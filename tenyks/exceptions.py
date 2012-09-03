@@ -1,0 +1,2 @@
+class ConnectionConfigurationError(Exception):
+    pass

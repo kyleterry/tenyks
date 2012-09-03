@@ -1,0 +1,29 @@
+CONNECTIONS = {
+    'network1': {
+        'host': 'localhost',
+        'port': 6667,
+        'password': None,
+        'nick': 'tenyks',
+        'ident': 'tenyks',
+        'realname': 'tenyks IRC bot',
+        'admins': ['vhost-',],
+        'ssl': False,
+        'channels': [],
+    },
+    'network2': {
+        'host': 'localhost',
+        'port': 6667,
+        'password': None,
+        'nick': 'tenyks',
+        'ident': 'tenyks',
+        'realname': 'tenyks IRC bot',
+        'admins': ['vhost-',],
+        'ssl': False
+        'channels': [],
+    }
+}
+
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6379
+REDIS_DB = 0
+REDIS_PASSWORD = None
