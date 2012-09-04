@@ -18,7 +18,7 @@ CONNECTIONS = {
         'ident': 'tenyks',
         'realname': 'tenyks IRC bot',
         'admins': ['vhost-',],
-        'ssl': False
+        'ssl': False,
         'channels': [],
     }
 }
