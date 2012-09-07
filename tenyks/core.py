@@ -1,13 +1,14 @@
+import json
+from os.path import join
 import re
 import sys
 import time
-import json
-from os.path import join
 
 import gevent
 from gevent import socket
 from gevent import queue
 import gevent.monkey
+import redis
 
 import settings
 
@@ -202,6 +203,12 @@ class Robot(object):
         """
         Broadcase a line from IRC to all the services
         """
+        pass
+
+    def fetch_online_services(self):
+        pass
+
+    def fetch_all_services(self):
         pass
 
     def run(self):
