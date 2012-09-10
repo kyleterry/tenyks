@@ -32,4 +32,6 @@ REDIS_CONNECTION = {
 
 # SERVICES_SET_KEY = 'tenyks.services'
 # SERVICES_KEY = 'tenyks.services.%s'
-# SERVICES_BROADCAST_CHANNEL = 'tenyks.services.broadcast'
+# SERVICES_PING_RESPONSE_KEY = 'tenyks.services.%s.ping_response'
+# BROADCAST_TO_SERVICES_CHANNEL = 'tenyks.services.broadcast_to'
+# BROADCAST_TO_ROBOT_CHANNEL = 'tenyks.robot.broadcast_to'

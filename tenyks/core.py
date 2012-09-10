@@ -12,6 +12,8 @@ import gevent.monkey
 import redis
 
 import settings
+from constants import PING, PONG
+from client import CLIENT_SERVICE_STATUS_ONLINE, CLIENT_SERVICE_STATUS_OFFLINE
 
 gevent.monkey.patch_all()
 
@@ -162,7 +164,7 @@ class RedisLineV1(RedisLine):
 
     exact_version = 1
 
-    def __init__(self, raw_line):
+    def __init__(self, raw_line, connection_name=None):
         if type(raw_line) in (str, unicode,):
             raw_line = json.loads(raw_line)
         if raw_line['version'] != self.exact_version:
@@ -174,6 +176,7 @@ class RedisLineV1(RedisLine):
         self.message = raw_line['data']['message']
         self.service_name = raw_line['service_name'] if 'service_name' \
             in raw_line else None
+        self.connection_name = connection_name
         self.data = raw_line['data']
 
     def to_publish(self):
@@ -181,6 +184,7 @@ class RedisLineV1(RedisLine):
             'version': self.version,
             'type': self.type,
             'service_name': self.service_name,
+            'connection_name': self.connection_name,
             'data': self.data,
         })
 
@@ -266,37 +270,75 @@ class Robot(object):
         This worker will broadcast a message to the service broadcast channel
         """
         r = redis.Redis(**settings.REDIS_CONNECTION)
-        broadcast_channel = getattr(settings, 'SERVICES_BROADCAST_CHANNEL',
-            'tenyks.services.broadcast')
+        broadcast_channel = getattr(settings, 'BROADCAST_TO_SERVICES_CHANNEL',
+            'tenyks.services.broadcast_to')
         r.publish(broadcast_channel, irc_line.to_redis_line().to_publish())
 
-    def fetch_online_services(self):
-        pass
+    def pub_sub_loops(self):
+        r = redis.Redis(**settings.REDIS_CONNECTION)
+        pubsub = r.pubsub()
+        broadcast_channel = getattr(settings, 'BROADCAST_TO_ROBOT_CHANNEL',
+            'tenyks.robot.broadcast_to')
+        pubsub.subscribe(broadcast_channel)
+        for raw_redis_message in pubsub.listen():
+            try:
+                if raw_redis_message['data'] != 1L:
+                    message = json.loads(raw_redis_message['data'])
+                    assert False, 'TODO'
+                    if message['version'] == 1:
+                        if message['type'] == 'privmsg':
+                            self.say(message['data']['message'],
+                                    channels=message['data']['to'])
+                        elif message['type'] == 'register_request':
+                            print 'Received registration request from %s' % (message['data']['name'])
+                            self._handle_service_register_request(message)
+                        elif message['type'] == 'unregister_request':
+                            print 'Received unregistration request from %s' % (message['data']['name'])
+                            self._handle_service_unregister_request(message)
+            except ValueError:
+                print 'Pubsub loop: invalid JSON. Ignoring message.'
 
-    def fetch_offline_services(self):
-        pass
+    def ping_services(self):
+        for service in self.fetch_service_info():
+            gevent.spawn(self.ping_service, service)
+        gevent.spawn_later(30, self.ping_services)
 
-    def fetch_all_services(self):
-        pass
-
-    def run(self):
+    def ping_service(self, service):
         try:
-            while True:
-                self.workers = []
-                for name, connection in self.connections.iteritems():
-                    self.workers.append(gevent.spawn(self.connection_worker, connection))
-                gevent.joinall(self.workers)
-                break
-        except KeyboardInterrupt:
-            print 'Shutting down: User disconnect'
-            for name, connection in self.connections.iteritems():
-                connection.close()
-        finally:
-            for name, connection in self.connections.iteritems():
-                self.send(connection.name,
-                        'QUIT :%s' % getattr(self, 'exit_message', ''))
-                connection.close()
-            sys.exit('Bye.')
+            service = json.loads(self.r.get('services.%s' % service))
+            if service['status'] in (CLIENT_SERVICE_STATUS_ONLINE,
+                    CLIENT_SERVICE_STATUS_OFFLINE):
+                channel = 'services.%s.ping_response' % service['name']
+                to_publish = json.dumps({
+                    'version': 1,
+                    'type': PING,
+                    'data': {
+                        'name': service['name'],
+                        'message': PING,
+                        'channel': channel
+                    }
+                })
+                self.publish(to_publish)
+                print 'waiting for PONG on %s' % channel
+                pong = self.r.blpop(channel, 10) # block for 10 second timeout
+                if not pong:
+                    print 'failed to get PONG from %s' % service['name']
+                    service['status'] = CLIENT_SERVICE_STATUS_OFFLINE
+                elif pong == PONG:
+                    print 'got PONG from %s' % service['name']
+                    service['status'] = CLIENT_SERVICE_STATUS_ONLINE
+                service['last_check'] = time.time()
+                to_set = json.dumps(service)
+                self.r.set('services.%s' % service['name'], to_set)
+                return service
+        except Exception, e:
+            print e
+
+    def fetch_service_info(self):
+        r = redis.Redis(**settings.REDIS_CONNECTION)
+        services_set_key = getattr(settings, 'SERVICES_SET_KEY',
+                'tenyks.services')
+        return r.smembers(services_set_key)
 
     def connection_worker(self, connection):
         while True:
@@ -316,6 +358,25 @@ class Robot(object):
                 irc_line = IrcLine(connection, raw_line)
                 self.broadcast_queue.put(irc_line)
         print 'Worker shutdown'
+
+    def run(self):
+        try:
+            while True:
+                self.workers = []
+                for name, connection in self.connections.iteritems():
+                    self.workers.append(gevent.spawn(self.connection_worker, connection))
+                gevent.joinall(self.workers)
+                break
+        except KeyboardInterrupt:
+            print 'Shutting down: User disconnect'
+            for name, connection in self.connections.iteritems():
+                connection.close()
+        finally:
+            for name, connection in self.connections.iteritems():
+                self.send(connection.name,
+                        'QUIT :%s' % getattr(self, 'exit_message', ''))
+                connection.close()
+            sys.exit('Bye.')
 
 
 if __name__ == '__main__':

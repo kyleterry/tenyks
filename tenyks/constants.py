@@ -1,0 +1,2 @@
+PING = 'ping'
+PONG = 'pong'
