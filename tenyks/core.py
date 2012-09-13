@@ -379,6 +379,10 @@ class Robot(object):
             sys.exit('Bye.')
 
 
-if __name__ == '__main__':
+def make_and_run_robot():
     robot = Robot()
     robot.run()
+
+
+if __name__ == '__main__':
+    make_and_run_robot()

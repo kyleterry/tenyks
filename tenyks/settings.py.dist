@@ -8,19 +8,19 @@ CONNECTIONS = {
         'realname': 'tenyks IRC bot',
         'admins': ['vhost-',],
         'ssl': False,
-        'channels': [],
+        'channels': ['#test',], # if your channel has a password: '#thechannel, thepassword'
     },
-    'network2': {
-        'host': 'localhost',
-        'port': 6667,
-        'password': None,
-        'nick': 'tenyks',
-        'ident': 'tenyks',
-        'realname': 'tenyks IRC bot',
-        'admins': ['vhost-',],
-        'ssl': False,
-        'channels': [],
-    }
+    #'network2': {
+    #    'host': 'localhost',
+    #    'port': 6667,
+    #    'password': None,
+    #    'nick': 'tenyks',
+    #    'ident': 'tenyks',
+    #    'realname': 'tenyks IRC bot',
+    #    'admins': ['vhost-',],
+    #    'ssl': False,
+    #    'channels': [],
+    #}
 }
 
 REDIS_CONNECTION = {

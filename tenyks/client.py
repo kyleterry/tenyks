@@ -54,8 +54,8 @@ class TenyksClient(object):
                             data['type'] == PING and
                             data['data']['name'] == self.service_name):
                             self.handle_pint(data)
-                except:
-                    print 'Failed to parse JSON.'
+                except ValueError:
+                    print 'Failed to parse Json'
 
     def handle_ping(self, data):
         print 'responding to PING on %s' % (
