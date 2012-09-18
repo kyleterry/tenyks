@@ -22,21 +22,17 @@ class TenyksClientInitError(Exception):
 class TenyksClient(object):
 
     def __init__(self):
-        if not getattr(self, 'client_type'):
+        if not getattr(self, 'client_name'):
             raise TenyksClientInitError(
-                    'You must subclass with a client_type attribute')
-        if not getattr(self, 'service_name'):
-            raise TenyksClientInitError(
-                    'You must subclass with a service_name attribute')
+                    'You must subclass with a client_name attribute')
         self.r = redis.Redis(**settings.REDIS_CONNECTION)
-        if self.client_type == CLIENT_TYPE_SERVICE:
-            log_directory = getattr(settings, 'LOG_DIRECTORY', '/tmp/tenyks')
-            self.log_file = join(log_directory, 'tenyks-service-%s.log' % self.service_name)
-            self.input_queue = queue.Queue()
-            with open(self.log_file, 'a+') as f:
-                f.write('Starting up')
-            gevent.spawn(self.pub_sub_loop)
-            self.send_status_update(CLIENT_SERVICE_STATUS_ONLINE)
+        log_directory = getattr(settings, 'LOG_DIRECTORY', '/tmp/tenyks')
+        self.log_file = join(log_directory, 'tenyks-service-%s.log' % self.client_name)
+        self.input_queue = queue.Queue()
+        with open(self.log_file, 'a+') as f:
+            f.write('Starting up')
+        gevent.spawn(self.pub_sub_loop)
+        self.send_status_update(CLIENT_SERVICE_STATUS_ONLINE)
 
     def pub_sub_loop(self):
         pubsub = self.r.pubsub()
@@ -47,12 +43,12 @@ class TenyksClient(object):
             if raw_redis_message['data'] != 1L: 
                 try:
                     data = json.loads(raw_redis_message['data'])
+                    print data
                     if data['version'] == 1:
                         if data['type'] == 'privmsg':
                             self.input_queue.put(data)
-                        elif (self.client_type == CLIENT_TYPE_SERVICE and 
-                            data['type'] == PING and
-                            data['data']['name'] == self.service_name):
+                        elif data['type'] == PING and \
+                            data['data']['name'] == self.client_name:
                             self.handle_pint(data)
                 except ValueError:
                     print 'Failed to parse Json'
@@ -61,7 +57,7 @@ class TenyksClient(object):
         print 'responding to PING on %s' % (
                 data['data']['channel'])
         ping_response_key = getattr(settings, 'SERVICES_PING_RESPONSE_KEY',
-                'tenyks.services.%s.ping_response' % self.service_name)
+                'tenyks.services.%s.ping_response' % self.client_name)
         self.r.rpush(ping_response_key, PONG)
 
     def publish(self, to_publish, broadcast_channel=None):
@@ -76,7 +72,7 @@ class TenyksClient(object):
             'type': 'client_status',
             'data': {
                 'status': status,
-                'name': self.service_name
+                'name': self.client_name
             }
         })
         self.publish(to_publish)
@@ -86,10 +82,16 @@ class TenyksClient(object):
         Generator that compiles a regular expression and returns a re result
         """
         listening = re.compile(expression).match
-        while True:
+        for data in self.input_queue.get():
+            print data
+            try:
+                data = json.loads(data)
+            except:
+                continue
             result = listening(self.input_queue.get())
-            if result:
-                yield result
+            if not result:
+                continue
+            yield result
 
     def run(self):
         raise NotImplementedError('You must subclass with a `run` method.')
