@@ -1,3 +1,8 @@
+from os.path import abspath, join, dirname
+import logging.config
+
+PROJECT_ROOT = abspath(dirname(__file__))
+
 CONNECTIONS = {
     'network1': {
         'host': 'localhost',
@@ -35,3 +40,5 @@ REDIS_CONNECTION = {
 # SERVICES_PING_RESPONSE_KEY = 'tenyks.services.%s.ping_response'
 # BROADCAST_TO_SERVICES_CHANNEL = 'tenyks.services.broadcast_to'
 # BROADCAST_TO_ROBOT_CHANNEL = 'tenyks.robot.broadcast_to'
+
+logging.config.fileConfig(join(PROJECT_ROOT, 'logging_config.ini'))

@@ -1,9 +1,12 @@
+""" Core of tenyks. Contains Robot, Connection, and IRC/Redis Lines"""
 import json
 from os.path import join
 import re
 import sys
 import time
 import hashlib
+import logging
+logger = logging.getLogger()
 
 import gevent
 from gevent import socket
@@ -39,16 +42,16 @@ class Connection(object):
         while True:
             try:
                 if reconnecting:
-                    print 'Reconnecting to %s' % self.name
+                    logger.info('%s: reconnecting...' % self.name)
                 else:
-                    print 'Connecting to %s...' % self.name
+                    logger.info('%s: connecting...' % self.name)
                 self.socket.connect((self.config['host'], self.config['port']))
                 self.socket_connected = True
                 self.server_disconnect = False
-                print 'Successfully connected to %s' % self.name
+                logger.info('%s: successfully connected' % self.name)
                 break
             except socket.error as e:
-                print 'Could not connect to %s: Retrying' % self.name
+                logger.info('%s: could not connect: retrying...' % self.name)
                 time.sleep(5)
         self.spawn_send_and_recv_loops()
 
@@ -71,7 +74,7 @@ class Connection(object):
         while True:
             data = self.socket.recv(1024).decode('utf-8')
             if not data:
-                print 'Disconnected'
+                logger.info('%s: disconnected' % self.name)
                 self.socket_connected = False
                 self.server_disconnect = True
                 break
@@ -290,13 +293,13 @@ class Robot(object):
                             self.say(message['data']['message'],
                                     channels=message['data']['to'])
                         elif message['type'] == 'register_request':
-                            print 'Received registration request from %s' % (message['data']['name'])
+                            logger.info('Received registration request from %s' % (message['data']['name']))
                             self._handle_service_register_request(message)
                         elif message['type'] == 'unregister_request':
-                            print 'Received unregistration request from %s' % (message['data']['name'])
+                            logger.info('Received unregistration request from %s' % (message['data']['name']))
                             self._handle_service_unregister_request(message)
             except ValueError:
-                print 'Pubsub loop: invalid JSON. Ignoring message.'
+                logger.info('Pubsub loop: invalid JSON. Ignoring message.')
 
     def ping_services(self):
         for service in self.fetch_service_info():
@@ -319,20 +322,21 @@ class Robot(object):
                     }
                 })
                 self.publish(to_publish)
-                print 'waiting for PONG on %s' % channel
+                logger.debug('Robot: waiting for PONG on %s' % channel)
                 pong = self.r.blpop(channel, 10) # block for 10 second timeout
                 if not pong:
-                    print 'failed to get PONG from %s' % service['name']
+                    logger.debug('Robot: failed to get PONG from %s' % service['name'])
+                    logger.info('Robot: putting %s into offline mode' % service['name'])
                     service['status'] = CLIENT_SERVICE_STATUS_OFFLINE
                 elif pong == PONG:
-                    print 'got PONG from %s' % service['name']
+                    logger.debug('got PONG from %s' % service['name'])
                     service['status'] = CLIENT_SERVICE_STATUS_ONLINE
                 service['last_check'] = time.time()
                 to_set = json.dumps(service)
                 self.r.set('services.%s' % service['name'], to_set)
                 return service
         except Exception, e:
-            print e
+            logger.debug(e)
 
     def fetch_service_info(self):
         r = redis.Redis(**settings.REDIS_CONNECTION)
@@ -357,7 +361,7 @@ class Robot(object):
             else:
                 irc_line = IrcLine(connection, raw_line)
                 self.broadcast_queue.put(irc_line)
-        print 'Worker shutdown'
+        logger.info('Connection Worker: worker shutdown')
 
     def run(self):
         try:
@@ -368,7 +372,7 @@ class Robot(object):
                 gevent.joinall(self.workers)
                 break
         except KeyboardInterrupt:
-            print 'Shutting down: User disconnect'
+            logger.info('Robot: shutting down: user disconnect')
             for name, connection in self.connections.iteritems():
                 connection.close()
         finally:

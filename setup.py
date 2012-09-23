@@ -20,6 +20,7 @@ setup(name='tenyks',
       install_requires=[
           'gevent',
           'redis',
+          'nose',
       ],
       entry_points="""
       # -*- Entry points: -*-

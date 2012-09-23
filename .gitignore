@@ -2,3 +2,4 @@
 *.swp
 *.egg-info
 settings.py
+.coverage
