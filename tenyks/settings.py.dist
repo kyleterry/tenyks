@@ -40,5 +40,7 @@ REDIS_CONNECTION = {
 # SERVICES_PING_RESPONSE_KEY = 'tenyks.services.%s.ping_response'
 # BROADCAST_TO_SERVICES_CHANNEL = 'tenyks.services.broadcast_to'
 # BROADCAST_TO_ROBOT_CHANNEL = 'tenyks.robot.broadcast_to'
+# WORKING_DIR
+# LOGGING_DIR
 
 logging.config.fileConfig(join(PROJECT_ROOT, 'logging_config.ini'))

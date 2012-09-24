@@ -1,10 +1,12 @@
 """ Core of tenyks. Contains Robot, Connection, and IRC/Redis Lines"""
+import hashlib
 import json
+import os
 from os.path import join
 import re
 import sys
 import time
-import hashlib
+
 import logging
 logger = logging.getLogger()
 
@@ -14,18 +16,18 @@ from gevent import queue
 import gevent.monkey
 import redis
 
-import settings
 from constants import PING, PONG
 from client import CLIENT_SERVICE_STATUS_ONLINE, CLIENT_SERVICE_STATUS_OFFLINE
+import config
 
 gevent.monkey.patch_all()
 
 
 class Connection(object):
 
-    def __init__(self, name, config):
+    def __init__(self, name, connection_config):
         self.name = name
-        self.config = config
+        self.connection_config = connection_config
         self.greenlets = []
         self.socket = socket.socket()
         self.socket_connected = False
@@ -35,7 +37,7 @@ class Connection(object):
         self.input_buffer = ''
         self.output_queue = queue.Queue()
         self.output_buffer = ''
-        log_directory = getattr(settings, 'LOG_DIRECTORY', '/tmp/tenyks')
+        log_directory = getattr(config, 'LOG_DIR', config.WORKING_DIR)
         self.log_file = join(log_directory, 'irc-%s.log' % self.name)
 
     def connect(self, reconnecting=False):
@@ -45,13 +47,14 @@ class Connection(object):
                     logger.info('%s: reconnecting...' % self.name)
                 else:
                     logger.info('%s: connecting...' % self.name)
-                self.socket.connect((self.config['host'], self.config['port']))
+                self.socket.connect((self.connection_config['host'],
+                    self.connection_config['port']))
                 self.socket_connected = True
                 self.server_disconnect = False
                 logger.info('%s: successfully connected' % self.name)
                 break
             except socket.error as e:
-                logger.info('%s: could not connect: retrying...' % self.name)
+                logger.warning('%s: could not connect: retrying...' % self.name)
                 time.sleep(5)
         self.spawn_send_and_recv_loops()
 
@@ -87,7 +90,12 @@ class Connection(object):
 
     def send_loop(self):
         while True:
-            line = self.output_queue.get()
+            if not self.socket_connected:
+                break
+            try:
+                line = self.output_queue.get(timeout=5)
+            except queue.Empty:
+                continue
             self.output_buffer += line.encode('utf-8', 'replace') + '\r\n'
             while self.output_buffer:
                 sent = self.socket.send(self.output_buffer)
@@ -123,7 +131,8 @@ class IrcLine(object):
             lastparam = self.paramlist[-1]
         self.channel = self.paramlist[0]
         self.message = lastparam.lower()
-        self.direct = self.message.startswith(connection.config['nick'])
+        self.direct = self.message.startswith(
+                connection.connectino_config['nick'])
         self.verb = ''
         if self.message:
             try:
@@ -216,25 +225,34 @@ class Robot(object):
     def __init__(self):
         self.broadcast_queue = queue.Queue()
         gevent.spawn(self.broadcast_loop)
+        
+        self.prepare_environment()
 
         self.connections = {}
         self.bootstrap_connections()
 
+    def prepare_environment(self):
+        try:
+            os.mkdir(config.WORKING_DIR)
+            os.mkdir(config.DATA_WORKING_DIR)
+        except OSError:
+            pass
+
     def bootstrap_connections(self):
-        for name, connection in settings.CONNECTIONS.iteritems():
+        for name, connection in config.CONNECTIONS.iteritems():
             conn = Connection(name, connection)
             conn.connect()
             self.connections[name] = conn
             self.set_nick_and_join(conn)
 
     def set_nick_and_join(self, connection):
-        self.send(connection.name, "NICK %s" % connection.config['nick'])
+        self.send(connection.name, "NICK %s" % connection.connection_config['nick'])
         self.send(connection.name, "USER %s %s bla :%s" % (
-            connection.config['ident'], connection.config['host'],
-            connection.config['realname']))
+            connection.connection_config['ident'], connection.connection_config['host'],
+            connection.connection_config['realname']))
 
         # join channels
-        for channel in connection.config['channels']:
+        for channel in connection.connection_config['channels']:
             self.join(channel, connection)
 
     def join(self, channel, connection, message=None):
@@ -272,15 +290,15 @@ class Robot(object):
         """
         This worker will broadcast a message to the service broadcast channel
         """
-        r = redis.Redis(**settings.REDIS_CONNECTION)
-        broadcast_channel = getattr(settings, 'BROADCAST_TO_SERVICES_CHANNEL',
+        r = redis.Redis(**config.REDIS_CONNECTION)
+        broadcast_channel = getattr(config, 'BROADCAST_TO_SERVICES_CHANNEL',
             'tenyks.services.broadcast_to')
         r.publish(broadcast_channel, irc_line.to_redis_line().to_publish())
 
     def pub_sub_loops(self):
-        r = redis.Redis(**settings.REDIS_CONNECTION)
+        r = redis.Redis(**config.REDIS_CONNECTION)
         pubsub = r.pubsub()
-        broadcast_channel = getattr(settings, 'BROADCAST_TO_ROBOT_CHANNEL',
+        broadcast_channel = getattr(config, 'BROADCAST_TO_ROBOT_CHANNEL',
             'tenyks.robot.broadcast_to')
         pubsub.subscribe(broadcast_channel)
         for raw_redis_message in pubsub.listen():
@@ -339,8 +357,8 @@ class Robot(object):
             logger.debug(e)
 
     def fetch_service_info(self):
-        r = redis.Redis(**settings.REDIS_CONNECTION)
-        services_set_key = getattr(settings, 'SERVICES_SET_KEY',
+        r = redis.Redis(**config.REDIS_CONNECTION)
+        services_set_key = getattr(config, 'SERVICES_SET_KEY',
                 'tenyks.services')
         return r.smembers(services_set_key)
 
