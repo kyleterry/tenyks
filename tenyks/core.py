@@ -90,12 +90,7 @@ class Connection(object):
 
     def send_loop(self):
         while True:
-            if not self.socket_connected:
-                break
-            try:
-                line = self.output_queue.get(timeout=5)
-            except queue.Empty:
-                continue
+            line = self.output_queue.get()
             self.output_buffer += line.encode('utf-8', 'replace') + '\r\n'
             while self.output_buffer:
                 sent = self.socket.send(self.output_buffer)
@@ -132,7 +127,7 @@ class IrcLine(object):
         self.channel = self.paramlist[0]
         self.message = lastparam.lower()
         self.direct = self.message.startswith(
-                connection.connectino_config['nick'])
+                connection.connection_config['nick'])
         self.verb = ''
         if self.message:
             try:
