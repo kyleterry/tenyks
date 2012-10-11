@@ -1,9 +1,10 @@
-{-# LANGUAGE OverloadedStrings #-}
-import Data.Maybe
+{-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
 import Control.Monad (forever)
+import Data.Maybe
 
-import Text.JSON()
 import Database.Redis.Redis
+import Reactive.Banana
+import Text.JSON
 
 host :: String
 host = "127.0.0.1"
