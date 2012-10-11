@@ -3,13 +3,9 @@ import Control.Monad (forever)
 import Data.Maybe
 import Database.Redis.Redis
 
-type Host = String
-type Port = String 
-type Channel = String
-
 host = "127.0.0.1"
 port = "6379" 
-channel = "tenyks.services.broadcast_to" :: Channel
+channel = "tenyks.services.broadcast_to"
 
 getMessage :: (Message String) -> String
 getMessage (MMessage s1 s2) = s2
