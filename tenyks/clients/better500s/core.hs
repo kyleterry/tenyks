@@ -1,23 +1,31 @@
 {-# LANGUAGE OverloadedStrings #-}
-import Control.Monad (forever)
 import Data.Maybe
+import Control.Monad (forever)
+
+import Text.JSON()
 import Database.Redis.Redis
 
+host :: String
 host = "127.0.0.1"
-port = "6379" 
+
+port :: String
+port = "6379"
+
+channel :: String
 channel = "tenyks.services.broadcast_to"
 
 getMessage :: (Message String) -> String
-getMessage (MMessage s1 s2) = s2
+getMessage (MMessage _ s2) = s2
 getMessage _ = ""
 
+main :: IO ()
 main = do
     putStrLn host    
     putStrLn port
 
     db <- connect host port
-    subscribe db [channel] :: IO [Message ()]
-    forever $ do
+    _ <- subscribe db [channel] :: IO [Message ()]
+    _ <- forever $ do
         message <- listen db 1000
         if isJust message
         then do
