@@ -29,7 +29,7 @@ class Client(object):
         else:
             self.name = self.name.lower()
         if self.message_filter:
-            self.message_filter = re.compile(self.message_filter).match
+            self.re_message_filter = re.compile(self.message_filter).match
 
     def run(self):
         r = redis.Redis(**config.REDIS_CONNECTION)
@@ -43,7 +43,7 @@ class Client(object):
                     if self.direct_only and not data['direct']:
                         continue
                     if self.message_filter:
-                        match = self.message_filter(data['payload'])
+                        match = self.re_message_filter(data['payload'])
                         if match:
                             gevent.spawn(self.handle, data, match)
                     else:
