@@ -21,7 +21,7 @@ getMessage _ = ""
 
 main :: IO ()
 main = do
-    putStrLn host    
+    putStrLn host
     putStrLn port
 
     db <- connect host port
@@ -33,7 +33,7 @@ main = do
             let msg = getMessage $ fromJust message
             putStrLn msg
         else do
-            return ()    
+            return ()
     disconnect db
 
     return ()

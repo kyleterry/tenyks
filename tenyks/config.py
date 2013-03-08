@@ -19,3 +19,10 @@ REDIS_CONNECTION = settings.REDIS_CONNECTION
 WORKING_DIR = getattr(settings, 'WORKING_DIRECTORY_PATH',
         join(os.environ['HOME'], '.tenyks'))
 DATA_WORKING_DIR = join(WORKING_DIR, 'data')
+
+
+BROADCAST_TO_SERVICES_CHANNEL = getattr(settings,
+    'BROADCAST_TO_SERVICES_CHANNEL', 'tenyks.services.broadcast_to')
+
+BROADCAST_TO_ROBOT_CHANNEL = getattr(settings,
+    'BROADCAST_TO_ROBOT_CHANNEL', 'tenyks.robot.broadcast_to')

@@ -1,106 +1,84 @@
-import re
 import json
-import redis
-from os.path import join
-import logging
-logger = logging.getLogger(__name__)
+import re
 
 import gevent
 from gevent import queue
+import redis
 
-import config
-from constants import PING, PONG
+import logging
+logger = logging.getLogger()
 
-CLIENT_TYPE_ONE_TIME = 1
-CLIENT_TYPE_SERVICE = 2
+import tenyks.config as config
+
+
+CLIENT_SERVICE_STATUS_OFFLINE = 0
 CLIENT_SERVICE_STATUS_ONLINE = 1
-CLIENT_SERVICE_STATUS_OFFLINE = 2
 
 
-class TenyksClientInitError(Exception):
-    pass
+class Client(object):
 
-
-class TenyksClient(object):
+    message_filter = None
+    name = None
+    direct_only = False
 
     def __init__(self):
-        if not getattr(self, 'client_name'):
-            raise TenyksClientInitError(
-                    'You must subclass with a client_name attribute')
-        self.r = redis.Redis(**config.REDIS_CONNECTION)
-        log_directory = getattr(config, 'LOG_DIR', config.WORKING_DIR)
-        self.log_file = join(log_directory, 'tenyks-service-%s.log' % self.client_name)
         self.input_queue = queue.Queue()
-        with open(self.log_file, 'a+') as f:
-            f.write('Starting up')
-        gevent.spawn(self.pub_sub_loop)
-        self.send_status_update(CLIENT_SERVICE_STATUS_ONLINE)
-        if getattr(self, 'hear', None):
-            self.heard_queue = queue.Queue()
-            gevent.spawn(self.hear)
-
-    def pub_sub_loop(self):
-        pubsub = self.r.pubsub()
-        broadcast_channel = getattr(config, 'BROADCAST_TO_SERVICES_CHANNEL',
-            'tenyks.services.broadcast_to')
-        pubsub.subscribe(broadcast_channel)
-        for raw_redis_message in pubsub.listen():
-            if raw_redis_message['data'] != 1L: 
-                try:
-                    data = json.loads(raw_redis_message['data'])
-                    if data['version'] == 1:
-                        if data['type'] == 'privmsg':
-                            self.input_queue.put(data)
-                        elif data['type'] == PING and \
-                            data['data']['name'] == self.client_name:
-                            self.handle_ping(data)
-                except ValueError:
-                    logger.error('Failed to parse Json')
-
-    def handle_ping(self, data):
-        logger.debug('responding to PING on %s' % (
-                data['data']['channel']))
-        ping_response_key = getattr(config, 'SERVICES_PING_RESPONSE_KEY',
-                'tenyks.services.%s.ping_response' % self.client_name)
-        self.r.rpush(ping_response_key, PONG)
-
-    def publish(self, to_publish, broadcast_channel=None):
-        if not broadcast_channel:
-            broadcast_channel = getattr(config, 'BROADCAST_TO_ROBOT_CHANNEL',
-                'tenyks.robot.broadcast_to')
-        self.r.publish(broadcast_channel, to_publish)
-
-    def send_status_update(self, status):
-        to_publish = json.dumps({
-            'version': 1,
-            'type': 'client_status',
-            'data': {
-                'status': status,
-                'name': self.client_name
-            }
-        })
-        self.publish(to_publish)
-
-    def hear(self):
-        """
-        Generator that compiles a regular expression and returns a re result
-        """
-        listening = re.compile(self.hear).match
-        while True:
-            data = self.input_queue.get()
-            self.heard_queue.put(data)
-            print data
+        self.output_queue = queue.Queue()
+        if not self.name:
+            self.name = self.__class__.__name__.lower()
+        else:
+            self.name = self.name.lower()
+        if self.message_filter:
+            self.message_filter = re.compile(self.message_filter).match
 
     def run(self):
-        raise NotImplementedError('You must subclass with a `run` method.')
+        r = redis.Redis(**config.REDIS_CONNECTION)
+        pubsub = r.pubsub()
+        pubsub.subscribe(config.BROADCAST_TO_SERVICES_CHANNEL)
+        for raw_redis_message in pubsub.listen():
+            logger.debug(json.dumps(raw_redis_message))
+            try:
+                if raw_redis_message['data'] != 1L:
+                    data = json.loads(raw_redis_message['data'])
+                    if self.direct_only and not data['direct']:
+                        continue
+                    if self.message_filter:
+                        match = self.message_filter(data['payload'])
+                        if match:
+                            gevent.spawn(self.handle, data, match)
+                    else:
+                        gevent.spawn(self.handle, data, None)
+            except ValueError:
+                logger.info(
+                        '{name}.run: invalid JSON. Ignoring message.'.format(
+                                    name=self.__class__.__name__))
+
+    def handle(self, data, match):
+        raise NotImplementedError('`handle` needs to be implemented on all '
+                                  'Client subclasses.')
+
+    def send(self, message, data=None):
+        r = redis.Redis(**config.REDIS_CONNECTION)
+        broadcast_channel = config.BROADCAST_TO_ROBOT_CHANNEL
+        if data:
+            to_publish = json.dumps({
+                'version': 1,
+                'type': 'privmsg',
+                'client': self.name,
+                'payload': message,
+                'irc_channel': data['irc_channel'],
+                'connection_name': data['connection_name']
+            })
+        r.publish(broadcast_channel, to_publish)
 
 
-def run_service(service_instance):
+def run_client(service_instance):
     try:
         service_instance.run()
     except KeyboardInterrupt:
         logger.info('%s client: exiting' % service_instance.name)
     finally:
-        with open(service_instance.log_file, 'a+') as f:
-            f.write('Shutting down')
-        service_instance.send_status_update(CLIENT_SERVICE_STATUS_OFFLINE)
+        pass
+        #with open(service_instance.log_file, 'a+') as f:
+        #    f.write('Shutting down')
+        #service_instance.send_status_update(CLIENT_SERVICE_STATUS_OFFLINE)

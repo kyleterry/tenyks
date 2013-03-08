@@ -22,6 +22,7 @@ setup(name='tenyks',
           'redis',
           'nose',
           'unittest2',
+          'clint',
       ],
       entry_points="""
       # -*- Entry points: -*-

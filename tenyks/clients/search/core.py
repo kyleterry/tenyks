@@ -1,16 +1,24 @@
-from tenyks.client import TenyksClient, run_service, CLIENT_TYPE_SERVICE
+import json
+import gevent.monkey
+from tenyks.client import Client, run_client
+
+import logging
+logger = logging.getLogger()
+
+gevent.monkey.patch_all()
 
 
-class TenyksSearch(TenyksClient):
+class TenyksSearch(Client):
 
-    client_name = 'search'
-    hear = r'^search (!{1}[gdw]{1}) (.*)$'
+    message_filter = r'^search (.*)$'
+    direct_only = True
 
-    def run(self):
-        while True:
-            data = self.heard_queue.get()
-            print data
+    def handle(self, data, match):
+        query = match.groups()[0]
+        self.send(
+                '{nick_from}: You will be able to search for "{query}" later.'.format(
+                    nick_from=data['nick_from'], query=query), data=data)
 
 if __name__ == '__main__':
     search = TenyksSearch()
-    run_service(search)
+    run_client(search)

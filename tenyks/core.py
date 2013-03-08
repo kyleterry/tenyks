@@ -2,7 +2,6 @@
 import hashlib
 import json
 import os
-from os.path import join
 import re
 import sys
 import time
@@ -11,94 +10,18 @@ import logging
 logger = logging.getLogger()
 
 import gevent
-from gevent import socket
 from gevent import queue
 import gevent.monkey
 import redis
 
-from constants import PING, PONG
-from client import CLIENT_SERVICE_STATUS_ONLINE, CLIENT_SERVICE_STATUS_OFFLINE
-import config
+from tenyks.client import (CLIENT_SERVICE_STATUS_ONLINE,
+        CLIENT_SERVICE_STATUS_OFFLINE)
+from tenyks.constants import PING, PONG
+import tenyks.config as config
+from tenyks.connection import Connection
+from tenyks.utils import pubsub_factory
 
 gevent.monkey.patch_all()
-
-
-class Connection(object):
-
-    def __init__(self, name, connection_config):
-        self.name = name
-        self.connection_config = connection_config
-        self.greenlets = []
-        self.socket = socket.socket()
-        self.socket_connected = False
-        self.server_disconnect = False
-        self.user_disconnect = False
-        self.input_queue = queue.Queue()
-        self.input_buffer = ''
-        self.output_queue = queue.Queue()
-        self.output_buffer = ''
-        log_directory = getattr(config, 'LOG_DIR', config.WORKING_DIR)
-        self.log_file = join(log_directory, 'irc-%s.log' % self.name)
-
-    def connect(self, reconnecting=False):
-        while True:
-            try:
-                if reconnecting:
-                    logger.info('%s: reconnecting...' % self.name)
-                else:
-                    logger.info('%s: connecting...' % self.name)
-                self.socket.connect((self.connection_config['host'],
-                    self.connection_config['port']))
-                self.socket_connected = True
-                self.server_disconnect = False
-                logger.info('%s: successfully connected' % self.name)
-                break
-            except socket.error as e:
-                logger.warning('%s: could not connect: retrying...' % self.name)
-                time.sleep(5)
-        self.spawn_send_and_recv_loops()
-
-    def reconnect(self):
-        for greenlet in self.greenlets:
-            greenlet.kill()
-        self.socket.close()
-        self.socket = socket.socket()
-        self.connect(reconnecting=True)
-
-    def close(self):
-        self.socket.close()
-        self.user_disconnect = True
-
-    def spawn_send_and_recv_loops(self):
-        self.greenlets.append(gevent.spawn(self.recv_loop))
-        self.greenlets.append(gevent.spawn(self.send_loop))
-
-    def recv_loop(self):
-        while True:
-            data = self.socket.recv(1024).decode('utf-8')
-            if not data:
-                logger.info('%s: disconnected' % self.name)
-                self.socket_connected = False
-                self.server_disconnect = True
-                break
-            with open(self.log_file, 'a+') as log_file:
-                log_file.write('receiving: %s' % data)
-            self.input_buffer += data
-            while '\r\n' in self.input_buffer:
-                line, self.input_buffer = self.input_buffer.split('\r\n', 1)
-                self.input_queue.put(line)
-
-    def send_loop(self):
-        while True:
-            line = self.output_queue.get()
-            self.output_buffer += line.encode('utf-8', 'replace') + '\r\n'
-            while self.output_buffer:
-                sent = self.socket.send(self.output_buffer)
-                self.output_buffer = self.output_buffer[sent:]
-                time.sleep(.5)
-
-    def needs_reconnect(self):
-        return not self.socket_connected and self.server_disconnect
 
 
 class IrcLine(object):
@@ -113,10 +36,13 @@ class IrcLine(object):
         self.raw_line = raw_line
         self.connection = connection
         if raw_line.startswith(":"):  # has a prefix
-            prefix, self.command, params = self.irc_prefix_rem(raw_line).groups()
+            prefix, self.command, params = self.irc_prefix_rem(
+                    raw_line).groups()
         else:
-            prefix, self.command, params = self.irc_noprefix_rem(raw_line).groups()
-        self.nick_from, self.user, self.host = self.irc_netmask_rem(prefix).groups()
+            prefix, self.command, params = self.irc_noprefix_rem(
+                    raw_line).groups()
+        self.nick_from, self.user, self.host = self.irc_netmask_rem(
+                prefix).groups()
         self.mask = self.user + "@" + self.host
         self.paramlist = self.irc_param_ref(params)
         lastparam = ""
@@ -142,19 +68,18 @@ class IrcLine(object):
             self.message = " ".join(self.message.split()[1:])
 
     def __repr__(self):
-        return '<%s: %s>' % (self.nick_from, self.message)
+        return '<{nick}: {message}>'.format(
+                nick=self.nick_from, message=self.message)
 
     def to_redis_line(self):
         return redisline_factory({
             'version': 1,
             'type': 'privmsg',
-            'data': {
-                'nick_from': self.nick_from,
-                'message': self.message,
-                'irc_channel': self.channel,
-                'is_direct': self.direct,
-            }
-        })
+            'nick_from': self.nick_from,
+            'irc_channel': self.channel,
+            'direct': self.direct,
+            'payload': self.message,
+        }, connection=self.connection)
 
 
 class RedisLineVersionMismatch(Exception):
@@ -176,29 +101,35 @@ class RedisLineV1(RedisLine):
             raw_line = json.loads(raw_line)
         if raw_line['version'] != self.exact_version:
             raise RedisLineVersionMismatch(
-                'Instances of this class must be created with version %d of the API' % 
-                (self.exact_version))
+                'Instances of this class must be created '
+                'with version {version} of the API'.format(
+                (self.exact_version)))
         self.version = raw_line['version']
-        self.type = raw_line['type']
-        self.message = raw_line['data']['message']
+        self.message_type = raw_line['type']
+        self.payload = raw_line['payload']
+        self.irc_channel = raw_line['irc_channel']
+        self.direct = raw_line['direct']
+        self.nick_from = raw_line['nick_from']
         self.service_name = raw_line['service_name'] if 'service_name' \
             in raw_line else None
         self.connection_name = connection_name
-        self.data = raw_line['data']
 
     def to_publish(self):
         return json.dumps({
             'version': self.version,
-            'type': self.type,
+            'type': self.message_type,
             'service_name': self.service_name,
             'connection_name': self.connection_name,
-            'data': self.data,
+            'irc_channel': self.irc_channel,
+            'direct': self.direct,
+            'nick_from': self.nick_from,
+            'payload': self.payload,
         })
 
 
-def redisline_factory(raw_line, version=1):
+def redisline_factory(raw_line, connection, version=1):
     if version == 1:
-        return RedisLineV1(raw_line)
+        return RedisLineV1(raw_line, connection_name=connection.name)
     return None
 
 
@@ -220,7 +151,8 @@ class Robot(object):
     def __init__(self):
         self.broadcast_queue = queue.Queue()
         gevent.spawn(self.broadcast_loop)
-        
+        gevent.spawn(self.handle_incoming_redis_messages)
+
         self.prepare_environment()
 
         self.connections = {}
@@ -231,6 +163,7 @@ class Robot(object):
             os.mkdir(config.WORKING_DIR)
             os.mkdir(config.DATA_WORKING_DIR)
         except OSError:
+            # Already exists
             pass
 
     def bootstrap_connections(self):
@@ -241,10 +174,12 @@ class Robot(object):
             self.set_nick_and_join(conn)
 
     def set_nick_and_join(self, connection):
-        self.send(connection.name, "NICK %s" % connection.connection_config['nick'])
-        self.send(connection.name, "USER %s %s bla :%s" % (
-            connection.connection_config['ident'], connection.connection_config['host'],
-            connection.connection_config['realname']))
+        self.send(connection.name, 'NICK {nick}'.format(
+            nick=connection.connection_config['nick']))
+        self.send(connection.name, 'USER {ident} {host} bla :{realname}'.format(
+            ident=connection.connection_config['ident'],
+            host=connection.connection_config['host'],
+            realname=connection.connection_config['realname']))
 
         # join channels
         for channel in connection.connection_config['channels']:
@@ -256,8 +191,10 @@ class Robot(object):
         password = ''
         if ',' in channel:
             channel, password = channel.split(',')
-        chan = '%s %s' % (channel, password)
-        self.send(connection.name, 'JOIN %s' % chan.strip())
+        chan = '{channel} {password}'.format(
+                channel=channel, password=password)
+        self.send(connection.name, 'JOIN {channel}'.format(
+            channel=chan.strip()))
 
     def handle_irc_ping(self, connection, message):
         """
@@ -272,6 +209,14 @@ class Robot(object):
         """
         message = message.strip()
         self.connections[connection].output_queue.put(message)
+
+    def say(self, connection, message, channels=[]):
+        for channel in channels:
+            message = 'PRIVMSG {channel} :{message}\r\n'.format(
+                    channel=channel, message=message)
+            logger.info('Sending {connection}: {message}'.format(
+                connection=connection, message=message))
+            self.send(connection, message)
 
     def broadcast_loop(self):
         """
@@ -290,72 +235,22 @@ class Robot(object):
             'tenyks.services.broadcast_to')
         r.publish(broadcast_channel, irc_line.to_redis_line().to_publish())
 
-    def pub_sub_loops(self):
-        r = redis.Redis(**config.REDIS_CONNECTION)
-        pubsub = r.pubsub()
+    def handle_incoming_redis_messages(self):
         broadcast_channel = getattr(config, 'BROADCAST_TO_ROBOT_CHANNEL',
             'tenyks.robot.broadcast_to')
-        pubsub.subscribe(broadcast_channel)
+        pubsub = pubsub_factory(broadcast_channel)
         for raw_redis_message in pubsub.listen():
+            logger.debug('robot got: {data}'.format(data=json.dumps(raw_redis_message)))
             try:
                 if raw_redis_message['data'] != 1L:
                     message = json.loads(raw_redis_message['data'])
-                    assert False, 'TODO'
                     if message['version'] == 1:
                         if message['type'] == 'privmsg':
-                            self.say(message['data']['message'],
-                                    channels=message['data']['to'])
-                        elif message['type'] == 'register_request':
-                            logger.info('Received registration request from %s' % (message['data']['name']))
-                            self._handle_service_register_request(message)
-                        elif message['type'] == 'unregister_request':
-                            logger.info('Received unregistration request from %s' % (message['data']['name']))
-                            self._handle_service_unregister_request(message)
+                            self.say(message['connection_name'],
+                                      message['payload'],
+                                      channels=[message['irc_channel']])
             except ValueError:
                 logger.info('Pubsub loop: invalid JSON. Ignoring message.')
-
-    def ping_services(self):
-        for service in self.fetch_service_info():
-            gevent.spawn(self.ping_service, service)
-        gevent.spawn_later(30, self.ping_services)
-
-    def ping_service(self, service):
-        try:
-            service = json.loads(self.r.get('services.%s' % service))
-            if service['status'] in (CLIENT_SERVICE_STATUS_ONLINE,
-                    CLIENT_SERVICE_STATUS_OFFLINE):
-                channel = 'services.%s.ping_response' % service['name']
-                to_publish = json.dumps({
-                    'version': 1,
-                    'type': PING,
-                    'data': {
-                        'name': service['name'],
-                        'message': PING,
-                        'channel': channel
-                    }
-                })
-                self.publish(to_publish)
-                logger.debug('Robot: waiting for PONG on %s' % channel)
-                pong = self.r.blpop(channel, 10) # block for 10 second timeout
-                if not pong:
-                    logger.debug('Robot: failed to get PONG from %s' % service['name'])
-                    logger.info('Robot: putting %s into offline mode' % service['name'])
-                    service['status'] = CLIENT_SERVICE_STATUS_OFFLINE
-                elif pong == PONG:
-                    logger.debug('got PONG from %s' % service['name'])
-                    service['status'] = CLIENT_SERVICE_STATUS_ONLINE
-                service['last_check'] = time.time()
-                to_set = json.dumps(service)
-                self.r.set('services.%s' % service['name'], to_set)
-                return service
-        except Exception, e:
-            logger.debug(e)
-
-    def fetch_service_info(self):
-        r = redis.Redis(**config.REDIS_CONNECTION)
-        services_set_key = getattr(config, 'SERVICES_SET_KEY',
-                'tenyks.services')
-        return r.smembers(services_set_key)
 
     def connection_worker(self, connection):
         while True:
@@ -391,7 +286,8 @@ class Robot(object):
         finally:
             for name, connection in self.connections.iteritems():
                 self.send(connection.name,
-                        'QUIT :%s' % getattr(self, 'exit_message', ''))
+                        'QUIT :{message}'.format(
+                            message=getattr(self, 'exit_message', '')))
                 connection.close()
             sys.exit('Bye.')
 
