@@ -1,3 +1,4 @@
+from datetime import datetime
 from os.path import join
 import time
 
@@ -40,6 +41,7 @@ class Connection(object):
                     self.connection_config['port']))
                 self.socket_connected = True
                 self.server_disconnect = False
+                self.last_ping = datetime.now()
                 logger.info('%s: successfully connected' % self.name)
                 break
             except socket.error as e:

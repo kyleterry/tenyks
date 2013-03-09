@@ -1,16 +1,17 @@
-from tenyks.client import TenyksClient, run_service, CLIENT_TYPE_SERVICE
+from tenyks.client import Client, run_client
 
 
-class TenyksBrain(TenyksClient):
+class TenyksBrain(Client):
 
-    service_name = 'brain'
-    client_type = CLIENT_TYPE_SERVICE
+    direct_only = True
 
-    def run(self):
-        for data in self.input_queue.get():
-            print data
+    def handle(self, data, match):
+        if data['payload'].lower() == 'why do you hate me?':
+            self.send(
+                '{nick_from}: Because you have not made me a better person.'.format(
+                    nick_from=data['nick_from']), data=data)
 
 
 if __name__ == '__main__':
     brain = TenyksBrain()
-    run_service(brain)
+    run_client(brain)

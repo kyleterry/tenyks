@@ -24,12 +24,18 @@ class Client(object):
     def __init__(self):
         self.input_queue = queue.Queue()
         self.output_queue = queue.Queue()
-        if not self.name:
+        if self.name is None:
             self.name = self.__class__.__name__.lower()
         else:
             self.name = self.name.lower()
         if self.message_filter:
             self.re_message_filter = re.compile(self.message_filter).match
+        if hasattr(self, 'recurring'):
+            gevent.spawn(self.handle_recurring)
+
+    def handle_recurring(self):
+        self.recurring()
+        gevent.spawn_later(30, self.handle_recurring)
 
     def run(self):
         r = redis.Redis(**config.REDIS_CONNECTION)
@@ -50,8 +56,8 @@ class Client(object):
                         gevent.spawn(self.handle, data, None)
             except ValueError:
                 logger.info(
-                        '{name}.run: invalid JSON. Ignoring message.'.format(
-                                    name=self.__class__.__name__))
+                    '{name}.run: invalid JSON. Ignoring message.'.format(
+                        name=self.__class__.__name__))
 
     def handle(self, data, match):
         raise NotImplementedError('`handle` needs to be implemented on all '

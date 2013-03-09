@@ -1,4 +1,5 @@
 """ Core of tenyks. Contains Robot, Connection, and IRC/Redis Lines"""
+from datetime import datetime
 import hashlib
 import json
 import os
@@ -256,7 +257,10 @@ class Robot(object):
         while True:
             if connection.user_disconnect:
                 break
-            if connection.needs_reconnect():
+            needs_reconnect = connection.needs_reconnect()
+            ping_delta = datetime.now() - connection.last_ping
+            no_ping = ping_delta.seconds > 4 * 60
+            if needs_reconnect or no_ping:
                 connection.reconnect()
                 self.set_nick_and_join(connection)
             try:
@@ -264,6 +268,10 @@ class Robot(object):
             except queue.Empty:
                 continue
             if raw_line.startswith('PING'):
+                connection.last_ping = datetime.now()
+                logger.debug(
+                    '{connection} connection_worker: setting last_ping to {dt}'.format(
+                        connection=connection.name, dt=connection.last_ping))
                 self.handle_irc_ping(connection, raw_line)
                 continue
             else:

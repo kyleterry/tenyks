@@ -5,7 +5,7 @@ import settings
 
 
 class ConfigError(Exception):
-    pass 
+    pass
 
 
 if not getattr(settings, 'CONNECTIONS', None):
@@ -17,7 +17,7 @@ if not getattr(settings, 'REDIS_CONNECTION', None):
 REDIS_CONNECTION = settings.REDIS_CONNECTION
 
 WORKING_DIR = getattr(settings, 'WORKING_DIRECTORY_PATH',
-        join(os.environ['HOME'], '.tenyks'))
+        join(os.environ['HOME'], '.config', 'tenyks'))
 DATA_WORKING_DIR = join(WORKING_DIR, 'data')
 
 
