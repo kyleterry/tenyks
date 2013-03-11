@@ -17,7 +17,7 @@ CLIENT_SERVICE_STATUS_ONLINE = 1
 
 class Client(object):
 
-    message_filter = None
+    message_filters = {}
     name = None
     direct_only = False
 
@@ -28,14 +28,16 @@ class Client(object):
             self.name = self.__class__.__name__.lower()
         else:
             self.name = self.name.lower()
-        if self.message_filter:
-            self.re_message_filter = re.compile(self.message_filter).match
+        if self.message_filters:
+            self.re_message_filters = {}
+            for name, regex in self.message_filters.iteritems():
+                self.re_message_filters[name] = re.compile(regex).match
         if hasattr(self, 'recurring'):
-            gevent.spawn(self.handle_recurring)
+            gevent.spawn(self.run_recurring)
 
-    def handle_recurring(self):
+    def run_recurring(self):
         self.recurring()
-        gevent.spawn_later(30, self.handle_recurring)
+        gevent.spawn_later(30, self.run_recurring)
 
     def run(self):
         r = redis.Redis(**config.REDIS_CONNECTION)
@@ -48,16 +50,30 @@ class Client(object):
                     data = json.loads(raw_redis_message['data'])
                     if self.direct_only and not data['direct']:
                         continue
-                    if self.message_filter:
-                        match = self.re_message_filter(data['payload'])
+                    if self.message_filters:
+                        name, match = self.search_for_match(data['payload'])
                         if match:
-                            gevent.spawn(self.handle, data, match)
+                            self.delegate_to_handle_method(data, match, name)
                     else:
                         gevent.spawn(self.handle, data, None)
             except ValueError:
                 logger.info(
                     '{name}.run: invalid JSON. Ignoring message.'.format(
                         name=self.__class__.__name__))
+
+    def search_for_match(self, message):
+        for name, regex in self.re_message_filters.iteritems():
+            match = regex(message)
+            if match:
+                return name, match
+        return None, None
+
+    def delegate_to_handle_method(self, data, match, name):
+        if hasattr(self, 'handle_{name}'.format(name=name)):
+            callee = getattr(self, 'handle_{name}'.format(name=name))
+            gevent.spawn(callee, data, match)
+        else:
+            gevent.spawn(self.handle, data, match)
 
     def handle(self, data, match):
         raise NotImplementedError('`handle` needs to be implemented on all '

@@ -3,7 +3,6 @@ from os.path import join
 import time
 
 import logging
-logger = logging.getLogger()
 
 import gevent
 from gevent import socket
@@ -29,23 +28,24 @@ class Connection(object):
         self.output_buffer = ''
         log_directory = getattr(config, 'LOG_DIR', config.WORKING_DIR)
         self.log_file = join(log_directory, 'irc-%s.log' % self.name)
+        self.logger = logging.getLogger(self.name)
 
     def connect(self, reconnecting=False):
         while True:
             try:
                 if reconnecting:
-                    logger.info('%s: reconnecting...' % self.name)
+                    self.logger.info('Reconnecting...')
                 else:
-                    logger.info('%s: connecting...' % self.name)
+                    self.logger.info('Connecting...')
                 self.socket.connect((self.connection_config['host'],
                     self.connection_config['port']))
                 self.socket_connected = True
                 self.server_disconnect = False
                 self.last_ping = datetime.now()
-                logger.info('%s: successfully connected' % self.name)
+                self.logger.info('Successfully connected')
                 break
             except socket.error as e:
-                logger.warning('%s: could not connect: retrying...' % self.name)
+                self.logger.warning('Could not connect: retrying...')
                 time.sleep(5)
         self.spawn_send_and_recv_loops()
 
@@ -68,12 +68,11 @@ class Connection(object):
         while True:
             data = self.socket.recv(1024).decode('utf-8')
             if not data:
-                logger.info('%s: disconnected' % self.name)
+                self.logger.info('disconnected')
                 self.socket_connected = False
                 self.server_disconnect = True
                 break
-            logger.debug('{server} received: {data}'.format(
-                server=self.name, data=data))
+            self.logger.info('<- IRC: {data}'.format(data=data))
             with open(self.log_file, 'a+') as log_file:
                 log_file.write('receiving: %s' % data)
             self.input_buffer += data
@@ -87,8 +86,8 @@ class Connection(object):
             self.output_buffer += line.encode('utf-8', 'replace') + '\r\n'
             while self.output_buffer:
                 sent = self.socket.send(self.output_buffer)
-                logger.debug('{server} sending: {data}'.format(
-                    server=self.name, data=self.output_buffer))
+                self.logger.info('-> IRC: {data}'.format(
+                    data=self.output_buffer))
                 self.output_buffer = self.output_buffer[sent:]
                 time.sleep(.5)
 

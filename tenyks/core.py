@@ -1,4 +1,4 @@
-""" Core of tenyks. Contains Robot, Connection, and IRC/Redis Lines"""
+""" Core of tenyks. Contains Robot and IRC/Redis Lines"""
 from datetime import datetime
 import hashlib
 import json
@@ -8,7 +8,7 @@ import sys
 import time
 
 import logging
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 import gevent
 from gevent import queue
@@ -210,13 +210,13 @@ class Robot(object):
         """
         message = message.strip()
         self.connections[connection].output_queue.put(message)
+        logger.info('Robot -> {connection}: {message}'.format(
+            connection=connection, message=message))
 
     def say(self, connection, message, channels=[]):
         for channel in channels:
             message = 'PRIVMSG {channel} :{message}\r\n'.format(
                     channel=channel, message=message)
-            logger.info('Sending {connection}: {message}'.format(
-                connection=connection, message=message))
             self.send(connection, message)
 
     def broadcast_loop(self):
@@ -241,7 +241,7 @@ class Robot(object):
             'tenyks.robot.broadcast_to')
         pubsub = pubsub_factory(broadcast_channel)
         for raw_redis_message in pubsub.listen():
-            logger.debug('robot got: {data}'.format(data=json.dumps(raw_redis_message)))
+            logger.debug('Robot <- {data}'.format(data=json.dumps(raw_redis_message)))
             try:
                 if raw_redis_message['data'] != 1L:
                     message = json.loads(raw_redis_message['data'])
@@ -251,7 +251,7 @@ class Robot(object):
                                       message['payload'],
                                       channels=[message['irc_channel']])
             except ValueError:
-                logger.info('Pubsub loop: invalid JSON. Ignoring message.')
+                logger.info('Robot Pubsub: invalid JSON. Ignoring message.')
 
     def connection_worker(self, connection):
         while True:
@@ -259,7 +259,7 @@ class Robot(object):
                 break
             needs_reconnect = connection.needs_reconnect()
             ping_delta = datetime.now() - connection.last_ping
-            no_ping = ping_delta.seconds > 4 * 60
+            no_ping = ping_delta.seconds > 5 * 60
             if needs_reconnect or no_ping:
                 connection.reconnect()
                 self.set_nick_and_join(connection)
@@ -270,14 +270,15 @@ class Robot(object):
             if raw_line.startswith('PING'):
                 connection.last_ping = datetime.now()
                 logger.debug(
-                    '{connection} connection_worker: setting last_ping to {dt}'.format(
+                    '{connection} Connection Worker: setting last_ping to {dt}'.format(
                         connection=connection.name, dt=connection.last_ping))
                 self.handle_irc_ping(connection, raw_line)
                 continue
             else:
                 irc_line = IrcLine(connection, raw_line)
                 self.broadcast_queue.put(irc_line)
-        logger.info('Connection Worker: worker shutdown')
+        logger.info('{connection} Connection Worker: worker shutdown'.format(
+            connection=connection.name))
 
     def run(self):
         try:

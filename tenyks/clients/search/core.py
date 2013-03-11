@@ -10,11 +10,14 @@ gevent.monkey.patch_all()
 
 class TenyksSearch(Client):
 
-    message_filter = r'^search (.*)$'
+    message_filters = {
+        'search': r'^search (.*)$',
+    }
     direct_only = True
 
     def handle(self, data, match):
         query = match.groups()[0]
+        logger.debug('search found: {query}'.format(query=query))
         self.send(
                 '{nick_from}: You will be able to search for "{query}" later.'.format(
                     nick_from=data['nick_from'], query=query), data=data)

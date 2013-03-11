@@ -3,3 +3,4 @@
 *.egg-info
 settings.py
 .coverage
+pudb
