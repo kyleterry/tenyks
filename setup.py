@@ -23,6 +23,7 @@ setup(name='tenyks',
           'nose',
           'unittest2',
           'clint',
+          'feedparser',
       ],
       entry_points="""
       # -*- Entry points: -*-

@@ -97,7 +97,7 @@ class RedisLineV1(RedisLine):
 
     exact_version = 1
 
-    def __init__(self, raw_line, connection_name=None):
+    def __init__(self, raw_line, connection=None):
         if type(raw_line) in (str, unicode,):
             raw_line = json.loads(raw_line)
         if raw_line['version'] != self.exact_version:
@@ -113,24 +113,25 @@ class RedisLineV1(RedisLine):
         self.nick_from = raw_line['nick_from']
         self.service_name = raw_line['service_name'] if 'service_name' \
             in raw_line else None
-        self.connection_name = connection_name
+        self.connection = connection
 
     def to_publish(self):
         return json.dumps({
             'version': self.version,
             'type': self.message_type,
             'service_name': self.service_name,
-            'connection_name': self.connection_name,
+            'connection_name': self.connection.name,
             'irc_channel': self.irc_channel,
             'direct': self.direct,
             'nick_from': self.nick_from,
             'payload': self.payload,
+            'admins': self.connection.connection_config['admins'],
         })
 
 
 def redisline_factory(raw_line, connection, version=1):
     if version == 1:
-        return RedisLineV1(raw_line, connection_name=connection.name)
+        return RedisLineV1(raw_line, connection=connection)
     return None
 
 
@@ -160,8 +161,13 @@ class Robot(object):
         self.bootstrap_connections()
 
     def prepare_environment(self):
+        # TODO FIX THIS MESS
         try:
             os.mkdir(config.WORKING_DIR)
+        except OSError:
+            # Already exists
+            pass
+        try:
             os.mkdir(config.DATA_WORKING_DIR)
         except OSError:
             # Already exists
@@ -241,7 +247,8 @@ class Robot(object):
             'tenyks.robot.broadcast_to')
         pubsub = pubsub_factory(broadcast_channel)
         for raw_redis_message in pubsub.listen():
-            logger.debug('Robot <- {data}'.format(data=json.dumps(raw_redis_message)))
+            logger.debug('Robot <- {data}'.format(
+                data=json.dumps(raw_redis_message)))
             try:
                 if raw_redis_message['data'] != 1L:
                     message = json.loads(raw_redis_message['data'])
@@ -270,7 +277,7 @@ class Robot(object):
             if raw_line.startswith('PING'):
                 connection.last_ping = datetime.now()
                 logger.debug(
-                    '{connection} Connection Worker: setting last_ping to {dt}'.format(
+                    '{connection} Connection Worker: last_ping: {dt}'.format(
                         connection=connection.name, dt=connection.last_ping))
                 self.handle_irc_ping(connection, raw_line)
                 continue
@@ -285,7 +292,8 @@ class Robot(object):
             while True:
                 self.workers = []
                 for name, connection in self.connections.iteritems():
-                    self.workers.append(gevent.spawn(self.connection_worker, connection))
+                    self.workers.append(
+                            gevent.spawn(self.connection_worker, connection))
                 gevent.joinall(self.workers)
                 break
         except KeyboardInterrupt:

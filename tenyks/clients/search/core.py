@@ -3,7 +3,6 @@ import gevent.monkey
 from tenyks.client import Client, run_client
 
 import logging
-logger = logging.getLogger()
 
 gevent.monkey.patch_all()
 
@@ -17,9 +16,7 @@ class TenyksSearch(Client):
 
     def handle(self, data, match):
         query = match.groups()[0]
-        logger.debug('search found: {query}'.format(query=query))
-        self.send(
-                '{nick_from}: You will be able to search for "{query}" later.'.format(
+        self.send('{nick_from}: You will be able to search for "{query}" later.'.format(
                     nick_from=data['nick_from'], query=query), data=data)
 
 if __name__ == '__main__':

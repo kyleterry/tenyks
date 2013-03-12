@@ -6,7 +6,6 @@ from gevent import queue
 import redis
 
 import logging
-logger = logging.getLogger()
 
 import tenyks.config as config
 
@@ -34,6 +33,7 @@ class Client(object):
                 self.re_message_filters[name] = re.compile(regex).match
         if hasattr(self, 'recurring'):
             gevent.spawn(self.run_recurring)
+        self.logger = logging.getLogger(self.name)
 
     def run_recurring(self):
         self.recurring()
@@ -44,7 +44,6 @@ class Client(object):
         pubsub = r.pubsub()
         pubsub.subscribe(config.BROADCAST_TO_SERVICES_CHANNEL)
         for raw_redis_message in pubsub.listen():
-            logger.debug(json.dumps(raw_redis_message))
             try:
                 if raw_redis_message['data'] != 1L:
                     data = json.loads(raw_redis_message['data'])
