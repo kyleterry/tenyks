@@ -31,11 +31,38 @@ class TenyksFeeds(Client):
         return conn.cursor()
 
     def recurring(self):
-        self.logger.debug('recurring called')
+        self.logger.debug('Fetching feeds')
+        cur = self.fetch_cursor()
+        for channel in self.get_channels(cur):
+            connection = self.get_connection(cur, channel)
+            for feed_obj in self.feeds_by_channel(cur, channel):
+                self.feed_handler(cur, feed_obj, channel, connection)
+
+    def feed_handler(self, cur, feed_obj, channel, connection):
+        feed = feedparser.parse(feed_obj[1])
+        title = feed['feed']['title']
+        self.logger.debug('Looking for entries in {feed}'.format(
+            feed=feed_obj[1]))
+        for i, entry in enumerate(feed['entries']):
+            message = '[{feed}] {title} - {link}'.format(feed=title,
+                title=entry['title'],
+                link=entry['link'])
+            if not self.entry_exists(cur, entry['id'], feed_obj) and i < 6:
+                data = {
+                    'version': 1,
+                    'type': 'privmsg',
+                    'client': self.name,
+                    'payload': message,
+                    'irc_channel': channel[1],
+                    'connection_name': connection[1]
+                }
+                self.send(message, data)
+                self.create_entry(cur, entry['id'], feed_obj)
 
     def handle_add_feed(self, data, match):
         if data['nick_from'] in data['admins']:
             feed_url = match.groups()[0]
+            self.logger.debug('add_feed: {feed}'.format(feed=feed_url))
             cur = self.fetch_cursor()
             connection = self.get_or_create_connection(cur,
                     data['connection_name'])
@@ -47,9 +74,9 @@ class TenyksFeeds(Client):
                         data=data)
 
     def handle_del_feed(self, data, match):
-        self.logger.debug('TODO: del_feed')
         if data['nick_from'] in data['admins']:
             feed_url = match.groups()[0]
+            self.logger.debug('del_feed: {feed}'.format(feed=feed_url))
             cur = self.fetch_cursor()
             connection = self.get_or_create_connection(cur,
                 data['connection_name'])
@@ -60,6 +87,7 @@ class TenyksFeeds(Client):
 
 
     def handle_list_feeds(self, data, match):
+        self.logger.debug('list_feeds')
         cur = self.fetch_cursor()
         connection = self.get_or_create_connection(
                 cur, data['connection_name'])
@@ -128,8 +156,22 @@ class TenyksFeeds(Client):
             feed = result.fetchone()
         return feed
 
+    def get_channels(self, cur):
+        result = cur.execute("""
+            SELECT * FROM channel
+        """)
+        return result.fetchall()
+
+    def get_connection(self, cur, channel):
+        return cur.execute("""
+            SELECT * FROM connection
+            WHERE id = ?""", (channel[2],)).fetchone()
+
     def feeds_by_channel(self, cur, channel):
-        pass
+        result = cur.execute("""
+            SELECT * FROM feed
+            WHERE channel_id = ?""", (channel[0],))
+        return result.fetchall()
 
     def feed_exists(self, cur, feed_url, channel):
         result = cur.execute("""
@@ -147,34 +189,50 @@ class TenyksFeeds(Client):
         """, (channel[0], feed_url))
         cur.connection.commit()
 
+    def entry_exists(self, cur, entry_id, feed_obj):
+        result = cur.execute("""
+            SELECT * FROM entry
+            WHERE entry_key = ?
+            AND feed_id = ?
+        """, (entry_id, feed_obj[0]))
+        return result.fetchone() is not None
+
+    def create_entry(self, cur, entry_id, feed_obj):
+        result = cur.execute("""
+            INSERT INTO entry (entry_key, feed_id)
+            VALUES (?, ?)
+        """, (entry_id, feed_obj[0]))
+        result.connection.commit()
+
     def create_tables(self, cur):
-        connection_sql = """
+        table_sql = """
         CREATE TABLE IF NOT EXISTS connection (
             id INTEGER PRIMARY KEY,
             connection_name TEXT
-        )
-        """
-        channel_sql = """
+        );
         CREATE TABLE IF NOT EXISTS channel (
             id INTEGER PRIMARY KEY,
             channel TEXT,
             connection_id INTEGER,
             FOREIGN KEY(connection_id)
                 REFERENCES connection(id)
-        )
-        """
-        feed_sql = """
+        );
         CREATE TABLE IF NOT EXISTS feed (
             id INTEGER PRIMARY KEY,
             feed_url TEXT,
             channel_id INTEGER,
             FOREIGN KEY(channel_id)
                 REFERENCES channel(id)
-        )
+        );
+        CREATE TABLE IF NOT EXISTS entry (
+            id INTEGER PRIMARY KEY,
+            entry_key TEXT,
+            feed_id INTEGER,
+            FOREIGN KEY(feed_id)
+                REFERENCES entry(id)
+        );
         """
-        cur.execute(connection_sql)
-        cur.execute(channel_sql)
-        cur.execute(feed_sql)
+        cur.executescript(table_sql)
 
 if __name__ == '__main__':
     feed = TenyksFeeds()
