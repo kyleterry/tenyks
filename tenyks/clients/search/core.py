@@ -14,7 +14,7 @@ class TenyksSearch(Client):
     }
     direct_only = True
 
-    def handle(self, data, match):
+    def handle(self, data, match, filter_name):
         query = match.groups()[0]
         self.send('{nick_from}: You will be able to search for "{query}" later.'.format(
                     nick_from=data['nick_from'], query=query), data=data)

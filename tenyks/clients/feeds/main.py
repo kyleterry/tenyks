@@ -48,6 +48,16 @@ class TenyksFeeds(Client):
 
     def handle_del_feed(self, data, match):
         self.logger.debug('TODO: del_feed')
+        if data['nick_from'] in data['admins']:
+            feed_url = match.groups()[0]
+            cur = self.fetch_cursor()
+            connection = self.get_or_create_connection(cur,
+                data['connection_name'])
+            channel = self.get_or_create_channel(cur,
+                connection, data['irc_channel'])
+            if self.feed_exists(cur, feed_url, channel):
+                self.delete_feed(cur, feed_url, channel)
+
 
     def handle_list_feeds(self, data, match):
         cur = self.fetch_cursor()
@@ -70,8 +80,8 @@ class TenyksFeeds(Client):
 
     def get_or_create_connection(self, cur, name):
         connection_sql = """
-            SELECT * 
-            FROM connection 
+            SELECT *
+            FROM connection
             WHERE connection_name = ?"""
         result = cur.execute(connection_sql, (name,))
         connection = result.fetchone()
@@ -117,6 +127,25 @@ class TenyksFeeds(Client):
             cur.connection.commit()
             feed = result.fetchone()
         return feed
+
+    def feeds_by_channel(self, cur, channel):
+        pass
+
+    def feed_exists(self, cur, feed_url, channel):
+        result = cur.execute("""
+            SELECT * FROM feed
+            WHERE channel_id = ?
+            AND feed_url = ?
+        """, (channel[0], feed_url))
+        return result.fetchone() is not None
+
+    def delete_feed(self, cur, feed_url, channel):
+        result = cur.execute("""
+            DELETE FROM feed
+            WHERE channel_id = ?
+            AND feed_url = ?
+        """, (channel[0], feed_url))
+        cur.connection.commit()
 
     def create_tables(self, cur):
         connection_sql = """

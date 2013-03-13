@@ -54,7 +54,7 @@ class Client(object):
                         if match:
                             self.delegate_to_handle_method(data, match, name)
                     else:
-                        gevent.spawn(self.handle, data, None)
+                        gevent.spawn(self.handle, data, None, None)
             except ValueError:
                 logger.info(
                     '{name}.run: invalid JSON. Ignoring message.'.format(
@@ -72,9 +72,9 @@ class Client(object):
             callee = getattr(self, 'handle_{name}'.format(name=name))
             gevent.spawn(callee, data, match)
         else:
-            gevent.spawn(self.handle, data, match)
+            gevent.spawn(self.handle, data, match, name)
 
-    def handle(self, data, match):
+    def handle(self, data, match, filter_name):
         raise NotImplementedError('`handle` needs to be implemented on all '
                                   'Client subclasses.')
 
@@ -97,7 +97,8 @@ def run_client(service_instance):
     try:
         service_instance.run()
     except KeyboardInterrupt:
-        logger.info('%s client: exiting' % service_instance.name)
+        logger = logging.getLogger(service_instance.name)
+        logger.info('exiting')
     finally:
         pass
         #with open(service_instance.log_file, 'a+') as f:
