@@ -24,6 +24,7 @@ setup(name='tenyks',
           'unittest2',
           'clint',
           'feedparser',
+          'python-mpd2',
       ],
       entry_points="""
       # -*- Entry points: -*-
