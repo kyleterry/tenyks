@@ -14,8 +14,13 @@ class TenyksMpdMusic(Client):
         'random_toggle': r'toggle random',
         'currentsong': r'current song',
         'stats': r'music stats',
+        'vote': r'(down|up)+(vote|boat)+ song',
     }
     direct_only = True
+
+    def __init__(self):
+        super(TenyksMpdMusic, self).__init__()
+        self.votes = {}
 
     def get_client(self):
         client = mpd.MPDClient()
@@ -71,6 +76,28 @@ class TenyksMpdMusic(Client):
                 message=message)
         self.send(message, data)
         client.disconnect()
+
+    def handle_vote(self, data, match):
+        direction = match.groups()[0]
+        thing = match.groups()[1]
+        client = self.get_client()
+        currentsong = client.currentsong()
+        song_id = currentsong['id']
+        if not song_id in self.votes:
+            self.votes = {}
+            self.votes[song_id] = {}
+            self.votes[song_id]['up'] = set()
+            self.votes[song_id]['down'] = set()
+        self.votes[song_id][direction].update([data['nick_from']])
+        ups = len(self.votes[song_id]['up'])
+        downs = len(self.votes[song_id]['down'])
+
+        if downs == 1:
+            client.next()
+
+        if thing == 'boat':
+            self.send('{nick}: I see what you did there.'.format(
+                nick=data['nick_from']), data)
 
 
 if __name__ == '__main__':
