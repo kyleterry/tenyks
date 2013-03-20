@@ -40,11 +40,13 @@ class TenyksFeeds(Client):
 
     def feed_handler(self, cur, feed_obj, channel, connection):
         feed = feedparser.parse(feed_obj[1])
+        if not feed['entries']:
+            return
         title = feed['feed']['title']
         self.logger.debug('Looking for entries in {feed}'.format(
             feed=feed_obj[1]))
         for i, entry in enumerate(feed['entries']):
-            message = '[{feed}] {title} - {link}'.format(feed=title,
+            message = u'[{feed}] {title} - {link}'.format(feed=title,
                 title=entry['title'],
                 link=entry['link'])
             if not self.entry_exists(cur, entry['id'], feed_obj) and i < 6:
