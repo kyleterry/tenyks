@@ -15,6 +15,8 @@ setup(name='tenyks',
       url='',
       license='LICENSE',
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
+      package_dir={'tenyks': 'tenyks'},
+      package_data={'tenyks': ['logging_config.ini']},
       include_package_data=True,
       zip_safe=False,
       install_requires=[
@@ -26,7 +28,9 @@ setup(name='tenyks',
           'feedparser',
           'python-mpd2',
       ],
-      entry_points="""
-      # -*- Entry points: -*-
-      """,
+      entry_points={
+          'console_scripts': [
+              'tenyks = tenyks.core:main'
+          ]
+      },
       )

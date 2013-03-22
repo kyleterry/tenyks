@@ -73,8 +73,8 @@ class Connection(object):
                 self.server_disconnect = True
                 break
             self.logger.info('<- IRC: {data}'.format(data=data))
-            with open(self.log_file, 'a+') as log_file:
-                log_file.write('receiving: %s' % data)
+            #with open(self.log_file, 'a+') as log_file:
+            #    log_file.write('receiving: %s' % data)
             self.input_buffer += data
             while '\r\n' in self.input_buffer:
                 line, self.input_buffer = self.input_buffer.split('\r\n', 1)

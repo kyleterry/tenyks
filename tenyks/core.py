@@ -309,10 +309,10 @@ class Robot(object):
             sys.exit('Bye.')
 
 
-def make_and_run_robot():
+def main():
     robot = Robot()
     robot.run()
 
 
 if __name__ == '__main__':
-    make_and_run_robot()
+    main()
