@@ -5,14 +5,14 @@ version = '0.1.1'
 
 setup(name='tenyks',
       version=version,
-      description="redis powered IRC bot",
+      description="Redis powered IRC bot",
       long_description="""\
 """,
       classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
       keywords='irc bot redis',
       author='Kyle Terry',
       author_email='kyle@kyleterry.com',
-      url='',
+      url='https://github.com/kyleterry/tenyks',
       license='LICENSE',
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
       package_dir={'tenyks': 'tenyks'},
@@ -27,6 +27,7 @@ setup(name='tenyks',
           'clint',
           'feedparser',
           'python-mpd2',
+          'tenyksclient',
       ],
       entry_points={
           'console_scripts': [

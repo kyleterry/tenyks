@@ -15,9 +15,6 @@ from gevent import queue
 import gevent.monkey
 import redis
 
-from tenyks.client import (CLIENT_SERVICE_STATUS_ONLINE,
-        CLIENT_SERVICE_STATUS_OFFLINE)
-from tenyks.constants import PING, PONG
 import tenyks.config as config
 from tenyks.connection import Connection
 from tenyks.utils import pubsub_factory
