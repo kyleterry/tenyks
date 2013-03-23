@@ -1,5 +1,4 @@
 from datetime import datetime
-from os.path import join
 import time
 
 import logging
@@ -7,9 +6,6 @@ import logging
 import gevent
 from gevent import socket
 from gevent import queue
-import gevent.monkey
-
-import tenyks.config as config
 
 
 class Connection(object):
@@ -26,8 +22,6 @@ class Connection(object):
         self.input_buffer = ''
         self.output_queue = queue.Queue()
         self.output_buffer = ''
-        log_directory = getattr(config, 'LOG_DIR', config.WORKING_DIR)
-        self.log_file = join(log_directory, 'irc-%s.log' % self.name)
         self.logger = logging.getLogger(self.name)
 
     def connect(self, reconnecting=False):
@@ -73,8 +67,6 @@ class Connection(object):
                 self.server_disconnect = True
                 break
             self.logger.info('<- IRC: {data}'.format(data=data))
-            #with open(self.log_file, 'a+') as log_file:
-            #    log_file.write('receiving: %s' % data)
             self.input_buffer += data
             while '\r\n' in self.input_buffer:
                 line, self.input_buffer = self.input_buffer.split('\r\n', 1)
