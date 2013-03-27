@@ -26,3 +26,6 @@ BROADCAST_TO_SERVICES_CHANNEL = getattr(settings,
 
 BROADCAST_TO_ROBOT_CHANNEL = getattr(settings,
     'BROADCAST_TO_ROBOT_CHANNEL', 'tenyks.robot.broadcast_to')
+
+if hasattr(settings, 'MIDDLEWARE'):
+    MIDDLEWARE = settings.MIDDLEWARE

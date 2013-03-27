@@ -17,119 +17,18 @@ import redis
 
 import tenyks.config as config
 from tenyks.connection import Connection
-from tenyks.utils import pubsub_factory
+from tenyks.utils import pubsub_factory, parse_irc_message, get_privmsg_data
+from tenyks.middleware import admin_middlware
 
 gevent.monkey.patch_all()
 
 
-class IrcLine(object):
-    irc_prefix_rem = re.compile(r'(.*?) (.*?) (.*)').match
-    irc_noprefix_rem = re.compile(r'()(.*?) (.*)').match
-    irc_netmask_rem = re.compile(r':?([^!@]*)!?([^@]*)@?(.*)').match
-    irc_param_ref = re.compile(r'(?:^|(?<= ))(:.*|[^ ]+)').findall
+CORE_MIDDLEWARE = (
+    admin_middlware,
+)
 
-    def __init__(self, connection, raw_line):
-        self.line_id = hashlib.sha256(
-                str(time.time()) + raw_line).hexdigest()[:10]
-        self.raw_line = raw_line
-        self.connection = connection
-        if raw_line.startswith(":"):  # has a prefix
-            prefix, self.command, params = self.irc_prefix_rem(
-                    raw_line).groups()
-        else:
-            prefix, self.command, params = self.irc_noprefix_rem(
-                    raw_line).groups()
-        self.nick_from, self.user, self.host = self.irc_netmask_rem(
-                prefix).groups()
-        self.mask = self.user + "@" + self.host
-        self.paramlist = self.irc_param_ref(params)
-        lastparam = ""
-        if self.paramlist:
-            if self.paramlist[-1].startswith(':'):
-                self.paramlist[-1] = self.paramlist[-1][1:]
-            lastparam = self.paramlist[-1]
-        self.channel = self.paramlist[0]
-        self.message = lastparam.lower()
-        self.direct = self.message.startswith(
-                connection.connection_config['nick'])
-        self.verb = ''
-        if self.message:
-            try:
-                if self.direct:
-                    self.verb = self.message.split()[1]
-                else:
-                    self.verb = self.message.split()[0]
-            except IndexError:
-                self.verb = 'confused'
-        if self.direct:
-            # remove 'BOTNICK: ' from message
-            self.message = " ".join(self.message.split()[1:])
-
-    def __repr__(self):
-        return '<{nick}: {message}>'.format(
-                nick=self.nick_from, message=self.message)
-
-    def to_redis_line(self):
-        return redisline_factory({
-            'version': 1,
-            'type': 'privmsg',
-            'nick_from': self.nick_from,
-            'irc_channel': self.channel,
-            'direct': self.direct,
-            'payload': self.message,
-        }, connection=self.connection)
-
-
-class RedisLineVersionMismatch(Exception):
-    pass
-
-
-class RedisLine(object):
-
-    def __init__(self):
-        raise NotImplementedError
-
-
-class RedisLineV1(RedisLine):
-
-    exact_version = 1
-
-    def __init__(self, raw_line, connection=None):
-        if type(raw_line) in (str, unicode,):
-            raw_line = json.loads(raw_line)
-        if raw_line['version'] != self.exact_version:
-            raise RedisLineVersionMismatch(
-                'Instances of this class must be created '
-                'with version {version} of the API'.format(
-                (self.exact_version)))
-        self.version = raw_line['version']
-        self.message_type = raw_line['type']
-        self.payload = raw_line['payload']
-        self.irc_channel = raw_line['irc_channel']
-        self.direct = raw_line['direct']
-        self.nick_from = raw_line['nick_from']
-        self.service_name = raw_line['service_name'] if 'service_name' \
-            in raw_line else None
-        self.connection = connection
-
-    def to_publish(self):
-        return json.dumps({
-            'version': self.version,
-            'type': self.message_type,
-            'service_name': self.service_name,
-            'connection_name': self.connection.name,
-            'irc_channel': self.irc_channel,
-            'direct': self.direct,
-            'nick_from': self.nick_from,
-            'payload': self.payload,
-            'admins': self.connection.connection_config['admins'],
-        })
-
-
-def redisline_factory(raw_line, connection, version=1):
-    if version == 1:
-        return RedisLineV1(raw_line, connection=connection)
-    return None
+if hasattr(config, 'MIDDLEWARE'):
+    CORE_MIDDLEWARE += config.MIDDLEWARE
 
 
 class Robot(object):
@@ -204,6 +103,10 @@ class Robot(object):
         """
         always returns None
         """
+        connection.last_ping = datetime.now()
+        logger.debug(
+            '{connection} Connection Worker: last_ping: {dt}'.format(
+                connection=connection.name, dt=connection.last_ping))
         message = message.replace('PING', 'PONG')
         self.send(connection.name, message)
 
@@ -227,33 +130,32 @@ class Robot(object):
         Pop things off the broadcast_queue and create jobs for them.
         """
         while True:
-            irc_line = self.broadcast_queue.get()
-            gevent.spawn(self.broadcast_worker, irc_line)
+            data = self.broadcast_queue.get()
+            gevent.spawn(self.broadcast_worker, data)
 
-    def broadcast_worker(self, irc_line):
+    def broadcast_worker(self, data):
         """
         This worker will broadcast a message to the service broadcast channel
         """
         r = redis.Redis(**config.REDIS_CONNECTION)
         broadcast_channel = getattr(config, 'BROADCAST_TO_SERVICES_CHANNEL',
             'tenyks.services.broadcast_to')
-        r.publish(broadcast_channel, irc_line.to_redis_line().to_publish())
+        r.publish(broadcast_channel, json.dumps(data))
 
     def handle_incoming_redis_messages(self):
         broadcast_channel = getattr(config, 'BROADCAST_TO_ROBOT_CHANNEL',
             'tenyks.robot.broadcast_to')
         pubsub = pubsub_factory(broadcast_channel)
         for raw_redis_message in pubsub.listen():
-            logger.debug('Robot <- {data}'.format(
+            logger.info('Robot <- {data}'.format(
                 data=json.dumps(raw_redis_message)))
             try:
                 if raw_redis_message['data'] != 1L:
                     message = json.loads(raw_redis_message['data'])
-                    if message['version'] == 1:
-                        if message['type'] == 'privmsg':
-                            self.say(message['connection_name'],
-                                      message['payload'],
-                                      channels=[message['irc_channel']])
+                    if message['command'].lower() == 'privmsg':
+                        self.say(message['connection'],
+                                    message['payload'],
+                                    channels=[message['target']])
             except ValueError:
                 logger.info('Robot Pubsub: invalid JSON. Ignoring message.')
 
@@ -272,15 +174,15 @@ class Robot(object):
             except queue.Empty:
                 continue
             if raw_line.startswith('PING'):
-                connection.last_ping = datetime.now()
-                logger.debug(
-                    '{connection} Connection Worker: last_ping: {dt}'.format(
-                        connection=connection.name, dt=connection.last_ping))
                 self.handle_irc_ping(connection, raw_line)
                 continue
             else:
-                irc_line = IrcLine(connection, raw_line)
-                self.broadcast_queue.put(irc_line)
+                data = get_privmsg_data(
+                    connection, *parse_irc_message(raw_line))
+                if data:
+                    for middleware in CORE_MIDDLEWARE:
+                        data = middleware(connection, data)
+                    self.broadcast_queue.put(data)
         logger.info('{connection} Connection Worker: worker shutdown'.format(
             connection=connection.name))
 
