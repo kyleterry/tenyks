@@ -15,26 +15,20 @@ from gevent import queue
 import gevent.monkey
 import redis
 
-import tenyks.config as config
+from tenyks.config import settings, collect_settings
 from tenyks.connection import Connection
 from tenyks.utils import pubsub_factory, parse_irc_message, get_privmsg_data
-from tenyks.middleware import admin_middlware
+from tenyks.middleware import CORE_MIDDLEWARE
 
 gevent.monkey.patch_all()
 
 
-CORE_MIDDLEWARE = (
-    admin_middlware,
-)
-
-if hasattr(config, 'MIDDLEWARE'):
-    CORE_MIDDLEWARE += config.MIDDLEWARE
+if hasattr(settings, 'MIDDLEWARE'):
+    CORE_MIDDLEWARE += settings.MIDDLEWARE
 
 
 class Robot(object):
     """
-    Platforms are IRC, Email, SMS, ect...
-
     Design Rules:
 
     * The Robot has access to services to handle commands.
@@ -59,18 +53,18 @@ class Robot(object):
     def prepare_environment(self):
         # TODO FIX THIS MESS
         try:
-            os.mkdir(config.WORKING_DIR)
+            os.mkdir(settings.WORKING_DIR)
         except OSError:
             # Already exists
             pass
         try:
-            os.mkdir(config.DATA_WORKING_DIR)
+            os.mkdir(settings.DATA_WORKING_DIR)
         except OSError:
             # Already exists
             pass
 
     def bootstrap_connections(self):
-        for name, connection in config.CONNECTIONS.iteritems():
+        for name, connection in settings.CONNECTIONS.iteritems():
             conn = Connection(name, connection)
             conn.connect()
             self.connections[name] = conn
@@ -137,13 +131,13 @@ class Robot(object):
         """
         This worker will broadcast a message to the service broadcast channel
         """
-        r = redis.Redis(**config.REDIS_CONNECTION)
-        broadcast_channel = getattr(config, 'BROADCAST_TO_SERVICES_CHANNEL',
+        r = redis.Redis(**settings.REDIS_CONNECTION)
+        broadcast_channel = getattr(settings, 'BROADCAST_TO_SERVICES_CHANNEL',
             'tenyks.services.broadcast_to')
         r.publish(broadcast_channel, json.dumps(data))
 
     def handle_incoming_redis_messages(self):
-        broadcast_channel = getattr(config, 'BROADCAST_TO_ROBOT_CHANNEL',
+        broadcast_channel = getattr(settings, 'BROADCAST_TO_ROBOT_CHANNEL',
             'tenyks.robot.broadcast_to')
         pubsub = pubsub_factory(broadcast_channel)
         for raw_redis_message in pubsub.listen():
@@ -203,12 +197,13 @@ class Robot(object):
             for name, connection in self.connections.iteritems():
                 self.send(connection.name,
                         'QUIT :{message}'.format(
-                            message=getattr(self, 'exit_message', '')))
+                            message=getattr(self, 'exit_message', 'I\' out!')))
                 connection.close()
             sys.exit('Bye.')
 
 
 def main():
+    collect_settings()
     robot = Robot()
     robot.run()
 
