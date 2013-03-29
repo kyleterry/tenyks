@@ -84,7 +84,8 @@ settings module is found, it will raise an error.
 `full_message` - Full, unparsed message. (e.g. tenyks: Hello, world!)  
 `user` - The username for the person sending the message.  
 `from_channel` - Whether it was sent to a channel or as a private message to the bot.  
-`payload` - The actual payload you should care about. It's the message the user intended us to see. (e.g. Hello, world!)  
+`payload` - The actual payload you should care about. It's the message the user
+intended us to see. (e.g. Hello, world!)
 
 ## Parameters needed when sending tenyks a message via Redis:
 
@@ -96,6 +97,21 @@ settings module is found, it will raise an error.
     'connection': 'freenode',
 }
 ```
+
+`payload` - The message you want tenyks to send to IRC.  
+`target` - The channel or user you want tenyks to send it to. IRC calls this
+the target.  
+`connection` - The connection where the target is.  
+`command` - This is almost always PRIVMSG. PRIVMSG is actually the only thing
+tenyks handles right now.
+
+When making a Tenyks client, it's easiest to just use the tenyksclient package
+in Pypi. It will handle most of the work for you and you can just think about
+you client logic instead of getting your program to interface right with Tenyks.
+
+With that said, you can write your clients in any programming language you
+want. As long as you can publish a message to a Redis channel, and subscribe
+to a channel on Redis, you are golden.
 
 ## FAQ
 
