@@ -126,7 +126,7 @@ Use `tenyksmkconfig > /path/to/settings.py` and run Tenyks with
         'loggers': {
             'tenyks': {
                 'handlers': ['console'],
-                'level': 'DEBUG',
+                'level': ('DEBUG' if settings.DEBUG else 'info'),
                 'propagate': True
             },
         }
