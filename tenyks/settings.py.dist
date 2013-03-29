@@ -3,6 +3,8 @@
 # Anything added to this file will be included in the tenyks.config.settings
 # singleton.
 
+DEBUG = False
+
 ##############################################################################
 # The following setting defines a dictionary of IRC connections.
 #

@@ -1,11 +1,14 @@
 import os
 import sys
 from os.path import abspath, join, dirname, expanduser
+import logging
 import logging.config
 
-PROJECT_ROOT = abspath(dirname(__file__))
-
 from tenyks.module_loader import make_module_from_file
+
+logger = logging.getLogger('tenyks')
+
+PROJECT_ROOT = abspath(dirname(__file__))
 
 
 class NotConfigured(Exception):
@@ -77,11 +80,10 @@ def collect_settings(settings_path=None):
 
     if not intrl_settings:
         message = """
-        You need to provide a settings module.
+You need to provide a settings module.
 
-        Try copying {pr}/settings.py.dist to ~/.config/tenyks/settings.py and
-        running tenyks with `tenyks ~/.config/tenyks/settings.py` after you
-        edit it accordingly.
+Use `tenyksmkconfig > /path/to/settings.py` and run Tenyks with
+`tenyks /path/to/settings.py` after you edit it accordingly.
         """.format(pr=PROJECT_ROOT)
         raise NotConfigured(message)
 
@@ -96,19 +98,44 @@ def collect_settings(settings_path=None):
         setattr(settings, 'WORKING_DIR', WORKING_DIR)
         setattr(settings, 'DATA_WORKING_DIR', DATA_WORKING_DIR)
 
+    LOGGING_CONFIG = {
+        'version': 1,
+        'disable_existing_loggers': True,
+        'formatters': {
+            'color': {
+                'class': 'tenyks.logs.ColorFormatter',
+                'format': '%(asctime)s %(name)s:%(levelname)s %(message)s'
+            },
+            'default': {
+                'format': '%(asctime)s %(name)s:%(levelname)s %(message)s'
+            }
+        },
+        'handlers': {
+            'console': {
+                'level': 'DEBUG',
+                'class': 'logging.StreamHandler',
+                'formatter': 'color'
+            },
+            'file': {
+                'level': 'INFO',
+                'class': 'logging.FileHandler',
+                'formatter': 'default',
+                'filename': join(WORKING_DIR, 'tenyks.log')
+            }
+        },
+        'loggers': {
+            'tenyks': {
+                'handlers': ['console'],
+                'level': 'DEBUG',
+                'propagate': True
+            },
+        }
+    }
 
-    #BROADCAST_TO_SERVICES_CHANNEL = getattr(settings,
-    #    'BROADCAST_TO_SERVICES_CHANNEL', 'tenyks.services.broadcast_to')
-
-    #BROADCAST_TO_ROBOT_CHANNEL = getattr(settings,
-    #    'BROADCAST_TO_ROBOT_CHANNEL', 'tenyks.robot.broadcast_to')
-
-    #if hasattr(settings, 'MIDDLEWARE'):
-    #    MIDDLEWARE = settings.MIDDLEWARE
+    logging.config.dictConfig(LOGGING_CONFIG)
 
 def make_config():
     with open(join(PROJECT_ROOT, 'settings.py.dist'), 'r') as f:
         for line in f.readlines():
             print line,
 
-logging.config.fileConfig(join(PROJECT_ROOT, 'logging_config.ini'))

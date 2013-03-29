@@ -22,7 +22,7 @@ class Connection(object):
         self.input_buffer = ''
         self.output_queue = queue.Queue()
         self.output_buffer = ''
-        self.logger = logging.getLogger(self.name)
+        self.logger = logging.getLogger('tenyks.connection.' + self.name)
 
     def connect(self, reconnecting=False):
         while True:

@@ -11,7 +11,7 @@ import sys
 import time
 
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('tenyks')
 
 import gevent
 from gevent import queue

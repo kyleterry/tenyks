@@ -5,7 +5,7 @@ from termcolors import colorize
 
 COLORS = {
     'DEBUG': ('white', ''),
-    'INFO': ('white', ''),
+    'INFO': ('green', ''),
     'WARNING': ('yellow', ''),
     'CRITICAL': ('red', ''),
     'ERROR': ('white', 'red'),
@@ -13,7 +13,7 @@ COLORS = {
 
 
 class ColorFormatter(logging.Formatter):
-    
+
     def format(self, record):
         if record.levelname in COLORS:
             colors = COLORS[record.levelname]
