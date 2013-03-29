@@ -2,7 +2,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.1.20'
+version = '0.1.21'
 
 setup(name='tenyks',
       version=version,
@@ -26,8 +26,6 @@ setup(name='tenyks',
           'nose',
           'unittest2',
           'clint',
-          'feedparser',
-          'python-mpd2',
       ],
       entry_points={
           'console_scripts': [
