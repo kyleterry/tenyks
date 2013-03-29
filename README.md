@@ -28,6 +28,12 @@ on how to install and run Redis.
 
 `tenyksmkconfig > /path/to/where/you/want/settings.py`
 
+After running `tenyksmkconfig`, the settings in settings.py should make sense.
+I have some comments in there explaining what each setting means. If you are
+extending tenyks, anything added to settings.py will be loaded into the
+`tenyks.config.settings` singleton and you can make things available for your
+Tenyks extension.
+
 `vim /path/to/where/you/want/settings.py # edit everything that makes sense to edit`
 
 ### For using Tenyks:
@@ -35,6 +41,12 @@ on how to install and run Redis.
 `pip install tenyks==0.1.20`
 
 `tenyksmkconfig > /path/to/settings.py`
+
+After running `tenyksmkconfig`, the settings in settings.py should make sense.
+I have some comments in there explaining what each setting means. If you are
+extending tenyks, anything added to settings.py will be loaded into the
+`tenyks.config.settings` singleton and you can make things available for your
+Tenyks extension.
 
 `vim /path/to/settings.py`
 
