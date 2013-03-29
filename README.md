@@ -38,7 +38,7 @@ Tenyks extension.
 
 ### For using Tenyks:
 
-`pip install tenyks==0.1.20`
+`pip install tenyks`
 
 `tenyksmkconfig > /path/to/settings.py`
 
