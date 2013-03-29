@@ -106,4 +106,9 @@ def collect_settings(settings_path=None):
     #if hasattr(settings, 'MIDDLEWARE'):
     #    MIDDLEWARE = settings.MIDDLEWARE
 
+def make_config():
+    with open(join(PROJECT_ROOT, 'settings.py.dist'), 'r') as f:
+        for line in f.readlines():
+            print line,
+
 logging.config.fileConfig(join(PROJECT_ROOT, 'logging_config.ini'))

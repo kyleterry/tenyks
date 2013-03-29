@@ -2,7 +2,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.1.19'
+version = '0.1.20'
 
 setup(name='tenyks',
       version=version,
@@ -31,7 +31,8 @@ setup(name='tenyks',
       ],
       entry_points={
           'console_scripts': [
-              'tenyks = tenyks.core:main'
+              'tenyks = tenyks.core:main',
+              'tenyksmkconfig = tenyks.config:make_config'
           ]
       },
       )
