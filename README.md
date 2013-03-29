@@ -44,6 +44,10 @@ Running Tenyks is simple:
 
 `tenyks /path/to/settings.py`
 
+Not passing `tenyks` a settings module will result in Tenyks looking in
+`~/.config/tenyks/settings.py` first and then `/etc/tenyks/settings.py`. If No
+settings module is found, it will raise an error.
+
 ## Default parameters sent to Redis from an IRC message:
 
 ```python
