@@ -93,7 +93,7 @@ A: For shits, giggles and lols. And because I wanted to play with Gevent.
 Q: How did you come up with the idea?  
 A: I didn't per se. My old co-worker had an idea for a service oriented IRC bot
 that used Redis pub/sub. He built that and I hacked around on it. I then
-decided I wanted to play with Gevent and that lead to the creation of the
+decided I wanted to play with Gevent and that led to the creation of the
 evented core of Tenyks. I have a lot of experience building IRC bots because
 it's one of the things I do for fun when I'm learning a new programming
 language. Tenyks just became a solid piece of code and my friends liked it.
