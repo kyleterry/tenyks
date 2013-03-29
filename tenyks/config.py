@@ -8,10 +8,6 @@ PROJECT_ROOT = abspath(dirname(__file__))
 from tenyks.module_loader import make_module_from_file
 
 
-class ConfigError(Exception):
-    pass
-
-
 class NotConfigured(Exception):
     pass
 
@@ -80,7 +76,14 @@ def collect_settings(settings_path=None):
             intrl_settings = make_module_from_file('settings', settings_path)
 
     if not intrl_settings:
-        raise NotConfigured('You need to provide a settings.py')
+        message = """
+        You need to provide a settings module.
+
+        Try copying {pr}/settings.py.dist to ~/.config/tenyks/settings.py and
+        running tenyks with `tenyks ~/.config/tenyks/settings.py` after you
+        edit it accordingly.
+        """.format(pr=PROJECT_ROOT)
+        raise NotConfigured(message)
 
     for sett in filter(lambda x: not x.startswith('__'), dir(intrl_settings)):
         setattr(settings, sett, getattr(intrl_settings, sett))

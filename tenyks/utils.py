@@ -60,7 +60,7 @@ def get_privmsg_data(connection, prefix, command, args):
             data['from_channel'] = False
         data['full_message'] = message
         data['direct'] = (
-                message.startswith(connection.connection_config['nick']) or
+                message.startswith(connection.config['nick']) or
                 not data['from_channel'])
         if data['direct'] and data['from_channel']:
             data['payload'] = ' '.join(message.split()[1:])

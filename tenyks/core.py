@@ -1,4 +1,7 @@
 """ Core of tenyks. Contains Robot and IRC/Redis Lines"""
+import gevent.monkey
+gevent.monkey.patch_all()
+
 from datetime import datetime
 import hashlib
 import json
@@ -12,15 +15,12 @@ logger = logging.getLogger(__name__)
 
 import gevent
 from gevent import queue
-import gevent.monkey
 import redis
 
 from tenyks.config import settings, collect_settings
 from tenyks.connection import Connection
 from tenyks.utils import pubsub_factory, parse_irc_message, get_privmsg_data
 from tenyks.middleware import CORE_MIDDLEWARE
-
-gevent.monkey.patch_all()
 
 
 if hasattr(settings, 'MIDDLEWARE'):
@@ -65,21 +65,21 @@ class Robot(object):
 
     def bootstrap_connections(self):
         for name, connection in settings.CONNECTIONS.iteritems():
-            conn = Connection(name, connection)
+            conn = Connection(name, **connection)
             conn.connect()
             self.connections[name] = conn
             self.set_nick_and_join(conn)
 
     def set_nick_and_join(self, connection):
         self.send(connection.name, 'NICK {nick}'.format(
-            nick=connection.connection_config['nick']))
+            nick=connection.config['nick']))
         self.send(connection.name, 'USER {ident} {host} bla :{realname}'.format(
-            ident=connection.connection_config['ident'],
-            host=connection.connection_config['host'],
-            realname=connection.connection_config['realname']))
+            ident=connection.config['ident'],
+            host=connection.config['host'],
+            realname=connection.config['realname']))
 
         # join channels
-        for channel in connection.connection_config['channels']:
+        for channel in connection.config['channels']:
             self.join(channel, connection)
 
     def join(self, channel, connection, message=None):
@@ -137,6 +137,14 @@ class Robot(object):
         r.publish(broadcast_channel, json.dumps(data))
 
     def handle_incoming_redis_messages(self):
+        """
+        {
+            'payload': 'this is a message to IRC',
+            'target': '#test',
+            'command': 'PRIVMSG',
+            'connection': 'freenode',
+        }
+        """
         broadcast_channel = getattr(settings, 'BROADCAST_TO_ROBOT_CHANNEL',
             'tenyks.robot.broadcast_to')
         pubsub = pubsub_factory(broadcast_channel)
@@ -157,7 +165,7 @@ class Robot(object):
         while True:
             if connection.user_disconnect:
                 break
-            needs_reconnect = connection.needs_reconnect()
+            needs_reconnect = connection.needs_reconnect
             ping_delta = datetime.now() - connection.last_ping
             no_ping = ping_delta.seconds > 5 * 60
             if needs_reconnect or no_ping:
@@ -197,7 +205,7 @@ class Robot(object):
             for name, connection in self.connections.iteritems():
                 self.send(connection.name,
                         'QUIT :{message}'.format(
-                            message=getattr(self, 'exit_message', 'I\' out!')))
+                            message=getattr(self, 'exit_message', 'I\'m out!')))
                 connection.close()
             sys.exit('Bye.')
 

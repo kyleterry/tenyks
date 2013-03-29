@@ -10,9 +10,9 @@ from gevent import queue
 
 class Connection(object):
 
-    def __init__(self, name, connection_config):
+    def __init__(self, name, **config):
         self.name = name
-        self.connection_config = connection_config
+        self.config = config
         self.greenlets = []
         self.socket = socket.socket()
         self.socket_connected = False
@@ -31,8 +31,8 @@ class Connection(object):
                     self.logger.info('Reconnecting...')
                 else:
                     self.logger.info('Connecting...')
-                self.socket.connect((self.connection_config['host'],
-                    self.connection_config['port']))
+                self.socket.connect((self.config['host'],
+                    self.config['port']))
                 self.socket_connected = True
                 self.server_disconnect = False
                 self.last_ping = datetime.now()
@@ -49,6 +49,10 @@ class Connection(object):
         self.socket.close()
         self.socket = socket.socket()
         self.connect(reconnecting=True)
+
+    @property
+    def needs_reconnect(self):
+        return not self.socket_connected and self.server_disconnect
 
     def close(self):
         self.socket.close()
@@ -82,6 +86,3 @@ class Connection(object):
                     data=self.output_buffer))
                 self.output_buffer = self.output_buffer[sent:]
                 time.sleep(.5)
-
-    def needs_reconnect(self):
-        return not self.socket_connected and self.server_disconnect
