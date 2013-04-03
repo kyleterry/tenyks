@@ -33,34 +33,30 @@ class ConnectionTestCase(TestCase):
         server = TestServer(('127.0.0.1', 0))
         server.start()
         client_config = {'host': '127.0.0.1', 'port': server.server_port}
-        client = Connection('test client', client_config)
+        client = Connection('test client', **client_config)
         client.connect()
         assert client.socket_connected
         response = client.input_queue.get()
         assert response == 'testing the connection'
+        assert not client.needs_reconnect
         server.stop()
 
     def test_can_reconnect(self):
-        raise SkipTest
         server = TestServer(('127.0.0.1', 0))
         server.start()
         client_config = {'host': '127.0.0.1', 'port': server.server_port}
-        client = Connection('test client', client_config)
+        client = Connection('test client', **client_config)
         client.connect()
         assert client.socket_connected
-        server.stop()
-        time.sleep(6)
-        assert client.server_disconnect
-        assert not client.socket_connected
-        server.start()
         client.reconnect()
         assert client.socket_connected
+        server.stop()
 
     def test_can_send_data(self):
         server = TestServer(('127.0.0.1', 0))
         server.start()
         client_config = {'host': '127.0.0.1', 'port': server.server_port}
-        client = Connection('test client', client_config)
+        client = Connection('test client', **client_config)
         client.connect()
         assert client.socket_connected
         client.output_queue.put('testing sending')
