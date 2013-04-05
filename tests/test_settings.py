@@ -3,7 +3,7 @@
 # Anything added to this file will be included in the tenyks.config.settings
 # singleton.
 
-DEBUG = False
+DEBUG = True
 
 ##############################################################################
 # The following setting defines a dictionary of IRC connections.
@@ -80,3 +80,32 @@ MIDDLEWARE = (
 # BROADCAST_TO_SERVICES_CHANNEL = 'tenyks.services.broadcast_to'
 # BROADCAST_TO_ROBOT_CHANNEL = 'tenyks.robot.broadcast_to'
 ##############################################################################
+
+
+LOGGING_CONFIG = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'color': {
+            'class': 'tenyks.logs.ColorFormatter',
+            'format': '%(asctime)s %(name)s:%(levelname)s %(message)s'
+        },
+        'default': {
+            'format': '%(asctime)s %(name)s:%(levelname)s %(message)s'
+        }
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'color'
+        },
+    },
+    'loggers': {
+        'tenyks': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': True
+        },
+    }
+}

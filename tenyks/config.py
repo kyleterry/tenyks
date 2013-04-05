@@ -98,39 +98,42 @@ Use `tenyksmkconfig > /path/to/settings.py` and run Tenyks with
         setattr(settings, 'WORKING_DIR', WORKING_DIR)
         setattr(settings, 'DATA_WORKING_DIR', DATA_WORKING_DIR)
 
-    LOGGING_CONFIG = {
-        'version': 1,
-        'disable_existing_loggers': True,
-        'formatters': {
-            'color': {
-                'class': 'tenyks.logs.ColorFormatter',
-                'format': '%(asctime)s %(name)s:%(levelname)s %(message)s'
+    if hasattr(intrl_settings, 'LOGGING_CONFIG'):
+        LOGGING_CONFIG = intrl_settings.LOGGING_CONFIG
+    else:
+        LOGGING_CONFIG = {
+            'version': 1,
+            'disable_existing_loggers': True,
+            'formatters': {
+                'color': {
+                    'class': 'tenyks.logs.ColorFormatter',
+                    'format': '%(asctime)s %(name)s:%(levelname)s %(message)s'
+                },
+                'default': {
+                    'format': '%(asctime)s %(name)s:%(levelname)s %(message)s'
+                }
             },
-            'default': {
-                'format': '%(asctime)s %(name)s:%(levelname)s %(message)s'
+            'handlers': {
+                'console': {
+                    'level': 'DEBUG',
+                    'class': 'logging.StreamHandler',
+                    'formatter': 'color'
+                },
+                'file': {
+                    'level': 'INFO',
+                    'class': 'logging.FileHandler',
+                    'formatter': 'default',
+                    'filename': join(WORKING_DIR, 'tenyks.log')
+                }
+            },
+            'loggers': {
+                'tenyks': {
+                    'handlers': ['console'],
+                    'level': ('DEBUG' if settings.DEBUG else 'INFO'),
+                    'propagate': True
+                },
             }
-        },
-        'handlers': {
-            'console': {
-                'level': 'DEBUG',
-                'class': 'logging.StreamHandler',
-                'formatter': 'color'
-            },
-            'file': {
-                'level': 'INFO',
-                'class': 'logging.FileHandler',
-                'formatter': 'default',
-                'filename': join(WORKING_DIR, 'tenyks.log')
-            }
-        },
-        'loggers': {
-            'tenyks': {
-                'handlers': ['console'],
-                'level': ('DEBUG' if settings.DEBUG else 'INFO'),
-                'propagate': True
-            },
         }
-    }
 
     logging.config.dictConfig(LOGGING_CONFIG)
 

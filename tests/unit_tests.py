@@ -1,9 +1,11 @@
+import gevent.monkey
+gevent.monkey.patch_all()
+import gevent
+import gevent.server
 import time
 from unittest import TestCase
 from os.path import abspath, join, dirname
 
-import gevent
-import gevent.server
 from nose import SkipTest
 
 PROJECT_ROOT = abspath(dirname(__file__))

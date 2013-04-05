@@ -1,2 +1,1 @@
-include tenyks/*.ini
 include tenyks/settings.py.dist

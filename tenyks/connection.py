@@ -70,7 +70,7 @@ class Connection(object):
                 self.socket_connected = False
                 self.server_disconnect = True
                 break
-            self.logger.info('<- IRC: {data}'.format(data=data))
+            self.logger.debug('<- IRC: {data}'.format(data=data))
             self.input_buffer += data
             while '\r\n' in self.input_buffer:
                 line, self.input_buffer = self.input_buffer.split('\r\n', 1)
