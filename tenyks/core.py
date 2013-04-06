@@ -17,6 +17,7 @@ import gevent
 from gevent import queue
 import redis
 
+from tenyks.commandmapping import command_parser
 from tenyks.config import settings, collect_settings
 from tenyks.connection import Connection
 from tenyks.utils import pubsub_factory, parse_irc_message, get_privmsg_data
@@ -69,6 +70,9 @@ class Robot(object):
             conn.connect()
             self.connections[name] = conn
             self.set_nick_and_join(conn)
+            if 'commands' in connection and connection['commands']:
+                for command in connection['commands']:
+                    self.run_command(conn, command)
 
     def set_nick_and_join(self, connection):
         self.send(connection.name, 'NICK {nick}'.format(
@@ -80,9 +84,12 @@ class Robot(object):
 
         # join channels
         for channel in connection.config['channels']:
-            self.join(channel, connection)
+            self.join(connection, channel)
 
-    def join(self, channel, connection, message=None):
+    def run_command(self, connection, command):
+        self.send(connection.name, command_parser(command))
+
+    def join(self, connection, channel):
         """ join a irc channel
         """
         password = ''
