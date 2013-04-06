@@ -6,6 +6,7 @@ import logging
 import gevent
 from gevent import socket
 from gevent import queue
+from gevent import ssl
 
 
 class Connection(object):
@@ -13,8 +14,9 @@ class Connection(object):
     def __init__(self, name, **config):
         self.name = name
         self.config = config
+        self.using_ssl = ('ssl' in config and config['ssl'])
         self.greenlets = []
-        self.socket = socket.socket()
+        self.socket = self._fetch_socket()
         self.socket_connected = False
         self.server_disconnect = False
         self.user_disconnect = False
@@ -23,6 +25,12 @@ class Connection(object):
         self.output_queue = queue.Queue()
         self.output_buffer = ''
         self.logger = logging.getLogger('tenyks.connection.' + self.name)
+
+    def _fetch_socket(self):
+        if self.using_ssl:
+            return ssl.wrap_socket(socket.socket())
+        else:
+            return socket.socket()
 
     def connect(self, reconnecting=False):
         while True:
@@ -47,7 +55,7 @@ class Connection(object):
         for greenlet in self.greenlets:
             greenlet.kill()
         self.socket.close()
-        self.socket = socket.socket()
+        self.socket = self._fetch_socket()
         self.connect(reconnecting=True)
 
     @property

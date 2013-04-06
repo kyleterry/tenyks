@@ -67,12 +67,12 @@ class Robot(object):
     def bootstrap_connections(self):
         for name, connection in settings.CONNECTIONS.iteritems():
             conn = Connection(name, **connection)
-            conn.connect()
             self.connections[name] = conn
             self.set_nick_and_join(conn)
             if 'commands' in connection and connection['commands']:
                 for command in connection['commands']:
                     self.run_command(conn, command)
+            conn.connect()
 
     def set_nick_and_join(self, connection):
         self.send(connection.name, 'NICK {nick}'.format(

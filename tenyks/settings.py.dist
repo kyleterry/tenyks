@@ -21,7 +21,7 @@ CONNECTIONS = {
         'commands': ['/msg nickserv identify foo bar'],
         'admins': ['vhost-',],
         'channels': ['#test',], # if your channel has a password: '#thechannel, thepassword'
-        #'ssl': False, # not supported yet.
+        'ssl': False,
     },
 }
 ##############################################################################
