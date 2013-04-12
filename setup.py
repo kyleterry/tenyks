@@ -4,6 +4,10 @@ import sys, os
 
 version = '0.1.22'
 
+packages = [
+    'tenyks',
+]
+
 setup(name='tenyks',
       version=version,
       description="Redis powered IRC bot",
@@ -15,9 +19,9 @@ setup(name='tenyks',
       author_email='kyle@kyleterry.com',
       url='https://github.com/kyleterry/tenyks',
       license='LICENSE',
-      packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
+      packages=packages,
       package_dir={'tenyks': 'tenyks'},
-      package_data={'tenyks': ['logging_config.ini']},
+      package_data={'tenyks': ['*.pem']},
       include_package_data=True,
       zip_safe=False,
       install_requires=[

@@ -1,4 +1,5 @@
 from datetime import datetime
+import os
 import time
 
 import logging
@@ -7,6 +8,10 @@ import gevent
 from gevent import socket
 from gevent import queue
 from gevent import ssl
+
+
+def get_certs_bundle():
+    return os.path.join(os.path.dirname(__file__), 'cacert.pem')
 
 
 class Connection(object):
@@ -28,7 +33,10 @@ class Connection(object):
 
     def _fetch_socket(self):
         if self.using_ssl:
-            return ssl.wrap_socket(socket.socket())
+            return ssl.wrap_socket(
+                socket.socket(),
+                cert_reqs=ssl.CERT_REQUIRED,
+                ca_certs=get_certs_bundle())
         else:
             return socket.socket()
 
