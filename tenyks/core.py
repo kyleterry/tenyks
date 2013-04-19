@@ -3,12 +3,9 @@ import gevent.monkey
 gevent.monkey.patch_all()
 
 from datetime import datetime
-import hashlib
 import json
 import os
-import re
 import sys
-import time
 
 import logging
 logger = logging.getLogger('tenyks')
@@ -17,6 +14,7 @@ import gevent
 from gevent import queue
 import redis
 
+from tenyks.banner import startup_banner
 from tenyks.commandmapping import command_parser
 from tenyks.config import settings, collect_settings
 from tenyks.connection import Connection
@@ -219,6 +217,7 @@ class Robot(object):
 
 def main():
     collect_settings()
+    print(startup_banner())
     robot = Robot()
     robot.run()
 
