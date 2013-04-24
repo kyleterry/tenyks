@@ -10,3 +10,8 @@ install:
 
 script:
     nosetests
+
+notifications:
+  irc:
+    channels:
+      - "irc.freenode.org#tenyks"
