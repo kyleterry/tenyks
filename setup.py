@@ -24,6 +24,7 @@ setup(name='tenyks',
       package_data={'tenyks': ['*.pem']},
       include_package_data=True,
       zip_safe=False,
+      test_suite='tests',
       install_requires=[
           'gevent',
           'redis',
