@@ -2,9 +2,10 @@ language: python
 python:
     - 2.7
 
+before_install:
+    - sudo apt-get build-dep python-gevent
+
 install:
-    - pip install --use-mirrors cython
-    - cython --version
     - python setup.py -q install
 
 script:
