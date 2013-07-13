@@ -66,11 +66,11 @@ class Robot(object):
         for name, connection in settings.CONNECTIONS.iteritems():
             conn = Connection(name, **connection)
             self.connections[name] = conn
-            if 'commands' in connection and connection['commands']:
-                for command in connection['commands']:
-                    self.run_command(conn, command)
             conn.connect()
             self.handshake(conn)
+            if connection.get('commands'):
+                for command in connection['commands']:
+                    self.run_command(conn, command)
             self.join_channels(conn)
 
     def handshake(self, connection):
