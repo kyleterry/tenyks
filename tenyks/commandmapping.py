@@ -50,3 +50,5 @@ def command_parser(command_str):
                 command=command_parts[0]))
         command = command_cls(command_str)
         return command.to_irc()
+    else:
+        return command_str
