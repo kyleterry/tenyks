@@ -73,6 +73,7 @@ class Robot(object):
             else:
                 logger.error('{conn} failed to connect or we did not get a response'.format(
                     conn=conn.name))
+                continue
             if connection.get('commands'):
                 for command in connection['commands']:
                     self.run_command(conn, command)
@@ -204,6 +205,7 @@ class Robot(object):
                 else:
                     logger.error('{conn} failed to connect or we did not get a response'.format(
                         conn=connection.name))
+                    continue
                 if connection.config.get('commands'):
                     for command in connection.config['commands']:
                         self.run_command(connection, command)
