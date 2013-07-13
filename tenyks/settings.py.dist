@@ -22,6 +22,7 @@ CONNECTIONS = {
         'admins': ['vhost-',],
         'channels': ['#test',], # if your channel has a password: '#thechannel, thepassword'
         'ssl': False,
+        #'ssl_version': 3, # if you need to force an ssl version
     },
 }
 ##############################################################################

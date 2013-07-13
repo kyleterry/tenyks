@@ -66,13 +66,17 @@ class Robot(object):
         for name, connection in settings.CONNECTIONS.iteritems():
             conn = Connection(name, **connection)
             self.connections[name] = conn
-            self.set_nick_and_join(conn)
             if 'commands' in connection and connection['commands']:
                 for command in connection['commands']:
                     self.run_command(conn, command)
             conn.connect()
+            self.handshake(conn)
+            self.join_channels(conn)
 
-    def set_nick_and_join(self, connection):
+    def handshake(self, connection):
+        if 'password' in connection.config and connection.config['password']:
+            self.send(connection.name, 'PASS {password}'.format(
+                password=connection.config['password']))
         self.send(connection.name, 'NICK {nick}'.format(
             nick=connection.config['nick']))
         self.send(connection.name, 'USER {ident} {host} bla :{realname}'.format(
@@ -80,7 +84,7 @@ class Robot(object):
             host=connection.config['host'],
             realname=connection.config['realname']))
 
-        # join channels
+    def join_channels(self, connection):
         for channel in connection.config['channels']:
             self.join(connection, channel)
 

@@ -33,10 +33,20 @@ class Connection(object):
 
     def _fetch_socket(self):
         if self.using_ssl:
+            if 'ssl_version' in self.config and self.config['ssl_version']:
+                if self.config['ssl_version'] == 2:
+                    ssl_version = ssl.PROTOCOL_SSLv2
+                elif self.config['ssl_version'] == 3:
+                    ssl_version = ssl.PROTOCOL_SSLv3
+                else:
+                    ssl_version = ssl.PROTOCOL_SSLv23
+            else:
+                ssl_version = ssl.PROTOCOL_SSLv23
             return ssl.wrap_socket(
                 socket.socket(),
                 cert_reqs=ssl.CERT_REQUIRED,
-                ca_certs=get_certs_bundle())
+                ca_certs=get_certs_bundle(),
+                ssl_version=ssl_version)
         else:
             return socket.socket()
 

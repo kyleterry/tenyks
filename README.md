@@ -64,6 +64,10 @@ settings module is found, it will raise an error.
 
 TODO
 
+### SSL
+Tenyks supports connecting over SSL. See example settings. Currently there is
+not support for self-signed certificates. This is coming.
+
 ## Default parameters sent to Redis from an IRC message:
 
 ```python
