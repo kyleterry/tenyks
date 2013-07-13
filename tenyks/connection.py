@@ -41,6 +41,7 @@ class Connection(object):
                 else:
                     ssl_version = ssl.PROTOCOL_SSLv23
             else:
+                # SSLv23 is the default for python ssl and gevent ssl
                 ssl_version = ssl.PROTOCOL_SSLv23
             return ssl.wrap_socket(
                 socket.socket(),
@@ -66,7 +67,10 @@ class Connection(object):
                 break
             except socket.error as e:
                 self.logger.warning('Could not connect: retrying...')
+                self.logger.debug(e)
                 time.sleep(5)
+
+    def post_connect(self):
         self.spawn_send_and_recv_loops()
 
     def reconnect(self):
