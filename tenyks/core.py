@@ -179,7 +179,8 @@ class Robot(object):
             no_ping = ping_delta.seconds > 5 * 60
             if needs_reconnect or no_ping:
                 connection.reconnect()
-                self.set_nick_and_join(connection)
+                self.handshake(connection)
+                self.join_channels(connection)
             try:
                 raw_line = connection.input_queue.get(timeout=5)
             except queue.Empty:
