@@ -67,11 +67,29 @@ class Robot(object):
             conn = Connection(name, **connection)
             self.connections[name] = conn
             conn.connect()
-            self.handshake(conn)
+            success = self.wait_for_success(conn)
+            if success:
+                self.handshake(conn)
+            else:
+                logger.error('{conn} failed to connect or we did not get a response'.format(
+                    conn=conn.name))
             if connection.get('commands'):
                 for command in connection['commands']:
                     self.run_command(conn, command)
             self.join_channels(conn)
+
+    def wait_for_success(self, connection):
+        """
+        This will look for something that represents a successful connection
+        to the server. If it doesn't see one in 5 seconds, it times out and
+        the connection is considered unsuccessful.
+        """
+        with gevent.Timeout(5, False):
+            data = connection.socket.recv(1024).decode('utf-8')
+            if data:
+                return True
+        return False
+
 
     def handshake(self, connection):
         if 'password' in connection.config and connection.config['password']:
@@ -83,6 +101,7 @@ class Robot(object):
             ident=connection.config['ident'],
             host=connection.config['host'],
             realname=connection.config['realname']))
+        connection.post_connect()
 
     def join_channels(self, connection):
         for channel in connection.config['channels']:
@@ -179,7 +198,15 @@ class Robot(object):
             no_ping = ping_delta.seconds > 5 * 60
             if needs_reconnect or no_ping:
                 connection.reconnect()
-                self.handshake(connection)
+                success = self.wait_for_success(connection)
+                if success:
+                    self.handshake(connection)
+                else:
+                    logger.error('{conn} failed to connect or we did not get a response'.format(
+                        conn=connection.name))
+                if connection.config.get('commands'):
+                    for command in connection.config['commands']:
+                        self.run_command(connection, command)
                 self.join_channels(connection)
             try:
                 raw_line = connection.input_queue.get(timeout=5)
