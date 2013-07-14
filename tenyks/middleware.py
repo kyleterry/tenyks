@@ -8,7 +8,6 @@ from tenyks.utils import parse_irc_prefix
 
 
 def irc_parse(robot, connection, data):
-	raw = data
 	command_re = r'^(:(?P<prefix>\S+) )?(?P<cmd>\S+)( (?!:)(?P<args>.+?))?( :(?P<trail>.+))?$'
 	match_obj = re.match(command_re, data)
 	data = {
@@ -16,7 +15,7 @@ def irc_parse(robot, connection, data):
 		'command': match_obj.group('cmd'),
 		'args': match_obj.group('args'),
 		'trail': match_obj.group('trail'),
-		'raw': raw
+		'raw': data
 	}
 	return data
 
