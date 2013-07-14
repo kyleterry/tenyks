@@ -12,8 +12,6 @@ def irc_parse(connection, data):
 		"args": match_obj.group("args"),
 		"trail": match_obj.group("trail"),
 	}
-	print raw
-	print data
 	return data
 
 def irc_extract(connection, data):
@@ -42,12 +40,11 @@ def irc_extract(connection, data):
     return data
 
 def irc_autoreply(connection, data):
-	pass
+	return data
 
 def admin_middlware(connection, data):
     conf = connection.config
-    print data, conf
-    data['admin'] = data['nick'] in conf['admins']
+    data['admin'] = data.get('nick') in conf['admins']
     return data
 
 CORE_MIDDLEWARE = (
