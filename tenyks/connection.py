@@ -106,6 +106,15 @@ class Connection(object):
                 line, self.input_buffer = self.input_buffer.split('\r\n', 1)
                 self.input_queue.put(line)
 
+    def send(self, message):
+        """
+        send a message to an IRC connection
+        """
+        message = message.strip()
+        self.output_queue.put(message)
+        self.logger.info('Robot -> {connection}: {message}'.format(
+            connection=self, message=message))
+
     def send_loop(self):
         while True:
             line = self.output_queue.get()

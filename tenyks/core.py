@@ -74,10 +74,6 @@ class Robot(object):
                 logger.error('{conn} failed to connect or we did not get a response'.format(
                     conn=conn.name))
                 continue
-            if connection.get('commands'):
-                for command in connection['commands']:
-                    self.run_command(conn, command)
-            self.join_channels(conn)
 
     def wait_for_success(self, connection):
         """
@@ -91,14 +87,13 @@ class Robot(object):
                 return True
         return False
 
-
     def handshake(self, connection):
         if 'password' in connection.config and connection.config['password']:
-            self.send(connection.name, 'PASS {password}'.format(
+            connection.send('PASS {password}'.format(
                 password=connection.config['password']))
-        self.send(connection.name, 'NICK {nick}'.format(
+        connection.send('NICK {nick}'.format(
             nick=connection.config['nick']))
-        self.send(connection.name, 'USER {ident} {host} bla :{realname}'.format(
+        connection.send('USER {ident} {host} bla :{realname}'.format(
             ident=connection.config['ident'],
             host=connection.config['host'],
             realname=connection.config['realname']))
@@ -109,33 +104,25 @@ class Robot(object):
             self.join(connection, channel)
 
     def run_command(self, connection, command):
-        self.send(connection.name, command_parser(command))
+        connection.send(command_parser(command))
 
     def join(self, connection, channel):
-        """ join a irc channel
+        """
+        join a irc channel
         """
         password = ''
         if ',' in channel:
             channel, password = channel.split(',')
         chan = '{channel} {password}'.format(
                 channel=channel, password=password)
-        self.send(connection.name, 'JOIN {channel}'.format(
+        connection.send('JOIN {channel}'.format(
             channel=chan.strip()))
-
-    def send(self, connection, message):
-        """
-        send a message to an IRC connection
-        """
-        message = message.strip()
-        self.connections[connection].output_queue.put(message)
-        logger.info('Robot -> {connection}: {message}'.format(
-            connection=connection, message=message))
 
     def say(self, connection, message, channels=[]):
         for channel in channels:
             message = 'PRIVMSG {channel} :{message}\r\n'.format(
                     channel=channel, message=message)
-            self.send(connection, message)
+            connection.send(message)
 
     def broadcast_loop(self):
         """
@@ -181,7 +168,7 @@ class Robot(object):
 
     def middleware_message(self, connection, data):
         for middleware in CORE_MIDDLEWARE:
-            data = middleware(connection, data)
+            data = middleware(self, connection, data)
         return data
 
     def connection_worker(self, connection):
@@ -200,10 +187,6 @@ class Robot(object):
                     logger.error('{conn} failed to connect or we did not get a response'.format(
                         conn=connection.name))
                     continue
-                if connection.config.get('commands'):
-                    for command in connection.config['commands']:
-                        self.run_command(connection, command)
-                self.join_channels(connection)
             try:
                 raw_line = connection.input_queue.get(timeout=5)
             except queue.Empty:
@@ -229,8 +212,7 @@ class Robot(object):
                 connection.close()
         finally:
             for name, connection in self.connections.iteritems():
-                self.send(connection.name,
-                        'QUIT :{message}'.format(
+                connection.send('QUIT :{message}'.format(
                             message=getattr(self, 'exit_message', 'I\'m out!')))
                 connection.close()
             sys.exit('Bye.')

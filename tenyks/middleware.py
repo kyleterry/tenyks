@@ -7,7 +7,7 @@ logger = logging.getLogger('tenyks')
 from tenyks.utils import parse_irc_prefix
 
 
-def irc_parse(connection, data):
+def irc_parse(robot, connection, data):
 	raw = data
 	command_re = r"^(:(?P<prefix>\S+) )?(?P<cmd>\S+)( (?!:)(?P<args>.+?))?( :(?P<trail>.+))?$"
 	match_obj = re.match(command_re, data)
@@ -20,7 +20,7 @@ def irc_parse(connection, data):
 	}
 	return data
 
-def irc_extract(connection, data):
+def irc_extract(robot, connection, data):
     if data['command'] == 'PRIVMSG':
         nick, user, host = parse_irc_prefix(data['prefix'])
         target = data['args']
@@ -45,16 +45,21 @@ def irc_extract(connection, data):
             data['payload'] = data['full_message']
     return data
 
-def irc_autoreply(connection, data):
+def irc_autoreply(robot, connection, data):
     if data["command"] == "PING":
         connection.last_ping = datetime.now()
         logger.debug(
             '{connection} Connection Worker: last_ping: {dt}'.format(
                 connection=connection.name, dt=connection.last_ping)) 
         connection.output_queue.put(data["raw"].replace("PING", "PONG"))
+    elif data['command'] == "001":
+        if connection.config.get('commands'):
+            for command in connection.config['commands']:
+                robot.run_command(connection, command)
+        robot.join_channels(connection)
     return data
 
-def admin_middlware(connection, data):
+def admin_middlware(robot, connection, data):
     conf = connection.config
     data['admin'] = data.get('nick') in conf['admins']
     return data
