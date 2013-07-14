@@ -1,4 +1,5 @@
 from tenyks.utils import parse_irc_prefix
+from datetime import datetime
 import re
 
 
@@ -11,6 +12,7 @@ def irc_parse(connection, data):
 		"command": match_obj.group("cmd"),
 		"args": match_obj.group("args"),
 		"trail": match_obj.group("trail"),
+		"raw": raw
 	}
 	return data
 
@@ -40,7 +42,10 @@ def irc_extract(connection, data):
     return data
 
 def irc_autoreply(connection, data):
-	return data
+    if data["command"] == "PING":
+        connection.last_ping = datetime.now()
+        connection.output_queue.put(data["raw"].replace("PING", "PONG"))
+    return data
 
 def admin_middlware(connection, data):
     conf = connection.config

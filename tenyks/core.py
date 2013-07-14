@@ -18,7 +18,7 @@ from tenyks.banner import startup_banner
 from tenyks.commandmapping import command_parser
 from tenyks.config import settings, collect_settings
 from tenyks.connection import Connection
-from tenyks.utils import pubsub_factory, parse_irc_message, get_privmsg_data
+from tenyks.utils import pubsub_factory
 from tenyks.middleware import CORE_MIDDLEWARE
 
 
@@ -122,17 +122,6 @@ class Robot(object):
         self.send(connection.name, 'JOIN {channel}'.format(
             channel=chan.strip()))
 
-    def handle_irc_ping(self, connection, message):
-        """
-        always returns None
-        """
-        connection.last_ping = datetime.now()
-        logger.debug(
-            '{connection} Connection Worker: last_ping: {dt}'.format(
-                connection=connection.name, dt=connection.last_ping))
-        message = message.replace('PING', 'PONG')
-        self.send(connection.name, message)
-
     def send(self, connection, message):
         """
         send a message to an IRC connection
@@ -219,13 +208,9 @@ class Robot(object):
                 raw_line = connection.input_queue.get(timeout=5)
             except queue.Empty:
                 continue
-            if raw_line.startswith('PING'):
-                self.handle_irc_ping(connection, raw_line)
-                continue
-            else:
-                data = self.middleware_message(connection, raw_line)
-                if data:
-                    self.broadcast_queue.put(data)
+            data = self.middleware_message(connection, raw_line)
+            if data:
+                self.broadcast_queue.put(data)
         logger.info('{connection} Connection Worker: worker shutdown'.format(
             connection=connection.name))
 
