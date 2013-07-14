@@ -50,7 +50,8 @@ def irc_autoreply(robot, connection, data):
         logger.debug(
             '{connection} Connection Worker: last_ping: {dt}'.format(
                 connection=connection.name, dt=connection.last_ping)) 
-        connection.output_queue.put(data['raw'].replace('PING', 'PONG'))
+        reply = data['raw'].replace('PING', 'PONG')
+        connection.output_queue.put(reply)
     # Authenticated to server
     elif data['command'] == '001':
         if connection.config.get('commands'):
@@ -60,9 +61,8 @@ def irc_autoreply(robot, connection, data):
     # Nickname in use
     elif data['command'] == '433':
         nicks = connection.config.get('nicks')
-        current_offset = nicks.index(connection.nick)
-        new_offset = (current_offset + 1) % len(nicks)
-        robot.set_nick(connection, offset=new_offset)
+        offset = (nicks.index(connection.nick) + 1) % len(nicks)
+        robot.set_nick(connection, offset=offset)
     return data
 
 def admin_middlware(robot, connection, data):
