@@ -1,6 +1,10 @@
-from tenyks.utils import parse_irc_prefix
 from datetime import datetime
 import re
+
+import logging
+logger = logging.getLogger('tenyks')
+
+from tenyks.utils import parse_irc_prefix
 
 
 def irc_parse(connection, data):
@@ -44,6 +48,9 @@ def irc_extract(connection, data):
 def irc_autoreply(connection, data):
     if data["command"] == "PING":
         connection.last_ping = datetime.now()
+        logger.debug(
+            '{connection} Connection Worker: last_ping: {dt}'.format(
+                connection=connection.name, dt=connection.last_ping)) 
         connection.output_queue.put(data["raw"].replace("PING", "PONG"))
     return data
 
