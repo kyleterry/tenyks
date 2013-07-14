@@ -15,7 +15,7 @@ CONNECTIONS = {
         'host': 'localhost',
         'port': 6667,
         'password': None,
-        'nicks': ['tenyks', 'tenyks_']
+        'nicks': ['tenyks', 'tenyks_'],
         'ident': 'tenyks',
         'realname': 'tenyks IRC bot',
         'commands': ['/msg nickserv identify foo bar'],
