@@ -87,12 +87,16 @@ class Robot(object):
                 return True
         return False
 
+    def set_nick(self, connection, offset=0):
+        connection.nick = connection.config['nicks'][offset]
+        connection.send('NICK {nick}'.format(
+            nick=connection.nick))
+
     def handshake(self, connection):
         if 'password' in connection.config and connection.config['password']:
             connection.send('PASS {password}'.format(
                 password=connection.config['password']))
-        connection.send('NICK {nick}'.format(
-            nick=connection.config['nick']))
+        self.set_nick(connection)
         connection.send('USER {ident} {host} bla :{realname}'.format(
             ident=connection.config['ident'],
             host=connection.config['host'],

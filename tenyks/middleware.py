@@ -37,7 +37,7 @@ def irc_extract(robot, connection, data):
             data['from_channel'] = False
         data['full_message'] = message
         data['direct'] = (
-                message.startswith(connection.config['nick']) or
+                message.startswith(connection.nick) or
                 not data['from_channel'])
         if data['direct'] and data['from_channel']:
             data['payload'] = ' '.join(message.split()[1:])
@@ -60,8 +60,10 @@ def irc_autoreply(robot, connection, data):
         robot.join_channels(connection)
     # Nickname in use
     elif data['command'] == '433':
-        pass
-
+        nicks = connection.config.get('nicks')
+        current_offset = nicks.index(connection.nick)
+        new_offset = (current_offset + 1) % len(nicks)
+        robot.set_nick(connection, offset=new_offset)
     return data
 
 def admin_middlware(robot, connection, data):
