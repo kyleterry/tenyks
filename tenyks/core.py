@@ -190,6 +190,11 @@ class Robot(object):
             except ValueError:
                 logger.info('Robot Pubsub: invalid JSON. Ignoring message.')
 
+    def middleware_message(self, connection, data):
+        for middleware in CORE_MIDDLEWARE:
+            data = middleware(connection, data)
+        return data
+
     def connection_worker(self, connection):
         while True:
             if connection.user_disconnect:
@@ -218,11 +223,8 @@ class Robot(object):
                 self.handle_irc_ping(connection, raw_line)
                 continue
             else:
-                data = get_privmsg_data(
-                    connection, *parse_irc_message(raw_line))
+                data = self.middleware_message(connection, raw_line)
                 if data:
-                    for middleware in CORE_MIDDLEWARE:
-                        data = middleware(connection, data)
                     self.broadcast_queue.put(data)
         logger.info('{connection} Connection Worker: worker shutdown'.format(
             connection=connection.name))
