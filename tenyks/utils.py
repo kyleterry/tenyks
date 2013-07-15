@@ -16,4 +16,8 @@ def pubsub_factory(channel):
 irc_prefix_re = re.compile(r':?([^!@]*)!?([^@]*)@?(.*)').match
 def parse_irc_prefix(prefix):
      nick, user, host = irc_prefix_re(prefix).groups()
-     return nick, user, host
+     return {
+        'nick': nick, 
+        'user': user, 
+        'host': host
+    }

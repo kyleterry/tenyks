@@ -21,19 +21,13 @@ def irc_parse(robot, connection, data):
 
 def irc_extract(robot, connection, data):
     if data['command'] == 'PRIVMSG':
-        nick, user, host = parse_irc_prefix(data['prefix'])
-        target = data['args']
+        data.update(parse_irc_prefix(data['prefix']))
         message = data['trail']
-        data['nick'] = nick
-        data['user'] = user
-        data['host'] = host
-        data['mask'] = '{user}@{host}'.format(user=user, host=host)
+        data['mask'] = '{user}@{host}'.format(user=data['user'], 
+            host=data['host'])
         data['connection'] = connection.name
-        data['target'] = target
-        if target.startswith('#'):
-            data['from_channel'] = True
-        else:
-            data['from_channel'] = False
+        data['target'] = data['args']
+        data['from_channel'] = data['target'].startswith('#')
         data['full_message'] = message
         data['direct'] = (
                 message.startswith(connection.nick) or
