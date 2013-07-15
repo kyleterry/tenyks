@@ -110,7 +110,7 @@ class Connection(object):
         """
         send a message to an IRC connection
         """
-        message = message.strip()
+        message = str(message).strip()
         self.output_queue.put(message)
         self.logger.info('Connection -> {connection}: {message}'.format(
             connection=self, message=message))

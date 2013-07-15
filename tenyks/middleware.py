@@ -5,7 +5,7 @@ import logging
 logger = logging.getLogger('tenyks')
 
 from tenyks.utils import parse_irc_prefix
-
+from tenyks import commands
 
 def irc_parse(robot, connection, data):
 	command_re = r'^(:(?P<prefix>\S+) )?(?P<cmd>\S+)( (?!:)(?P<args>.+?))?( :(?P<trail>.+))?$'
@@ -51,12 +51,19 @@ def irc_autoreply(robot, connection, data):
         if connection.config.get('commands'):
             for command in connection.config['commands']:
                 robot.run_command(connection, command)
-        robot.join_channels(connection)
+        for channel in connection.config['channels']:
+            password = ''
+            if ',' in channel:
+                channel, password = channel.split(',')
+            connection.send(commands.JOIN(
+                channel=channel.strip(), 
+                password=password.strip()))
     # Nickname in use
     elif data['command'] == '433':
         nicks = connection.config.get('nicks')
         offset = (nicks.index(connection.nick) + 1) % len(nicks)
-        robot.set_nick(connection, offset=offset)
+        connection.nick = connection.config['nicks'][offset]
+        connection.send(commands.NICK(nick=connection.nick))
     return data
 
 def admin_middlware(robot, connection, data):

@@ -20,6 +20,7 @@ from tenyks.config import settings, collect_settings
 from tenyks.connection import Connection
 from tenyks.utils import pubsub_factory
 from tenyks.middleware import CORE_MIDDLEWARE
+from tenyks import commands
 
 
 if hasattr(settings, 'MIDDLEWARE'):
@@ -87,46 +88,26 @@ class Robot(object):
                 return True
         return False
 
-    def set_nick(self, connection, offset=0):
-        connection.nick = connection.config['nicks'][offset]
-        connection.send('NICK {nick}'.format(
-            nick=connection.nick))
-
     def handshake(self, connection):
-        if 'password' in connection.config and connection.config['password']:
-            connection.send('PASS {password}'.format(
+        if connection.config.get('password'):
+            connection.send(commands.PASS(
                 password=connection.config['password']))
-        self.set_nick(connection)
-        connection.send('USER {ident} {host} bla :{realname}'.format(
+        connection.nick = connection.config['nicks'][0]
+        connection.send(commands.NICK(nick=connection.nick))
+        connection.send(commands.USER(
             ident=connection.config['ident'],
             host=connection.config['host'],
             realname=connection.config['realname']))
         connection.post_connect()
 
-    def join_channels(self, connection):
-        for channel in connection.config['channels']:
-            self.join(connection, channel)
-
     def run_command(self, connection, command):
         connection.send(command_parser(command))
 
-    def join(self, connection, channel):
-        """
-        join a irc channel
-        """
-        password = ''
-        if ',' in channel:
-            channel, password = channel.split(',')
-        chan = '{channel} {password}'.format(
-                channel=channel, password=password)
-        connection.send('JOIN {channel}'.format(
-            channel=chan.strip()))
-
     def say(self, connection, message, channels=[]):
         for channel in channels:
-            message = 'PRIVMSG {channel} :{message}\r\n'.format(
-                    channel=channel, message=message)
-            connection.send(message)
+            connection.send(commands.PRIVMSG(
+                target=channel, 
+                message=message))
 
     def broadcast_loop(self):
         """
@@ -173,6 +154,7 @@ class Robot(object):
     def middleware_message(self, connection, data):
         for middleware in CORE_MIDDLEWARE:
             data = middleware(self, connection, data)
+        #print data
         return data
 
     def connection_worker(self, connection):
@@ -216,7 +198,7 @@ class Robot(object):
                 connection.close()
         finally:
             for name, connection in self.connections.iteritems():
-                connection.send('QUIT :{message}'.format(
+                connection.send(commands.QUIT(
                             message=getattr(self, 'exit_message', 'I\'m out!')))
                 connection.close()
             sys.exit('Bye.')
