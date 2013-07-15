@@ -14,6 +14,7 @@ CONNECTIONS = {
     'network1': {
         'host': 'localhost',
         'port': 6667,
+        'retries': 5,
         'password': None,
         'nicks': ['tenyks', 'tenyks_'],
         'ident': 'tenyks',
