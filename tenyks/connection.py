@@ -112,7 +112,7 @@ class Connection(object):
         """
         message = message.strip()
         self.output_queue.put(message)
-        self.logger.info('Robot -> {connection}: {message}'.format(
+        self.logger.info('Connection -> {connection}: {message}'.format(
             connection=self, message=message))
 
     def send_loop(self):

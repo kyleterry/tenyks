@@ -48,7 +48,7 @@ def irc_autoreply(robot, connection, data):
     if data['command'] == 'PING':
         connection.last_ping = datetime.now()
         logger.debug(
-            '{connection} Connection Worker: last_ping: {dt}'.format(
+            '{connection} autoreply Middleware: last_ping: {dt}'.format(
                 connection=connection.name, dt=connection.last_ping)) 
         reply = data['raw'].replace('PING', 'PONG')
         connection.output_queue.put(reply)
