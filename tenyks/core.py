@@ -154,7 +154,6 @@ class Robot(object):
     def middleware_message(self, connection, data):
         for middleware in CORE_MIDDLEWARE:
             data = middleware(self, connection, data)
-        #print data
         return data
 
     def connection_worker(self, connection):
