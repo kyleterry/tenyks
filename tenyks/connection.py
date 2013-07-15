@@ -19,6 +19,7 @@ class Connection(object):
     def __init__(self, name, **config):
         self.name = name
         self.config = config
+        self.connect_attempts = 0
         self.using_ssl = ('ssl' in config and config['ssl'])
         self.greenlets = []
         self.socket = self._fetch_socket()
@@ -53,6 +54,10 @@ class Connection(object):
 
     def connect(self, reconnecting=False):
         while True:
+            self.connect_attempts += 1
+            max_retries = self.config.get('retries')
+            if max_retries and (self.connect_attempts > max_retries):
+                raise Exception("retries exceeded")
             try:
                 if reconnecting:
                     self.logger.info('Reconnecting...')
@@ -71,6 +76,7 @@ class Connection(object):
                 time.sleep(5)
 
     def post_connect(self):
+        self.connect_attempts = 0
         self.spawn_send_and_recv_loops()
 
     def reconnect(self):
