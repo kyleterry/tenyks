@@ -1,0 +1,13 @@
+[Unit]
+Description=Tenyks
+
+[Service]
+Type=simple
+PIDFile=/run/tenyks.pid
+User=tenyks
+Group=tenyks
+ExecStartPre=touch /var/log/tenyks.log
+ExecStart=/usr/bin/tenyks /etc/tenyks/settings.py
+
+[Install]
+WantedBy=default.target

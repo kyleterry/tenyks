@@ -52,7 +52,7 @@ def startup_banner():
     banner = banner.format(
         version=colored.green(version), networks='\n'.join(networks),
         debug=colored.green(
-            (settings.DEBUG if hasattr(settings, 'DEBUG') else False)),
+            str((settings.DEBUG if hasattr(settings, 'DEBUG') else False))),
         redis_host=settings.REDIS_CONNECTION['host'],
         redis_port=settings.REDIS_CONNECTION['port'],
         redis_status=get_redis_status())

@@ -98,6 +98,10 @@ Use `tenyksmkconfig > /path/to/settings.py` and run Tenyks with
         setattr(settings, 'WORKING_DIR', WORKING_DIR)
         setattr(settings, 'DATA_WORKING_DIR', DATA_WORKING_DIR)
 
+    if not hasattr(intrl_settings, 'LOGGING_DIR'):
+        LOGGING_DIR = WORKING_DIR
+        setattr(settings, 'LOGGING_DIR', LOGGING_DIR)
+
     if hasattr(intrl_settings, 'LOGGING_CONFIG'):
         LOGGING_CONFIG = intrl_settings.LOGGING_CONFIG
     else:
@@ -123,7 +127,7 @@ Use `tenyksmkconfig > /path/to/settings.py` and run Tenyks with
                     'level': 'INFO',
                     'class': 'logging.FileHandler',
                     'formatter': 'default',
-                    'filename': join(WORKING_DIR, 'tenyks.log')
+                    'filename': join(settings.LOGGING_DIR, 'tenyks.log')
                 }
             },
             'loggers': {
