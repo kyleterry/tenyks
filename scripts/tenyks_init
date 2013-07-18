@@ -1,0 +1,37 @@
+#!/bin/bash
+
+PIDFILE=/run/tenyks.pid
+CONF=/etc/tenyks/settings.py
+EXEC=/usr/bin/tenyks
+USER=tenyks
+
+case "$1" in
+    start)
+        if [ -f $PIDFILE ]
+        then
+                echo "$PIDFILE exists, process is already running or crashed"
+        else
+                echo "Starting tenyks..."
+                su $USER -c "$EXEC $CONF"
+        fi
+        ;;
+    stop)
+        if [ ! -f $PIDFILE ]
+        then
+                echo "$PIDFILE does not exist, process is not running"
+        else
+                PID=$(cat $PIDFILE)
+                echo "Stopping ..."
+                kill $PID
+                while [ -x /proc/${PID} ]
+                do
+                    echo "Waiting for Tenyks to shutdown ..."
+                    sleep 1
+                done
+                echo "Tenyks stopped"
+        fi
+        ;;
+    *)
+        echo "Please use start or stop as first argument"
+        ;;
+esac
