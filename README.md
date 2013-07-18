@@ -62,7 +62,52 @@ settings module is found, it will raise an error.
 
 ## Settings
 
-TODO
+The most important settings is, obviously, the IRC CONNECTIONS definition.
+This tells Tenyks what IRC networks and channels it will be joining.
+
+```python
+CONNECTIONS = {
+    'freenode': {
+        'host': 'irc.freenode.net',
+        'port': 6667,
+        'retries': 5,
+        'password': None,
+        'nicks': ['tenyks', 'tenyks_'],
+        'ident': 'tenyks',
+        'realname': 'tenyks IRC bot',
+        'commands': ['/msg nickserv identify foo bar'],
+        'admins': ['yournick',],
+        'channels': ['#tenyks',], # if your channel has a password: '#thechannel, thepassword'
+    },
+}
+```
+
+Next most important is REDIS_CONNECTION. This is the server Tenyks will be
+using to communicate with services. All messages Tenyks sees are sent to
+Redis.
+
+```python
+REDIS_CONNECTION = {
+    'host': 'localhost',
+    'port': 6379,
+    'db': 0,
+    'password': None,
+}
+```
+
+MIDDLEWARE is a WIP. Please ignore this setting for now.
+
+You can set the WORKING_DIR and DATA_WORKING_DIR (these settings might be
+deprecated soon).
+
+BROADCAST_TO_SERVICES_CHANNEL is the Redis pubsub channel that services listen
+on for messages from IRC that Tenyks relays.
+
+BROADCAST_TO_ROBOT_CHANNEL is the Redis pubsub channel that Tenyks core listens
+on for messages from services going to IRC. Tenyks will relay those too.
+
+LOGGING_DIR is the directory where the tenyks log file will go. I suggest
+logrotated.
 
 ### SSL
 Tenyks supports connecting over SSL. See example settings. Currently there is
