@@ -59,6 +59,26 @@ _USER=tenyks
 read -p "Who is running tenyks? [${_USER}]" USER
 if [ !"${USER}" ]; then
     USER=${_USER}
+    EXISTS=$(cat /etc/passwd |grep ${USER} | awk -F : '{print $1}')
+    if [ -z ${EXISTS} ]; then
+        USER_EXISTS=false
+        echo "Should I create the user? "
+        select CREATE_USER in "yes" "no"
+        do
+            case ${CREATE_USER} in
+                yes)
+                    CREATE_USER=true
+                    break
+                    ;;
+                no)
+                    CREATE_USER=false
+                    break
+                    ;;
+            esac
+        done
+    else
+        USER_EXISTS=true
+    fi
 fi
 
 case "$1" in
