@@ -26,7 +26,6 @@ CONNECTIONS = {
         #'ssl_version': 3, # if you need to force an ssl version
     },
 }
-##############################################################################
 
 
 ##############################################################################
@@ -41,12 +40,16 @@ REDIS_CONNECTION = {
     'db': 0,
     'password': None,
 }
-##############################################################################
 
 ##############################################################################
+# Logging options
+#
+# LOG_TO must be console, syslog or file
+LOG_TO = 'console'
+
+# If LOG_TO is set to file, you must include a LOG_FILE and LOG_DIR
 # LOG_FILE = tenyks.log
-# LOGGING_DIR = /path/to/logging/dir
-##############################################################################
+# LOG_DIR = /path/to/logging/dir
 
 
 ##############################################################################
@@ -58,7 +61,6 @@ REDIS_CONNECTION = {
 MIDDLEWARE = (
     # Custom Middlware goes in here.
 )
-##############################################################################
 
 
 ##############################################################################
@@ -71,7 +73,6 @@ MIDDLEWARE = (
 
 # WORKING_DIR = /path/to/working/dir
 # DATA_WORKING_DIR = /path/to/working/dir/data
-##############################################################################
 
 
 ##############################################################################
@@ -87,4 +88,3 @@ MIDDLEWARE = (
 
 # BROADCAST_TO_SERVICES_CHANNEL = 'tenyks.services.broadcast_to'
 # BROADCAST_TO_ROBOT_CHANNEL = 'tenyks.robot.broadcast_to'
-##############################################################################

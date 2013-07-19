@@ -3,6 +3,7 @@ import sys
 from os.path import abspath, join, dirname, expanduser
 import logging
 import logging.config
+from logging.handlers import SysLogHandler
 
 from tenyks.module_loader import make_module_from_file
 
@@ -12,6 +13,9 @@ PROJECT_ROOT = abspath(dirname(__file__))
 
 
 class NotConfigured(Exception):
+    pass
+
+class ConfigurationError(Exception):
     pass
 
 
@@ -98,9 +102,30 @@ Use `tenyksmkconfig > /path/to/settings.py` and run Tenyks with
         setattr(settings, 'WORKING_DIR', WORKING_DIR)
         setattr(settings, 'DATA_WORKING_DIR', DATA_WORKING_DIR)
 
-    if not hasattr(intrl_settings, 'LOGGING_DIR'):
-        LOGGING_DIR = WORKING_DIR
-        setattr(settings, 'LOGGING_DIR', LOGGING_DIR)
+    if not hasattr(intrl_settings, 'LOG_DIR'):
+        LOG_DIR = WORKING_DIR
+        setattr(settings, 'LOG_DIR', LOG_DIR)
+
+    if not hasattr(settings, 'LOG_LEVEL'):
+        if settings.DEBUG:
+            settings.LOG_LEVEL = 'DEBUG'
+        else:
+            settings.LOG_LEVEL = 'INFO'
+
+    if hasattr(settings, 'LOG_TO'):
+        available_handlers = ('console', 'file', 'syslog')
+        if settings.LOG_TO not in available_handlers:
+            raise ConfigurationError('LOG_TO must be one of {handlers}'.format(
+                handlers=available_handlers))
+    else:
+        setattr(settings, 'LOG_TO', 'console')
+
+    SYSLOG_PATH = None
+    if os.uname()[0] == 'Linux':
+        SYSLOG_PATH = '/dev/log'
+    elif os.uname()[0] == 'Darwin':
+        SYSLOG_PATH = '/var/run/syslog'
+    setattr(settings, 'SYSLOG_PATH', SYSLOG_PATH)
 
     if hasattr(intrl_settings, 'LOGGING_CONFIG'):
         LOGGING_CONFIG = intrl_settings.LOGGING_CONFIG
@@ -119,21 +144,28 @@ Use `tenyksmkconfig > /path/to/settings.py` and run Tenyks with
             },
             'handlers': {
                 'console': {
-                    'level': 'DEBUG',
+                    'level': settings.LOG_LEVEL,
                     'class': 'logging.StreamHandler',
                     'formatter': 'color'
                 },
                 'file': {
-                    'level': 'INFO',
+                    'level': settings.LOG_LEVEL,
                     'class': 'logging.FileHandler',
                     'formatter': 'default',
-                    'filename': join(settings.LOGGING_DIR, 'tenyks.log')
+                    'filename': join(settings.LOG_DIR, 'tenyks.log')
+                },
+                'syslog': {
+                    'address': settings.SYSLOG_PATH,
+                    'level': settings.LOG_LEVEL,
+                    'class': 'logging.handlers.SysLogHandler',
+                    'formatter': 'default',
+                    'facility': SysLogHandler.LOG_SYSLOG,
                 }
             },
             'loggers': {
                 'tenyks': {
-                    'handlers': ['console'],
-                    'level': ('DEBUG' if settings.DEBUG else 'INFO'),
+                    'handlers': [settings.LOG_TO],
+                    'level': settings.LOG_LEVEL,
                     'propagate': True
                 },
             }
