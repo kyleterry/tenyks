@@ -30,14 +30,13 @@ Things will probably change.
 * [Defaults needed sending to Tenyks](#defaults-needed-sending-to-tenyks)
 * [FAQ](#faq)
 
-
 ## Installing and Configuring
 
 Fist things first; you will need a [Redis](http://redis.io) server running
 somewhere. Tenyks will need to connect to Redis. Look for instructions online
 on how to install and run Redis.
 
-### For hacking on Tenyks:
+### For hacking on Tenyks
 
 `mkvirtualenv tenyks`
 
@@ -57,7 +56,7 @@ Tenyks extension.
 
 `vim /path/to/where/you/want/settings.py # edit everything that makes sense to edit`
 
-### For using Tenyks:
+### For using Tenyks
 
 `pip install tenyks`
 
