@@ -2,8 +2,9 @@
 
 PIDFILE=/run/tenyks.pid
 CONF=/etc/tenyks/settings.py
-EXEC=/usr/bin/tenyks
+EXEC=`which tenyks`
 USER=tenyks
+GROUP=tenyks
 
 case "$1" in
     start)
@@ -12,7 +13,14 @@ case "$1" in
                 echo "$PIDFILE exists, process is already running or crashed"
         else
                 echo "Starting tenyks..."
-                su $USER -c "$EXEC $CONF"
+		if start-stop-daemon --start --oknodo --quiet --exec $EXEC \
+			--pidfile $PIDFILE --chuid $USER:$GROUP \
+			--background -- $CONF; then
+			echo "Running"
+		else
+			echo "Failed"
+			exit 1
+		fi
         fi
         ;;
     stop)
@@ -22,7 +30,9 @@ case "$1" in
         else
                 PID=$(cat $PIDFILE)
                 echo "Stopping ..."
-                kill $PID
+		start-stop-daemon --stop --oknodo --quiet --exec $EXEC \
+			--pidfile $PIDFILE --chuid $USER:$GROUP \
+			--background -- $CONF
                 while [ -x /proc/${PID} ]
                 do
                     echo "Waiting for Tenyks to shutdown ..."
