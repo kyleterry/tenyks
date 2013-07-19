@@ -62,27 +62,50 @@ settings module is found, it will raise an error.
 
 ## Settings
 
-The most important settings is, obviously, the IRC CONNECTIONS definition.
+The most important settings is, obviously, the IRC `CONNECTIONS` definition.
 This tells Tenyks what IRC networks and channels it will be joining.
 
 ```python
 CONNECTIONS = {
     'freenode': {
-        'host': 'irc.freenode.net',
-        'port': 6667,
-        'retries': 5,
-        'password': None,
-        'nicks': ['tenyks', 'tenyks_'],
-        'ident': 'tenyks',
-        'realname': 'tenyks IRC bot',
-        'commands': ['/msg nickserv identify foo bar'],
-        'admins': ['yournick',],
-        'channels': ['#tenyks',], # if your channel has a password: '#thechannel, thepassword'
+        'host': 'irc.freenode.net', # required
+        'port': 6667, # required
+        'retries': 5, # optional
+        'password': None, # optional
+        'nicks': ['tenyks', 'tenyks_'], # assert len(CONNECTION.get('nicks')) >= 1
+        'ident': 'tenyks', # currently required
+        'realname': 'tenyks IRC bot', # currently required
+        'commands': ['/msg nickserv identify foo bar'], # optional
+        'admins': ['yournick',], # optional
+        'channels': ['#tenyks',], # assert len(CONNECTION.get('nicks')) >= 1
+        # if your channel has a password: '#thechannel, thepassword'
+        'ssl': False, # optional
+        'ssl_version': 2 # optional. You should probably just remove this.
     },
 }
 ```
 
-Next most important is REDIS_CONNECTION. This is the server Tenyks will be
+`host` The address of the IRC network you want to connect to  
+`port` The port of the IRC network you want to connect to.
+Usually it's 6667, 6668 or 6669 for non-SSL. SSL is usually 6697 or 7000.  
+`retries` Max retries Tenyks should make before giving up connecting to the
+network  
+`password` Use this if your network requires a password to connect. This is
+not the channel password.  
+`ident` http://wiki.swiftirc.net/index.php?title=Idents  
+`realname` Not the nick. But probably something similar.  
+`commands` If you registered the bot's nick, you might want to use this to
+identify with the IRC network on connect. Ignore if you are not sure.  
+`admins` A list of nicks that can control the bot admin style. It's commonly
+used for services that require an admin to issue a command.  
+`channels` A list of channels you want the bot to connect to. Don't forget the
+prefix!  
+`ssl` Set this to True if you are connecting to the network over SSL. Make sure
+you use the network's SSL port.  
+`ssl_version` Ignoring this is fine unless the network enforces a version of
+SSL.  
+
+Next most important is `REDIS_CONNECTION`. This is the server Tenyks will be
 using to communicate with services. All messages Tenyks sees are sent to
 Redis.
 
@@ -95,21 +118,22 @@ REDIS_CONNECTION = {
 }
 ```
 
-MIDDLEWARE is a WIP. Please ignore this setting for now.
+`MIDDLEWARE` is a WIP. Please ignore this setting for now.
 
-You can set the WORKING_DIR and DATA_WORKING_DIR (these settings might be
+You can set the `WORKING_DIR` and `DATA_WORKING_DIR` (these settings might be
 deprecated soon).
 
-BROADCAST_TO_SERVICES_CHANNEL is the Redis pubsub channel that services listen
+`BROADCAST_TO_SERVICES_CHANNEL` is the Redis pubsub channel that services listen
 on for messages from IRC that Tenyks relays.
 
-BROADCAST_TO_ROBOT_CHANNEL is the Redis pubsub channel that Tenyks core listens
+`BROADCAST_TO_ROBOT_CHANNEL` is the Redis pubsub channel that Tenyks core listens
 on for messages from services going to IRC. Tenyks will relay those too.
 
-LOGGING_DIR is the directory where the tenyks log file will go. I suggest
+`LOGGING_DIR` is the directory where the tenyks log file will go. I suggest
 logrotated.
 
 ### SSL
+
 Tenyks supports connecting over SSL. See example settings. Currently there is
 not support for self-signed certificates. This is coming.
 
