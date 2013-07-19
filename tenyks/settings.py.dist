@@ -50,6 +50,9 @@ LOG_TO = 'console'
 # If LOG_TO is set to file, you must include a LOG_FILE and LOG_DIR
 # LOG_FILE = tenyks.log
 # LOG_DIR = /path/to/logging/dir
+# 
+# Can be INFO, DEBUG, WARNING, ERROR
+# LOG_LEVEL = 'INFO'
 
 
 ##############################################################################
