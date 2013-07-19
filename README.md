@@ -1,13 +1,13 @@
-<pre>
+```Textile
   _                   _         
  | |                 | |        
  | |_ ___ _ __  _   _| | _____  
  | __/ _ \ '_ \| | | | |/ / __| 
- | ||  __/ | | | |_| |   <\__ \ 
+ | ||  __/ | | | |_| |   <\__ \  irc bot.
   \__\___|_| |_|\__, |_|\_\___/ 
                  __/ |          
                 |___/           
-</pre>
+```
 
 Tenyks is a (soon to be) really smart, service oriented, IRC bot. Tenyks
 itself is kind of dumb, actually. He just relays messages from IRC to
