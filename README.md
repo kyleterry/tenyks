@@ -1,5 +1,13 @@
-Tenyks
-======
+<pre>
+  _                   _         
+ | |                 | |        
+ | |_ ___ _ __  _   _| | _____  
+ | __/ _ \ '_ \| | | | |/ / __| 
+ | ||  __/ | | | |_| |   <\__ \ 
+  \__\___|_| |_|\__, |_|\_\___/ 
+                 __/ |          
+                |___/           
+</pre>
 
 Tenyks is a (soon to be) really smart, service oriented, IRC bot. Tenyks
 itself is kind of dumb, actually. He just relays messages from IRC to
@@ -9,6 +17,19 @@ He then relays those messages to IRC based on the context sent from the client.
 
 These current instructions are a WIP and I'm still heavily developing the bot.
 Things will probably change.
+
+# Table of Contents
+
+* [Installing and Configuring](#installing-and-configuring)
+    * [For hacking on Tenyks](#for-hacking-on-tenyks)
+    * [For using Tenyks](#for-using-tenyks)
+* [Running Tenyks](#running-tenyks)
+* [Settings](#settings)
+    * [SSL](#ssl)
+* [Defaults sent to services](#defaults-sent-to-services)
+* [Defaults needed sending to Tenyks](#defaults-needed-sending-to-tenyks)
+* [FAQ](#faq)
+
 
 ## Installing and Configuring
 
@@ -137,7 +158,7 @@ logrotated.
 Tenyks supports connecting over SSL. See example settings. Currently there is
 not support for self-signed certificates. This is coming.
 
-## Default parameters sent to Redis from an IRC message:
+## Defaults sent to services
 
 ```python
 {
@@ -164,7 +185,7 @@ not support for self-signed certificates. This is coming.
 `payload` - The actual payload you should care about. It's the message the user
 intended us to see. (e.g. Hello, world!)
 
-## Parameters needed when sending tenyks a message via Redis:
+## Defaults needed sending to Tenyks
 
 ```python
 {
