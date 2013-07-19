@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -e
+
+PS3="> "
+
 if [ `id -u` != "0" ]; then
     echo "You must be root to run this script."
     exit 1
@@ -26,12 +30,11 @@ cat <<HERE
 
 HERE
 
-
+# Get the dir that this script is in
 _script="$(readlink -f ${BASH_SOURCE[0]})"
- 
 BASE_DIR="$(dirname $_script)"
 
-
+# Where in the world is Tenyks?
 TENYKS_BIN=`which tenyks`
 if [ ! -z ${TENYKS_BIN} ]; then
     printf "Found tenyks in ${TENYKS_BIN}\n\n"
@@ -40,45 +43,31 @@ else
     exit 1
 fi
 
-#_START="yes"
-#PS3="> "
-#echo "Should I try to start Tenyks when we finish?"
-#select START in "yes" "no"
-#do
-#    case ${START} in
-#        yes)
-#            break
-#            ;;
-#        no)
-#            break
-#            ;;
-#    esac
-#done
-
+# User stuff
 _USER=tenyks
-read -p "Who is running tenyks? [${_USER}]" USER
-if [ !"${USER}" ]; then
+read -p "Who is running tenyks? [${_USER}] " USER
+if [ ! "${USER}" ]; then
     USER=${_USER}
-    EXISTS=$(cat /etc/passwd |grep ${USER} | awk -F : '{print $1}')
-    if [ -z ${EXISTS} ]; then
-        USER_EXISTS=false
-        echo "Should I create the user? "
-        select CREATE_USER in "yes" "no"
-        do
-            case ${CREATE_USER} in
-                yes)
-                    CREATE_USER=true
-                    break
-                    ;;
-                no)
-                    CREATE_USER=false
-                    break
-                    ;;
-            esac
-        done
-    else
-        USER_EXISTS=true
-    fi
+fi
+EXISTS=$(cat /etc/passwd |grep ${USER} | awk -F : '{print $1}')
+if [ -z ${EXISTS} ]; then
+    USER_EXISTS=false
+    echo "Should I create the user? "
+    select CREATE_USER in "yes" "no"
+    do
+        case ${CREATE_USER} in
+            yes)
+                CREATE_USER=true
+                break
+                ;;
+            no)
+                echo "Well, then there is nothing I can do for you. Good day."
+                exit 1
+                ;;
+        esac
+    done
+else
+    USER_EXISTS=true
 fi
 
 case "$1" in
