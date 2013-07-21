@@ -105,7 +105,7 @@ class Robot(object):
 
     def say(self, connection, message, channels=[]):
         for channel in channels:
-            connection.send(commands.PRIVMSG(
+            self.connections[connection].send(commands.PRIVMSG(
                 target=channel, 
                 message=message))
 
