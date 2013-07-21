@@ -8,16 +8,16 @@ from tenyks.utils import parse_irc_prefix
 from tenyks import commands
 
 def irc_parse(robot, connection, data):
-	command_re = r'^(:(?P<prefix>\S+) )?(?P<cmd>\S+)( (?!:)(?P<args>.+?))?( :(?P<trail>.+))?$'
-	match_obj = re.match(command_re, data)
-	data = {
-		'prefix': match_obj.group('prefix'),
-		'command': match_obj.group('cmd'),
-		'args': match_obj.group('args'),
-		'trail': match_obj.group('trail'),
-		'raw': data
-	}
-	return data
+    command_re = r'^(:(?P<prefix>\S+) )?(?P<cmd>\S+)( (?!:)(?P<args>.+?))?( :(?P<trail>.+))?$'
+    match_obj = re.match(command_re, data)
+    data = {
+        'prefix': match_obj.group('prefix'),
+        'command': match_obj.group('cmd'),
+        'args': match_obj.group('args'),
+        'trail': match_obj.group('trail'),
+        'raw': data
+    }
+    return data
 
 def irc_extract(robot, connection, data):
     if data['command'] == 'PRIVMSG':
