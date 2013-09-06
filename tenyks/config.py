@@ -142,26 +142,7 @@ Use `tenyksmkconfig > /path/to/settings.py` and run Tenyks with
                     'format': '%(asctime)s %(name)s:%(levelname)s %(message)s'
                 }
             },
-            'handlers': {
-                'console': {
-                    'level': settings.LOG_LEVEL,
-                    'class': 'logging.StreamHandler',
-                    'formatter': 'color'
-                },
-                'file': {
-                    'level': settings.LOG_LEVEL,
-                    'class': 'logging.FileHandler',
-                    'formatter': 'default',
-                    'filename': join(settings.LOG_DIR, 'tenyks.log')
-                },
-                'syslog': {
-                    'address': settings.SYSLOG_PATH,
-                    'level': settings.LOG_LEVEL,
-                    'class': 'logging.handlers.SysLogHandler',
-                    'formatter': 'default',
-                    'facility': SysLogHandler.LOG_SYSLOG,
-                }
-            },
+            'handlers': {},
             'loggers': {
                 'tenyks': {
                     'handlers': [settings.LOG_TO],
@@ -170,6 +151,28 @@ Use `tenyksmkconfig > /path/to/settings.py` and run Tenyks with
                 },
             }
         }
+        if settings.LOG_TO == 'console':
+            LOGGING_CONFIG['handlers']['console'] = {
+                'level': settings.LOG_LEVEL,
+                'class': 'logging.StreamHandler',
+                'formatter': 'color'
+            }
+        elif settings.LOG_TO == 'syslog':
+            LOGGING_CONFIG['handlers']['syslog'] = {
+                'address': settings.SYSLOG_PATH,
+                'level': settings.LOG_LEVEL,
+                'class': 'logging.handlers.SysLogHandler',
+                'formatter': 'default',
+                'facility': SysLogHandler.LOG_SYSLOG,
+            }
+        elif settings.LOG_TO == 'file':
+            LOGGING_CONFIG['handlers']['file'] = {
+                'level': settings.LOG_LEVEL,
+                'class': 'logging.FileHandler',
+                'formatter': 'default',
+                'filename': join(settings.LOG_DIR, 'tenyks.log')
+            }
+
 
     logging.config.dictConfig(LOGGING_CONFIG)
 
