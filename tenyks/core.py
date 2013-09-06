@@ -145,9 +145,11 @@ class Robot(object):
                 if raw_redis_message['data'] != 1L:
                     message = json.loads(raw_redis_message['data'])
                     if message['command'].lower() == 'privmsg':
+                        payload = message['payload'].replace('\n', '')
+                        payload = payload.replace('\r', '')
                         self.say(message['connection'],
-                                    message['payload'],
-                                    channels=[message['target']])
+                                 payload,
+                                 channels=[message['target']])
             except ValueError:
                 logger.info('Robot Pubsub: invalid JSON. Ignoring message.')
 
