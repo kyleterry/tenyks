@@ -72,7 +72,7 @@ class Robot(object):
             if success:
                 self.handshake(conn)
             else:
-                logger.error('{conn} failed to connect or we did not get a response'.format(
+                logger.error(u'{conn} failed to connect or we did not get a response'.format(
                     conn=conn.name))
                 continue
 
@@ -139,7 +139,7 @@ class Robot(object):
             'tenyks.robot.broadcast_to')
         pubsub = pubsub_factory(broadcast_channel)
         for raw_redis_message in pubsub.listen():
-            logger.info('Robot <- {data}'.format(
+            logger.info(u'Robot <- {data}'.format(
                 data=json.dumps(raw_redis_message)))
             try:
                 if raw_redis_message['data'] != 1L:
@@ -171,7 +171,7 @@ class Robot(object):
                 if success:
                     self.handshake(connection)
                 else:
-                    logger.error('{conn} failed to connect or we did not get a response'.format(
+                    logger.error(u'{conn} failed to connect or we did not get a response'.format(
                         conn=connection.name))
                     continue
             try:
@@ -181,7 +181,7 @@ class Robot(object):
             data = self.middleware_message(connection, raw_line)
             if data:
                 self.broadcast_queue.put(data)
-        logger.info('{connection} Connection Worker: worker shutdown'.format(
+        logger.info(u'{connection} Connection Worker: worker shutdown'.format(
             connection=connection.name))
 
     def run(self):
