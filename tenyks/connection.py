@@ -72,7 +72,7 @@ class Connection(object):
                 break
             except socket.error as e:
                 self.logger.warning('Could not connect: retrying...')
-                self.logger.debug(e)
+                self.logger.debug(unicode(e, errors='replace'))
                 time.sleep(5)
 
     def post_connect(self):
@@ -106,7 +106,7 @@ class Connection(object):
                 self.socket_connected = False
                 self.server_disconnect = True
                 break
-            self.logger.debug('<- IRC: {data}'.format(data=data))
+            self.logger.debug(u'<- IRC: {data}'.format(data=data))
             self.input_buffer += data
             while '\r\n' in self.input_buffer:
                 line, self.input_buffer = self.input_buffer.split('\r\n', 1)
@@ -118,7 +118,7 @@ class Connection(object):
         """
         message = str(message).strip()
         self.output_queue.put(message)
-        self.logger.info('Connection -> {connection}: {message}'.format(
+        self.logger.info(u'Connection -> {connection}: {message}'.format(
             connection=self, message=message))
 
     def send_loop(self):
@@ -127,7 +127,7 @@ class Connection(object):
             self.output_buffer += line.encode('utf-8', 'replace') + '\r\n'
             while self.output_buffer:
                 sent = self.socket.send(self.output_buffer)
-                self.logger.info('-> IRC: {data}'.format(
+                self.logger.info(u'-> IRC: {data}'.format(
                     data=self.output_buffer))
                 self.output_buffer = self.output_buffer[sent:]
                 time.sleep(.5)
