@@ -23,7 +23,7 @@ def irc_extract(robot, connection, data):
     if data['command'] == 'PRIVMSG':
         data.update(parse_irc_prefix(data['prefix']))
         message = data['trail']
-        data['mask'] = '{user}@{host}'.format(user=data['user'], 
+        data['mask'] = '{user}@{host}'.format(user=data['user'],
             host=data['host'])
         data['connection'] = connection.name
         data['target'] = data['args']
@@ -33,8 +33,10 @@ def irc_extract(robot, connection, data):
                 message.startswith(connection.nick) or
                 not data['from_channel'])
         if data['direct'] and data['from_channel']:
+            data['private_message'] = False
             data['payload'] = ' '.join(message.split()[1:])
         else:
+            data['private_message'] = True
             data['payload'] = data['full_message']
     return data
 
@@ -43,7 +45,7 @@ def irc_autoreply(robot, connection, data):
         connection.last_ping = datetime.now()
         logger.debug(
             '{connection} autoreply Middleware: last_ping: {dt}'.format(
-                connection=connection.name, dt=connection.last_ping)) 
+                connection=connection.name, dt=connection.last_ping))
         reply = data['raw'].replace('PING', 'PONG')
         connection.output_queue.put(reply)
     # Authenticated to server
@@ -56,7 +58,7 @@ def irc_autoreply(robot, connection, data):
             if ',' in channel:
                 channel, password = channel.split(',')
             connection.send(commands.JOIN(
-                channel=channel.strip(), 
+                channel=channel.strip(),
                 password=password.strip()))
     # Nickname in use
     elif data['command'] == '433':

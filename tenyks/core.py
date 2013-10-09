@@ -147,9 +147,13 @@ class Robot(object):
                     if message['command'].lower() == 'privmsg':
                         payload = message['payload'].replace('\n', '')
                         payload = payload.replace('\r', '')
+                        if message.get('private_message', False):
+                            target = message['nick']
+                        else:
+                            target = message['target']
                         self.say(message['connection'],
                                  payload,
-                                 channels=[message['target']])
+                                 channels=[target,])
             except ValueError:
                 logger.info('Robot Pubsub: invalid JSON. Ignoring message.')
 
