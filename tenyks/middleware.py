@@ -32,9 +32,14 @@ def irc_extract(robot, connection, data):
         data['direct'] = (
                 message.startswith(connection.nick) or
                 not data['from_channel'])
+
+        # TODO CLEAN THIS SHIT UP
         if data['direct'] and data['from_channel']:
             data['private_message'] = False
             data['payload'] = ' '.join(message.split()[1:])
+        elif data['from_channel']:
+            data['private_message'] = False
+            data['payload'] = data['full_message']
         else:
             data['private_message'] = True
             data['payload'] = data['full_message']
