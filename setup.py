@@ -31,11 +31,13 @@ setup(name='tenyks',
           'nose',
           'unittest2',
           'clint',
+          'peewee',
       ],
       entry_points={
           'console_scripts': [
               'tenyks = tenyks.core:main',
-              'tenyksmkconfig = tenyks.config:make_config'
+              'tenyksmkconfig = tenyks.config:make_config',
+              'tcmkconfig = tenyks.client.config:make_config'
           ]
       },
       )
