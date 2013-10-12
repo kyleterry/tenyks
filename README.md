@@ -28,6 +28,7 @@ Things will probably change.
     * [SSL](#ssl)
 * [Defaults sent to services](#defaults-sent-to-services)
 * [Defaults needed sending to Tenyks](#defaults-needed-sending-to-tenyks)
+* [Hello, World client](#hello-world-client)
 * [FAQ](#faq)
 
 ## Installing and Configuring
@@ -266,7 +267,7 @@ hand that back directly.
 we use `run_client` because it will handle errors and gracefully shut the
 service down by sending Tenyks any messages it needs to.
 
-We can now run this with `python hello.py`. You can watch it in action by
+We can now run this with `python hello.py ~/hello_world_settings.py`. You can watch it in action by
 saying "Hi, I'm bob" in the IRC channel you had Tenyks join.
 
 ## FAQ
