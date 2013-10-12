@@ -32,6 +32,7 @@ setup(name='tenyks',
           'unittest2',
           'clint',
           'peewee',
+          'jinja2',
       ],
       entry_points={
           'console_scripts': [

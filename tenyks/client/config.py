@@ -3,6 +3,8 @@ from os.path import abspath, join, dirname
 import sys
 import logging.config
 
+from jinja2 import Template, Environment
+
 from tenyks.module_loader import make_module_from_file
 
 
@@ -118,7 +120,13 @@ Use `tcmkconfig > /path/to/settings.py`
 
     logging.config.dictConfig(LOGGING_CONFIG)
 
+
 def make_config():
+    usage = 'tcmkconfig clientname'
+    if len(sys.argv) < 2:
+        print(usage)
+        exit(1)
     with open(join(CLIENT_ROOT, 'settings.py.dist'), 'r') as f:
-        for line in f.readlines():
-            print line,
+        settings_template = f.read()
+    template = Template(settings_template)
+    print(template.render({'client_name': sys.argv[1]}))

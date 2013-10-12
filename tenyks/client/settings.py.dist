@@ -1,5 +1,5 @@
 DEBUG = False
-# CLIENT_NAME = None
+CLIENT_NAME = '{{ client_name }}'
 
 ##############################################################################
 # The following setting defines a dictionary containing Redis connection
