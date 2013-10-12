@@ -222,10 +222,14 @@ settings using the `tcmkconfig` command:
 `tcmkconfig helloworld > ~/hello_world_settings.py`
 
 If you are running Redis locally, then the defaults in the settings will be
-fine. So lets start building the class in `hello.py`.
+fine.
+
+So lets start building the class in `hello.py`.
 
 ```
+import logging
 from tenyks.client import Client, run_client
+from tenyks.client.config import settings
 
 
 class HelloWorld(Client):
@@ -237,6 +241,7 @@ class HelloWorld(Client):
 
     def handle_hello(self, data, match):
         name = match.groupdict()['name']
+        self.logger.debug('Saying hello to {name}'.format(name=name))
         self.send('How are you {name}?!'.format(name=name), data)
 
 
