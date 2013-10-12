@@ -28,6 +28,7 @@ Things will probably change.
     * [SSL](#ssl)
 * [Defaults sent to services](#defaults-sent-to-services)
 * [Defaults needed sending to Tenyks](#defaults-needed-sending-to-tenyks)
+* [Hello, World client](#hello-world-client)
 * [FAQ](#faq)
 
 ## Installing and Configuring
@@ -202,13 +203,77 @@ the target.
 `command` - This is almost always PRIVMSG. PRIVMSG is actually the only thing
 tenyks handles right now.
 
-When making a Tenyks client, it's easiest to just use the tenyksclient package
-in Pypi. It will handle most of the work for you and you can just think about
-you client logic instead of getting your program to interface right with Tenyks.
-
-With that said, you can write your clients in any programming language you
+You can write your clients in any programming language you
 want. As long as you can publish a message to a Redis channel, and subscribe
 to a channel on Redis, you are golden.
+
+When making a Tenyks client, it's easiest to just use the client module
+included in this package. It will handle most of the work for you and you can
+just think about you client logic instead of getting your program to interface
+right with Tenyks.
+
+Lets make the Tenyks "Hello, World"!
+
+## Hello, World client
+
+Clients inheriting from the Tenyks client class need settings. You can generate
+settings using the `tcmkconfig` command:
+
+`tcmkconfig helloworld > ~/hello_world_settings.py`
+
+If you are running Redis locally, then the defaults in the settings will be
+fine.
+
+So lets start building the class in `hello.py`.
+
+```
+import logging
+from tenyks.client import Client, run_client
+from tenyks.client.config import settings
+
+
+class HelloWorld(Client):
+
+    direct_only = True
+    irc_message_filters = {
+        'hello': [r"^(?i)(hi|hello|sup|hey), I'm (?P<name>(.*))$"]
+    }
+
+    def handle_hello(self, data, match):
+        name = match.groupdict()['name']
+        self.logger.debug('Saying hello to {name}'.format(name=name))
+        self.send('How are you {name}?!'.format(name=name), data)
+
+
+def main():
+    run_client(HelloWorld)
+
+
+if __name__ == '__main__':
+    main()
+```
+
+Here we are importing `Client` and `run_client`. Then we inherit `Client` with
+`HelloWorld`.
+
+`direct_only` will tell Client to ignore any messages that
+weren't directed at Tenyks.
+
+`irc_message_filters` is a dictionary of regular expressions. Each key can have
+multiple regular expressions to match. The first one found will stop searching
+and it's respective handle method will be called with that match handed to it
+as an argument, along with the data dictionary.
+
+`self.send` takes a message string and a data dictionary. Since the data
+dictionary we get has everything we need to reply to a message, we can just
+hand that back directly.
+
+`run_client` will instantiate the HelloWorld class and call it's `run` method.
+we use `run_client` because it will handle errors and gracefully shut the
+service down by sending Tenyks any messages it needs to.
+
+We can now run this with `python hello.py ~/hello_world_settings.py`. You can watch it in action by
+saying "Hi, I'm bob" in the IRC channel you had Tenyks join.
 
 ## FAQ
 
