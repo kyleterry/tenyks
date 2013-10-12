@@ -2,8 +2,9 @@ import os
 from os.path import abspath, join, dirname
 import sys
 import logging.config
+from logging.handlers import SysLogHandler
 
-from jinja2 import Template, Environment
+from jinja2 import Template
 
 from tenyks.module_loader import make_module_from_file
 
@@ -77,12 +78,42 @@ Use `tcmkconfig > /path/to/settings.py`
         setattr(settings, sett, getattr(intrl_settings, sett))
 
     if not hasattr(intrl_settings, 'WORKING_DIR'):
-        WORKING_DIR = getattr(intrl_settings, 'WORKING_DIRECTORY_PATH',
+        WORKING_DIR = getattr(settings, 'WORKING_DIRECTORY_PATH',
                 join(os.environ['HOME'], '.config', settings.CLIENT_NAME))
-        setattr(settings, 'WORKING_DIR', WORKING_DIR)
+        DATA_WORKING_DIR = join(WORKING_DIR, 'data')
 
-    if not hasattr(intrl_settings, 'LOGGING_CONFIG'):
-        intrl_settings.LOGGING_CONFIG = LOGGING_CONFIG = {
+        setattr(settings, 'WORKING_DIR', WORKING_DIR)
+        setattr(settings, 'DATA_WORKING_DIR', DATA_WORKING_DIR)
+
+    if not hasattr(intrl_settings, 'LOG_DIR'):
+        LOG_DIR = WORKING_DIR
+        setattr(settings, 'LOG_DIR', LOG_DIR)
+
+    if not hasattr(settings, 'LOG_LEVEL'):
+        if settings.DEBUG:
+            settings.LOG_LEVEL = 'DEBUG'
+        else:
+            settings.LOG_LEVEL = 'INFO'
+
+    if hasattr(settings, 'LOG_TO'):
+        available_handlers = ('console', 'file', 'syslog')
+        if settings.LOG_TO not in available_handlers:
+            raise ConfigurationError('LOG_TO must be one of {handlers}'.format(
+                handlers=available_handlers))
+    else:
+        setattr(settings, 'LOG_TO', 'console')
+
+    SYSLOG_PATH = None
+    if os.uname()[0] == 'Linux':
+        SYSLOG_PATH = '/dev/log'
+    elif os.uname()[0] == 'Darwin':
+        SYSLOG_PATH = '/var/run/syslog'
+    setattr(settings, 'SYSLOG_PATH', SYSLOG_PATH)
+
+    if hasattr(intrl_settings, 'LOGGING_CONFIG'):
+        LOGGING_CONFIG = intrl_settings.LOGGING_CONFIG
+    else:
+        LOGGING_CONFIG = {
             'version': 1,
             'disable_existing_loggers': True,
             'formatters': {
@@ -94,29 +125,39 @@ Use `tcmkconfig > /path/to/settings.py`
                     'format': '%(asctime)s %(name)s:%(levelname)s %(message)s'
                 }
             },
-            'handlers': {
-                'console': {
-                    'level': 'DEBUG',
-                    'class': 'logging.StreamHandler',
-                    'formatter': 'color'
-                },
-                'file': {
-                    'level': 'INFO',
-                    'class': 'logging.FileHandler',
-                    'formatter': 'default',
-                    'filename': join(WORKING_DIR, 'tenyks.log')
-                }
-            },
+            'handlers': {},
             'loggers': {
                 settings.CLIENT_NAME: {
-                    'handlers': ['console'],
-                    'level': ('DEBUG' if settings.DEBUG else 'INFO'),
+                    'handlers': [settings.LOG_TO],
+                    'level': settings.LOG_LEVEL,
                     'propagate': True
                 },
             }
         }
+        if settings.LOG_TO == 'console':
+            LOGGING_CONFIG['handlers']['console'] = {
+                'level': settings.LOG_LEVEL,
+                'class': 'logging.StreamHandler',
+                'formatter': 'color'
+            }
+        elif settings.LOG_TO == 'syslog':
+            LOGGING_CONFIG['handlers']['syslog'] = {
+                'address': settings.SYSLOG_PATH,
+                'level': settings.LOG_LEVEL,
+                'class': 'logging.handlers.SysLogHandler',
+                'formatter': 'default',
+                'facility': SysLogHandler.LOG_SYSLOG,
+            }
+        elif settings.LOG_TO == 'file':
+            LOGGING_CONFIG['handlers']['file'] = {
+                'level': settings.LOG_LEVEL,
+                'class': 'logging.FileHandler',
+                'formatter': 'default',
+                'filename': join(settings.LOG_DIR, 'tenyks.log')
+            }
 
-    setattr(settings, 'LOGGING_CONFIG', intrl_settings.LOGGING_CONFIG)
+
+    setattr(settings, 'LOGGING_CONFIG', LOGGING_CONFIG)
 
     logging.config.dictConfig(LOGGING_CONFIG)
 
