@@ -6,6 +6,7 @@ version = '0.2.1'
 
 packages = [
     'tenyks',
+    'tenyks.client',
 ]
 
 setup(name='tenyks',
