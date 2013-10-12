@@ -226,7 +226,7 @@ fine.
 
 So lets start building the class in `hello.py`.
 
-```
+```python
 import logging
 from tenyks.client import Client, run_client
 from tenyks.client.config import settings
