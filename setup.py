@@ -2,7 +2,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.1.24'
+version = '0.2.1'
 
 packages = [
     'tenyks',
