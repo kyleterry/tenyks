@@ -29,8 +29,11 @@ class Client(object):
                 if isinstance(regexes, basestring):
                     regexes = [regexes]
                 for regex in regexes:
-                    self.re_irc_message_filters[name].append(
-                        re.compile(regex).match)
+                    if isinstance(regex, str) or isinstance(regex, unicode):
+                        self.re_irc_message_filters[name].append(
+                            re.compile(regex).match)
+                    else:
+                        self.re_irc_message_filters[name].append(regex)
         if hasattr(self, 'recurring'):
             gevent.spawn(self.run_recurring)
         self.logger = logging.getLogger(self.name)
@@ -104,8 +107,10 @@ class WebServiceClient(Client):
 
 
 def run_client(client_class):
-    collect_settings()
+    errors = collect_settings()
     client_instance = client_class(settings.CLIENT_NAME)
+    for error in errors:
+        client_instance.logger.error(error)
     try:
         client_instance.run()
     except KeyboardInterrupt:

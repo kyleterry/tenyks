@@ -61,6 +61,7 @@ class Settings(object):
 settings = Settings()
 
 def collect_settings(settings_path=None, client_name=None):
+    errors = []
     intrl_settings = None
     if not len(sys.argv) > 1:
         message = """
@@ -81,6 +82,10 @@ Use `tcmkconfig > /path/to/settings.py`
         WORKING_DIR = getattr(settings, 'WORKING_DIRECTORY_PATH',
                 join(os.environ['HOME'], '.config', settings.CLIENT_NAME))
         DATA_WORKING_DIR = join(WORKING_DIR, 'data')
+        try:
+            os.makedirs(DATA_WORKING_DIR)
+        except:
+            errors.append('Could not create {0}'.format(DATA_WORKING_DIR))
 
         setattr(settings, 'WORKING_DIR', WORKING_DIR)
         setattr(settings, 'DATA_WORKING_DIR', DATA_WORKING_DIR)
@@ -160,6 +165,8 @@ Use `tcmkconfig > /path/to/settings.py`
     setattr(settings, 'LOGGING_CONFIG', LOGGING_CONFIG)
 
     logging.config.dictConfig(LOGGING_CONFIG)
+
+    return errors
 
 
 def make_config():
