@@ -55,7 +55,9 @@ class Client(object):
                         continue
                     if self.irc_message_filters and 'payload' in data:
                         name, match = self.search_for_match(data['payload'])
-                        if match or (hasattr(self, 'pass_on_non_match') and self.pass_on_non_match):
+                        ignore = (hasattr(self, 'pass_on_non_match')
+                                  and self.pass_on_non_match)
+                        if match or ignore:
                             self.delegate_to_handle_method(data, match, name)
                     else:
                         gevent.spawn(self.handle, data, None, None)
@@ -93,17 +95,6 @@ class Client(object):
                 'connection': data['connection']
             })
         r.publish(broadcast_channel, to_publish)
-
-
-class WebServiceClient(Client):
-
-    def __init__(self):
-        super(WebServiceClient, self).__init__()
-        self.channels.append('tenyks.services.from_ws')
-
-    def web_handle(self, data, match, filter_name):
-        raise NotImplementedError('`handle` needs to be implemented on all '
-                                  'Client subclasses.')
 
 
 def run_client(client_class):
