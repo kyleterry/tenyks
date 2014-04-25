@@ -38,8 +38,8 @@ setup(name='tenyks',
       entry_points={
           'console_scripts': [
               'tenyks = tenyks.core:main',
-              'tenyksmkconfig = tenyks.config:make_config',
-              'tcmkconfig = tenyks.client.config:make_config'
+              'tenyks-mkconfig = tenyks.config:make_config',
+              'tenyks-client-mkconfig = tenyks.client.config:make_config'
           ]
       },
       )

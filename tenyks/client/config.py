@@ -67,7 +67,7 @@ def collect_settings(settings_path=None, client_name=None):
         message = """
 You need to provide a settings module.
 
-Use `tcmkconfig > /path/to/settings.py`
+Use `tcmkconfig clientname > /path/to/settings.py`
         """.format(pr=CLIENT_ROOT)
         raise NotConfigured(message)
     intrl_settings = make_module_from_file('settings', sys.argv[1])
