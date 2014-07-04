@@ -13,6 +13,8 @@ import (
 var log = logging.MustGetLogger("tenyks")
 var connections map[string]*irc.Connection
 var ircObservers []<-chan bool
+var ircDispatchCommands map[string]bool = make(map[string]bool)
+var serviceDispatchCommands map[string]bool = make(map[string]bool)
 
 var banner string = `
   _                   _         
@@ -34,9 +36,9 @@ func connectionObserver(conn *irc.Connection, observerCtl <-chan bool) {
 			select {
 			case rawmsg := <-conn.In:
 				msg := irc.ParseMessage(rawmsg)
-				fmt.Println(*msg)
+				log.Debug("%+v", *msg)
 				if msg != nil { // Just ignore invalid messages. Who knows...
-					//Dispatch(msg)
+					dispatch(conn, msg)
 				}
 			case <-observerCtl:
 				break
@@ -44,6 +46,17 @@ func connectionObserver(conn *irc.Connection, observerCtl <-chan bool) {
 		}
 	} else {
 		log.Error("[%s] Could not connect.", conn.Name)
+	}
+}
+
+func dispatch(conn *irc.Connection, msg *irc.Message) {
+	if ircDispatchCommands[msg.Command] {
+		if msg.Command == "PING" {
+			conn.Out <- fmt.Sprintf("PONG %s\r\n", msg.Trail)
+		}
+
+	} else if serviceDispatchCommands[msg.Command] {
+
 	}
 }
 
@@ -72,6 +85,10 @@ func main() {
 	connections = make(map[string]*irc.Connection)
 	ircObservers = make([]<-chan bool, 0)
 
+	ircDispatchCommands["PING"] = true
+	serviceDispatchCommands["PRIVMSG"] = true
+
+	// Create connection, spawn observers and add to the map
 	for _, c := range conf.Connections {
 		conn := irc.NewConn(c.Name, c)
 		ctl := make(<-chan bool, 1)
