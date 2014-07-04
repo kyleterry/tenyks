@@ -1,0 +1,26 @@
+{
+    "redis": {
+        "port": 6379,
+        "db": 0,
+        "password": "",
+        "tenyksPrefix": "tenyks.robot",
+        "servicePrefix": "tenyks.service"
+    },
+    "connections": [
+        {
+            "name": "freenode",
+            "host": "irc.freenode.net",
+            "port": 6697,
+            "retries": 5,
+            "password": "",
+            "nicks": ["tenyks-demo"],
+            "ident": "tenyks",
+            "realname": "tenyks IRC bot",
+            "commands": [],
+            "admins": ["vhost-"],
+            "channels": ["#infoforcefeed"],
+            "ssl": true
+        }
+    ],
+    "logLocation": "stdout"
+}
