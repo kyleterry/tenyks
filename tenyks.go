@@ -14,6 +14,17 @@ var log = logging.MustGetLogger("tenyks")
 var connections map[string]*irc.Connection
 var ircObservers []<-chan bool
 
+var banner string = `
+  _                   _         
+ | |                 | |        
+ | |_ ___ _ __  _   _| | _____  
+ | __/ _ \ '_ \| | | | |/ / __| 
+ | ||  __/ | | | |_| |   <\__ \ 
+  \__\___|_| |_|\__, |_|\_\___/ 
+                 __/ |          
+                |___/           
+`
+
 func connectionObserver(conn *irc.Connection, observerCtl <-chan bool) {
 	log.Info("[%s] Connecting", conn.Name)
 	connected := <-conn.Connect()
@@ -38,6 +49,8 @@ func connectionObserver(conn *irc.Connection, observerCtl <-chan bool) {
 
 func main() {
 	quit := make(chan bool, 1)
+
+	fmt.Printf(banner + "\n")
 
 	// Make configuration from json file
 	conf, conferr := config.NewConfigAutoDiscover()
