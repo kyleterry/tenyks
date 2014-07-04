@@ -37,17 +37,22 @@ func connectionObserver(conn *irc.Connection, observerCtl <-chan bool) {
 }
 
 func main() {
-	// Configure logging
-	logBackend := logging.NewLogBackend(os.Stdout, "", stdlog.LstdFlags|stdlog.Lshortfile)
-	logBackend.Color = true
-	logging.SetBackend(logBackend)
-
 	quit := make(chan bool, 1)
 
 	// Make configuration from json file
 	conf, conferr := config.NewConfigAutoDiscover()
 	if conferr != nil {
 		log.Fatal(conferr)
+	}
+
+	// Configure logging
+	logBackend := logging.NewLogBackend(os.Stdout, "", stdlog.LstdFlags|stdlog.Lshortfile)
+	logBackend.Color = true
+	logging.SetBackend(logBackend)
+	if conf.Debug {
+		logging.SetLevel(logging.DEBUG, "tenyks")
+	} else {
+		logging.SetLevel(logging.INFO, "tenyks")
 	}
 
 	// Connections map

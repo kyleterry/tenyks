@@ -45,6 +45,7 @@ func (m *Message) String() string {
 	return ""
 }
 
+// Parses a message string from an IRC server
 func ParseMessage(rawMsg string) *Message {
 	/*
 	<message>  ::= [':' <prefix> <SPACE> ] <command> <params> <crlf>

@@ -124,7 +124,7 @@ func (self *Connection) send() chan<- string {
 		for {
 			select {
 			case line := <-c:
-				log.Debug("[%s] send()", self.Name, line)
+				log.Debug("[%s] Sending %s", self.Name, line)
 				self.MessagesSent += 1
 				self.write(line)
 			case <-self.sendCtl:
