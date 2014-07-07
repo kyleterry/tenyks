@@ -33,6 +33,15 @@ func connectionObserver(conn *irc.Connection, observerCtl <-chan bool) {
 	if connected == true {
 		irc.Bootstrap(conn)
 		for {
+			if conn.IsConnected() == false {
+				connected := <-conn.Connect()
+				if connected == true {
+					irc.Bootstrap(conn)
+				} else {
+					log.Error("[%s] Could not connect.", conn.Name)
+					break
+				}
+			}
 			select {
 			case rawmsg := <-conn.In:
 				msg := irc.ParseMessage(rawmsg)
