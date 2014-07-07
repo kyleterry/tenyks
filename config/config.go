@@ -45,12 +45,16 @@ type ConnectionConfig struct {
 func discoverConfig() string {
 	// TODO: This is temporary. Please refactor
 	var filename string
-	if _, err := os.Stat("/etc/tenyks/config.json"); err == nil {
-		filename = "/etc/tenyks/config.json"
-	} else if _, err := os.Stat(os.Getenv("HOME") + "/.config/tenyks/config.json"); err == nil {
-		filename = os.Getenv("HOME") + "/.config/tenyks/config.json"
+	if len(os.Args) > 1 {
+		filename = os.Args[1]
 	} else {
-		return ""
+		if _, err := os.Stat("/etc/tenyks/config.json"); err == nil {
+			filename = "/etc/tenyks/config.json"
+		} else if _, err := os.Stat(os.Getenv("HOME") + "/.config/tenyks/config.json"); err == nil {
+			filename = os.Getenv("HOME") + "/.config/tenyks/config.json"
+		} else {
+			return ""
+		}
 	}
 	return filename
 }
