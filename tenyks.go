@@ -5,8 +5,8 @@ import (
 	"os"
 	"fmt"
 
-	"github.com/kyleterry/tenyks-go/config"
-	"github.com/kyleterry/tenyks-go/irc"
+	"github.com/kyleterry/tenyks/config"
+	"github.com/kyleterry/tenyks/irc"
 	"github.com/op/go-logging"
 )
 

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/kyleterry/tenyks-go/config"
+	"github.com/kyleterry/tenyks/config"
 	"github.com/op/go-logging"
 )
 
