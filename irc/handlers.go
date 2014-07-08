@@ -23,6 +23,7 @@ func (self *Connection) addBaseHandlers () {
 	self.AddHandler("001", (*Connection).ConnectedHandler)
 	self.AddHandler("433", (*Connection).NickInUseHandler)
 	self.AddHandler("PING", (*Connection).PingHandler)
+	self.AddHandler("CTCP", (*Connection).CTCPHandler)
 }
 
 func (self *Connection) PingHandler(msg *Message) {
@@ -56,4 +57,8 @@ func (self *Connection) ConnectedHandler(msg *Message) {
 	for _, channel := range self.Config.Channels {
 		self.Out <- fmt.Sprintf("JOIN %s", channel)
 	}
+}
+
+func (self *Connection) CTCPHandler(msg *Message) {
+
 }
