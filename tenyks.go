@@ -48,14 +48,14 @@ func main() {
 
 	// Connections map
 	connections = make(map[string]*irc.Connection)
-	ircObservers = make([]<-chan bool, 0)
+	ircReactors = make([]<-chan bool, 0)
 
 	// Create connection, spawn reactors and add to the map
 	for _, c := range conf.Connections {
 		conn := irc.NewConn(c.Name, c)
 		ctl := make(<-chan bool, 1)
-		ircObservers = append(ircObservers, ctl)
-		go ConnectionReactor(conn, ctl)
+		ircReactors = append(ircReactors, ctl)
+		go irc.ConnectionReactor(conn, ctl)
 		connections[c.Name] = conn
 	}
 

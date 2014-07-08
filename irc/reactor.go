@@ -3,14 +3,12 @@ package irc
 func ConnectionReactor(conn *Connection, reactorCtl <-chan bool) {
 	log.Info("[%s] Connecting", conn.Name)
 	connected := <-conn.Connect()
+	dispatch("bootstrap", conn, nil)
 	if connected == true {
-		Bootstrap(conn)
 		for {
 			if conn.IsConnected() == false {
 				connected := <-conn.Connect()
-				if connected == true {
-					Bootstrap(conn)
-				} else {
+				if connected == false {
 					log.Error("[%s] Could not connect.", conn.Name)
 					break
 				}
@@ -20,7 +18,7 @@ func ConnectionReactor(conn *Connection, reactorCtl <-chan bool) {
 				msg := ParseMessage(rawmsg)
 				log.Debug("%+v", *msg)
 				if msg != nil { // Just ignore invalid messages. Who knows...
-					dispatch(conn, msg)
+					dispatch(msg.Command, conn, msg)
 				}
 			case <-reactorCtl:
 				break
@@ -31,9 +29,13 @@ func ConnectionReactor(conn *Connection, reactorCtl <-chan bool) {
 	}
 }
 
-func dispatch(conn *Connection, msg *Message) {
-	handlers := ircHandlers.handlers[msg.Command]
-	for i := handlers.Front(); i != nil; i = i.Next() {
-		i.Value.()
+func dispatch(command string, conn *Connection, msg *Message) {
+	handlers, ok := conn.Registry.handlers[command]
+	log.Debug("%s\n", ok)
+	if ok {
+		for i := handlers.Front(); i != nil; i = i.Next() {
+			handler := i.Value.(fn)
+			handler(conn, msg)
+		}
 	}
 }

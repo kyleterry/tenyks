@@ -3,6 +3,7 @@ package irc
 import (
 	"bufio"
 	"crypto/tls"
+	"container/list"
 	"fmt"
 	"net"
 
@@ -15,6 +16,8 @@ var log = logging.MustGetLogger("tenyks")
 type Connection struct {
 	Name            string
 	Config          config.ConnectionConfig
+	currentNick     string
+	nickIndex       int
 	connectAttempts uint
 	usingSSL        bool
 	socket          net.Conn
@@ -25,36 +28,27 @@ type Connection struct {
 	connected       bool
 	MessagesRecved	uint
 	MessagesSent	uint
+	Registry		*handlerRegistry
 }
 
 func NewConn(name string, conf config.ConnectionConfig) *Connection {
 	sendCtl := make(chan bool, 1)
-	return &Connection{
+	registry := new(handlerRegistry)
+	registry.handlers = make(map[string]*list.List)
+	conn := &Connection{
 		Name:            name,
 		Config:          conf,
+		nickIndex:       0,
 		connectAttempts: 0,
 		usingSSL:        conf.Ssl,
 		socket:          nil,
 		sendCtl:         sendCtl,
 		io:              nil,
 		connected:       false,
+		Registry:        registry,
 	}
-}
-
-func Bootstrap(conn *Connection) {
-	if conn.IsConnected() {
-		conn.Out <- fmt.Sprintf(
-			"USER %s %s %s :%s",
-			conn.Config.Nicks[0],
-			conn.Config.Host,
-			conn.Config.Ident,
-			conn.Config.Realname)
-		conn.Out <- fmt.Sprintf(
-			"NICK %s", conn.Config.Nicks[0])
-		for _, channel := range conn.Config.Channels {
-			conn.Out <- fmt.Sprintf("JOIN %s", channel)
-		}
-	}
+	conn.addBaseHandlers()
+	return conn
 }
 
 // Goroutine that returns a channel that is true if connected successfully
