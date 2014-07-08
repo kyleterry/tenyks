@@ -7,6 +7,7 @@ import (
 
 	"github.com/kyleterry/tenyks/config"
 	"github.com/kyleterry/tenyks/irc"
+	"github.com/kyleterry/tenyks/service"
 	"github.com/op/go-logging"
 )
 
@@ -58,6 +59,9 @@ func main() {
 		go irc.ConnectionReactor(conn, ctl)
 		connections[c.Name] = conn
 	}
+
+	serviceConnection := service.NewConn(conf.Redis)
+	go service.ConnectionReactor(serviceConnection)
 
 	<-quit
 }
