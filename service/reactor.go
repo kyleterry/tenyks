@@ -9,11 +9,12 @@ func ConnectionReactor(conn *Connection) {
 	for {
 		select {
 		case msg := <-conn.In:
-			fmt.Println(string(msg[:]))
+			go dispatch(msg)
 		}
 	}
 }
 
-func dispatch(msg string) {
-
+func dispatch(msg []byte) {
+	fmt.Println(string(msg[:]))
+	ircify(msg)
 }

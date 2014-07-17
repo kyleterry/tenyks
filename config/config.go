@@ -75,10 +75,10 @@ func NewConfigAutoDiscover() (conf *Config, err error) {
 func NewConfig(input []byte) (conf *Config, err error) {
 	conf = new(Config)
 	jsonerr := json.Unmarshal(input, &conf)
+	err = nil
 	if jsonerr != nil {
 		err = jsonerr
 	}
-	err = nil
 	//fmt.Printf("%+v\n", conf)
 	return
 }
