@@ -1,28 +1,29 @@
 package service
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 )
 
 type Message struct {
-	Target string
-	Mask string
-	Direct bool
-	Nick string
-	Host string
-	FullMessage string
-	Full_message string
-	User string
-	FromChannel bool
-	From_channel bool
-	Payload string
+	Target       string
+	Mask         string
+	Direct       bool
+	Nick         string
+	Host         string
+	FullMessage  string
+	Full_message string // Legacy for compat with py version
+	User         string
+	FromChannel  bool
+	From_channel bool // Legacy for compat with py version
+	Payload      string
 }
 
 func ircify(msg []byte) {
 	message, err := NewMessage(msg)
 	if err != nil {
 		log.Error("[service] Error parsing message: %s", err)
+		return // Just ignore the shit we don't care about
 	}
 	fmt.Printf("%+v\n", message)
 }
