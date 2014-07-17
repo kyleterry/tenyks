@@ -2,11 +2,13 @@ package service
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/kyleterry/tenyks/config"
+	"github.com/op/go-logging"
 )
+
+var log = logging.MustGetLogger("tenyks")
 
 type Connection struct {
 	r      redis.Conn
@@ -33,6 +35,7 @@ func NewConn(conf config.RedisConfig) *Connection {
 }
 
 func (self *Connection) Bootstrap() {
+	log.Debug("[service] Bootstrapping pubsub")
 	self.In = self.recv()
 	self.Out = self.send()
 	self.pubsub = redis.PubSubConn{self.r}
@@ -40,6 +43,7 @@ func (self *Connection) Bootstrap() {
 
 func (self *Connection) recv() <-chan []byte {
 	c := make(chan []byte, 1000)
+	log.Debug("[service] Spawning recv loop")
 	go func() {
 		self.pubsub.Subscribe(self.config.TenyksPrefix + ".broadcast")
 		for {
@@ -54,6 +58,7 @@ func (self *Connection) recv() <-chan []byte {
 
 func (self *Connection) send() chan<- string {
 	c := make(chan string, 1000)
+	log.Debug("[service] Spawning send loop")
 	go func() {
 		for {
 			select {

@@ -13,3 +13,7 @@ func ConnectionReactor(conn *Connection) {
 		}
 	}
 }
+
+func dispatch(msg string) {
+
+}
