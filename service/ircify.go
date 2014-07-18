@@ -8,14 +8,14 @@ import (
 type Message struct {
 	Target       string `json:"target"`
 	Mask         string `json:"mask"`
-	Direct       bool `json:"direct"`
+	Direct       bool   `json:"direct"`
 	Nick         string `json:"nick"`
 	Host         string `json:"host"`
 	FullMsg      string `json:"fullmsg"`
 	Full_message string `json:"full_message"` // Legacy for compat with py version
 	User         string `json:"user"`
-	FromChannel  bool `json:"fromchannel"`
-	From_channel bool `json:"from_channel"` // Legacy for compat with py version
+	FromChannel  bool   `json:"fromchannel"`
+	From_channel bool   `json:"from_channel"` // Legacy for compat with py version
 	Payload      string `json:"payload"`
 }
 

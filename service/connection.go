@@ -43,7 +43,7 @@ func (self *Connection) Bootstrap(ircconns *map[string]*irc.Connection) {
 
 	// Hook up PrivmsgHandler to all connections
 	for _, ircconn := range *ircconns {
-		ircconn.AddHandler("PRIVMSG", PrivmsgHandler)
+		ircconn.AddHandler("PRIVMSG", self.PrivmsgHandler)
 	}
 }
 
@@ -69,7 +69,7 @@ func (self *Connection) send() chan<- string {
 		for {
 			select {
 			case msg := <-c:
-				self.r.Send("PUBLISH", msg)
+				self.r.Send("PUBLISH tenyks.service.broadcast", msg)
 			}
 		}
 	}()

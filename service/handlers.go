@@ -7,7 +7,7 @@ import (
 	"github.com/kyleterry/tenyks/irc"
 )
 
-func PrivmsgHandler(conn *irc.Connection, msg *irc.Message) {
+func (self *Connection) PrivmsgHandler(conn *irc.Connection, msg *irc.Message) {
 	serviceMsg := Message{}
 	serviceMsg.Target = msg.Params[0]
 	serviceMsg.Mask = msg.Host
@@ -26,11 +26,12 @@ func PrivmsgHandler(conn *irc.Connection, msg *irc.Message) {
 	}
 
 	fmt.Printf("%+v\n", serviceMsg)
-	jsonStr, err := json.Marshal(serviceMsg)
+	jsonBytes, err := json.Marshal(serviceMsg)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(string(jsonStr[:]))
+	fmt.Println(string(jsonBytes[:]))
+	self.Out <- string(jsonBytes[:])
 }
 
 func isDirect(msg string, conn *irc.Connection) bool {
