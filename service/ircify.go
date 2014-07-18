@@ -11,7 +11,7 @@ type Message struct {
 	Direct       bool
 	Nick         string
 	Host         string
-	FullMessage  string
+	FullMsg      string
 	Full_message string // Legacy for compat with py version
 	User         string
 	FromChannel  bool

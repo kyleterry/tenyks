@@ -161,6 +161,10 @@ func (self *Connection) IsConnected() bool {
 	return self.connected
 }
 
+func (self *Connection) GetCurrentNick() string {
+	return self.currentNick
+}
+
 func (self *Connection) String() string {
 	msg := "Tenyks Connection to " + self.Name + ".\n"
 	if self.connected {

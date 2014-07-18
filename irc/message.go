@@ -2,8 +2,8 @@ package irc
 
 import (
 	"regexp"
-	"time"
 	"strings"
+	"time"
 )
 
 // Extend Regexp for map support
@@ -30,15 +30,16 @@ func (r *ircRegexp) FindStringSubmatchMap(s string) map[string]string {
 }
 
 type Message struct {
-	Prefix string
-	Nick string
-	Ident string
-	Host string
+	Prefix  string
+	Nick    string
+	Ident   string
+	Host    string
 	Command string
-	Trail string
-	Params []string
-	SentAt     time.Time
-	RawMsg string
+	Trail   string
+	Params  []string
+	SentAt  time.Time
+	RawMsg  string
+	Conn    *Connection
 }
 
 func (m *Message) String() string {
@@ -48,17 +49,17 @@ func (m *Message) String() string {
 // Parses a message string from an IRC server
 func ParseMessage(rawMsg string) *Message {
 	/*
-	<message>  ::= [':' <prefix> <SPACE> ] <command> <params> <crlf>
-	<prefix>   ::= <servername> | <nick> [ '!' <user> ] [ '@' <host> ]
-	<command>  ::= <letter> { <letter> } | <number> <number> <number>
-	<SPACE>    ::= ' ' { ' ' }
-	<params>   ::= <SPACE> [ ':' <trailing> | <middle> <params> ]
+		<message>  ::= [':' <prefix> <SPACE> ] <command> <params> <crlf>
+		<prefix>   ::= <servername> | <nick> [ '!' <user> ] [ '@' <host> ]
+		<command>  ::= <letter> { <letter> } | <number> <number> <number>
+		<SPACE>    ::= ' ' { ' ' }
+		<params>   ::= <SPACE> [ ':' <trailing> | <middle> <params> ]
 
-	<middle>   ::= <Any *non-empty* sequence of octets not including SPACE
-					or NUL or CR or LF, the first of which may not be ':'>
-	<trailing> ::= <Any, possibly *empty*, sequence of octets not including
-					NUL or CR or LF>
-	<crlf>     ::= CR LF
+		<middle>   ::= <Any *non-empty* sequence of octets not including SPACE
+						or NUL or CR or LF, the first of which may not be ':'>
+		<trailing> ::= <Any, possibly *empty*, sequence of octets not including
+						NUL or CR or LF>
+		<crlf>     ::= CR LF
 	*/
 	rawMsg = strings.TrimSuffix(rawMsg, "\r\n")
 	msg := Message{
@@ -76,7 +77,7 @@ func ParseMessage(rawMsg string) *Message {
 		userIndex := strings.Index(msg.Prefix, "@")
 		if nickIndex != -1 && userIndex != -1 {
 			msg.Nick = msg.Prefix[:nickIndex]
-			msg.Ident = msg.Prefix[nickIndex+1:userIndex]
+			msg.Ident = msg.Prefix[nickIndex+1 : userIndex]
 			msg.Host = msg.Prefix[userIndex+1:]
 		}
 	} // Done with prefix

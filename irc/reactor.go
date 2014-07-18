@@ -16,6 +16,7 @@ func ConnectionReactor(conn *Connection, reactorCtl <-chan bool) {
 			select {
 			case rawmsg := <-conn.In:
 				msg := ParseMessage(rawmsg)
+				msg.Conn = conn
 				log.Debug("%+v", *msg)
 				if msg != nil { // Just ignore invalid messages. Who knows...
 					dispatch(msg.Command, conn, msg)
