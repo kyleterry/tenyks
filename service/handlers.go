@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"encoding/json"
 	"strings"
 	"github.com/kyleterry/tenyks/irc"
 )
@@ -23,7 +24,13 @@ func PrivmsgHandler(conn *irc.Connection, msg *irc.Message) {
 	} else {
 		serviceMsg.Payload = msg.Trail
 	}
+
 	fmt.Printf("%+v\n", serviceMsg)
+	jsonStr, err := json.Marshal(serviceMsg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(string(jsonStr[:]))
 }
 
 func isDirect(msg string, conn *irc.Connection) bool {
