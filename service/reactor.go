@@ -2,10 +2,12 @@ package service
 
 import (
 	"fmt"
+	"github.com/kyleterry/tenyks/irc"
 )
 
-func ConnectionReactor(conn *Connection) {
-	conn.Bootstrap()
+func ConnectionReactor(ircconns *map[string]*irc.Connection,
+	conn *Connection) {
+	conn.Bootstrap(ircconns)
 	for {
 		select {
 		case msg := <-conn.In:

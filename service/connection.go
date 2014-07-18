@@ -5,6 +5,7 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/kyleterry/tenyks/config"
+	"github.com/kyleterry/tenyks/irc"
 	"github.com/op/go-logging"
 )
 
@@ -34,11 +35,16 @@ func NewConn(conf config.RedisConfig) *Connection {
 	return conn
 }
 
-func (self *Connection) Bootstrap() {
+func (self *Connection) Bootstrap(ircconns *map[string]*irc.Connection) {
 	log.Debug("[service] Bootstrapping pubsub")
 	self.In = self.recv()
 	self.Out = self.send()
 	self.pubsub = redis.PubSubConn{self.r}
+
+	// Hook up PrivmsgHandler to all connections
+	for _, ircconn := range *ircconns {
+		ircconn.AddHandler("PRIVMSG", PrivmsgHandler)
+	}
 }
 
 func (self *Connection) recv() <-chan []byte {
