@@ -27,7 +27,6 @@ func (self *Connection) PrivmsgHandler(conn *irc.Connection, msg *irc.Message) {
 		serviceMsg.Payload = msg.Trail
 	}
 
-	fmt.Printf("%+v\n", serviceMsg)
 	jsonBytes, err := json.Marshal(serviceMsg)
 	if err != nil {
 		log.Fatal(err)

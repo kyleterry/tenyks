@@ -38,7 +38,6 @@ func (self *Connection) ircify(msg []byte) {
 				message.Connection)
 		}
 	}
-	fmt.Printf("%+v\n", message)
 }
 
 func (self *Connection) getIrcConnByName(name string) *irc.Connection {

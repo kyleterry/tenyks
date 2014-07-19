@@ -27,10 +27,12 @@ func (self *Connection) addBaseHandlers () {
 }
 
 func (self *Connection) PingHandler(msg *Message) {
+	log.Debug("[%s] Responding to PING", self.Name)
 	self.Out <- fmt.Sprintf("PONG %s", msg.Trail)
 }
 
 func (self *Connection) BootstrapHandler(msg *Message) {
+	log.Info("[%s] Bootstrapping connection", self.Name)
 	self.Out <- fmt.Sprintf(
 		"USER %s %s %s :%s",
 		self.Config.Nicks[0],
@@ -43,6 +45,7 @@ func (self *Connection) BootstrapHandler(msg *Message) {
 }
 
 func (self *Connection) NickInUseHandler(msg *Message) {
+	log.Info("[%s] Nick `%s` is in use. Next...", self.Name, self.currentNick)
 	self.nickIndex++
 	if len(self.Config.Nicks) >= self.nickIndex + 1 {
 		self.Out <- fmt.Sprintf(
@@ -54,8 +57,14 @@ func (self *Connection) NickInUseHandler(msg *Message) {
 }
 
 func (self *Connection) ConnectedHandler(msg *Message) {
+	log.Info("[%s] Sending user commands", self.Name)
+	for _, commandHook := range self.Config.Commands {
+		self.Out <- commandHook
+	}
+	log.Info("[%s] Joining Channels", self.Name)
 	for _, channel := range self.Config.Channels {
 		self.Out <- fmt.Sprintf("JOIN %s", channel)
+		log.Debug("[%s] Joined %s", self.Name, channel)
 	}
 }
 

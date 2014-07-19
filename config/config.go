@@ -19,7 +19,7 @@ type Config struct {
 }
 
 type RedisConfig struct {
-	Host          string `json:"host",localhost`
+	Host          string `json:"host","localhost"`
 	Port          int
 	Db            int
 	Password      string
@@ -79,6 +79,5 @@ func NewConfig(input []byte) (conf *Config, err error) {
 	if jsonerr != nil {
 		err = jsonerr
 	}
-	//fmt.Printf("%+v\n", conf)
 	return
 }
