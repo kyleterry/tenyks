@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"encoding/json"
 	"strings"
 	"github.com/kyleterry/tenyks/irc"
@@ -31,7 +30,6 @@ func (self *Connection) PrivmsgHandler(conn *irc.Connection, msg *irc.Message) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(string(jsonBytes[:]))
 	self.Out <- string(jsonBytes[:])
 }
 
