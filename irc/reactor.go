@@ -36,7 +36,7 @@ func dispatch(command string, conn *Connection, msg *Message) {
 		log.Debug("[%s] Dispatching handler `%s`", conn.Name, command)
 		for i := handlers.Front(); i != nil; i = i.Next() {
 			handler := i.Value.(fn)
-			handler(conn, msg)
+			go handler(conn, msg)
 		}
 	}
 }
