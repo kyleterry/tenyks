@@ -61,7 +61,7 @@ func main() {
 	}
 
 	serviceConnection := service.NewConn(conf.Redis)
-	go service.ConnectionReactor(&connections, serviceConnection)
+	go service.ConnectionReactor(connections, serviceConnection)
 
 	<-quit
 }

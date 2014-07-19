@@ -1,22 +1,20 @@
 package service
 
 import (
-	"fmt"
 	"github.com/kyleterry/tenyks/irc"
 )
 
-func ConnectionReactor(ircconns *map[string]*irc.Connection,
+func ConnectionReactor(ircconns map[string]*irc.Connection,
 	conn *Connection) {
 	conn.Bootstrap(ircconns)
 	for {
 		select {
 		case msg := <-conn.In:
-			go dispatch(msg)
+			go conn.dispatch(msg)
 		}
 	}
 }
 
-func dispatch(msg []byte) {
-	fmt.Println(string(msg[:]))
-	ircify(msg)
+func (self *Connection) dispatch(msg []byte) {
+	self.ircify(msg)
 }

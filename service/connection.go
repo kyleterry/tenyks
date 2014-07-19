@@ -12,11 +12,12 @@ import (
 var log = logging.MustGetLogger("tenyks")
 
 type Connection struct {
-	r      redis.Conn
-	config *config.RedisConfig
-	In     <-chan []byte
-	Out    chan<- string
-	pubsub redis.PubSubConn
+	r        redis.Conn
+	config   *config.RedisConfig
+	In       <-chan []byte
+	Out      chan<- string
+	pubsub   redis.PubSubConn
+	ircconns map[string]*irc.Connection
 }
 
 func NewConn(conf config.RedisConfig) *Connection {
@@ -35,16 +36,17 @@ func NewConn(conf config.RedisConfig) *Connection {
 	return conn
 }
 
-func (self *Connection) Bootstrap(ircconns *map[string]*irc.Connection) {
+func (self *Connection) Bootstrap(ircconns map[string]*irc.Connection) {
 	log.Debug("[service] Bootstrapping pubsub")
 	self.In = self.recv()
 	self.Out = self.send()
 	self.pubsub = redis.PubSubConn{self.r}
 
 	// Hook up PrivmsgHandler to all connections
-	for _, ircconn := range *ircconns {
+	for _, ircconn := range ircconns {
 		ircconn.AddHandler("PRIVMSG", self.PrivmsgHandler)
 	}
+	self.ircconns = ircconns
 }
 
 func (self *Connection) dialRedis() (redis.Conn, error) {

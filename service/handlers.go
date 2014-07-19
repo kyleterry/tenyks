@@ -38,12 +38,14 @@ func (self *Connection) PrivmsgHandler(conn *irc.Connection, msg *irc.Message) {
 
 func isDirect(msg string, conn *irc.Connection) bool {
 	nick := conn.GetCurrentNick()
-	possibleDelimeter := string(msg[len(nick)]) // not an off by one. I just happened to need that index.
-	if msg[:len(nick)] == nick &&
-		(possibleDelimeter == ":" ||
-		 possibleDelimeter == "," ||
-		 possibleDelimeter == " ") {
-		return true
+	if len(msg) > len(nick) {
+		possibleDelimeter := string(msg[len(nick)]) // not an off by one. I just happened to need that index.
+		if msg[:len(nick)] == nick &&
+			(possibleDelimeter == ":" ||
+			possibleDelimeter == "," ||
+			possibleDelimeter == " ") {
+			return true
+		}
 	}
 	return false
 }

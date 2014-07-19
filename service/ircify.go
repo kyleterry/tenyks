@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kyleterry/tenyks/irc"
 )
 
 type Message struct {
@@ -21,16 +22,34 @@ type Message struct {
 	Payload      string `json:"payload"`
 }
 
-func ircify(msg []byte) {
-	message, err := NewMessage(msg)
+func (self *Connection) ircify(msg []byte) {
+	message, err := NewMessageFromBytes(msg)
 	if err != nil {
 		log.Error("[service] Error parsing message: %s", err)
 		return // Just ignore the shit we don't care about
 	}
+	if message.Command == "PRIVMSG" {
+		conn := self.getIrcConnByName(message.Connection)
+		if conn != nil {
+			msgStr := fmt.Sprintf("%s %s :%s", message.Command, message.Target, message.Payload)
+			conn.Out <- msgStr
+		} else {
+			log.Debug("[service] No such connection `%s`. Ignoring.",
+				message.Connection)
+		}
+	}
 	fmt.Printf("%+v\n", message)
 }
 
-func NewMessage(msg []byte) (message *Message, err error) {
+func (self *Connection) getIrcConnByName(name string) *irc.Connection {
+	conn := self.ircconns[name]
+	if conn == nil {
+		log.Error("[service] Connection `%s` doesn't exist", name)
+	}
+	return conn
+}
+
+func NewMessageFromBytes(msg []byte) (message *Message, err error) {
 	message = new(Message)
 	jsonerr := json.Unmarshal(msg, &message)
 	err = nil
