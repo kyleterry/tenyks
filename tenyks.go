@@ -11,7 +11,7 @@ import (
 	"github.com/op/go-logging"
 )
 
-var TenyksVersion = "1.0dev"
+var TenyksVersion = "1.0"
 var log = logging.MustGetLogger("tenyks")
 var connections map[string]*irc.Connection
 var ircReactors []<-chan bool
@@ -28,6 +28,12 @@ var banner string = `
 `
 
 func main() {
+	// Check for version flag
+	if len(os.Args) > 1 && (os.Args[1] == "--version" || os.Args[1] == "-V") {
+		fmt.Println("Tenyks version " + TenyksVersion)
+		os.Exit(0)
+	}
+
 	quit := make(chan bool, 1)
 
 	fmt.Printf(banner + "\n")
