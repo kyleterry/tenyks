@@ -12,6 +12,8 @@ type handlerRegistry struct {
 type fn func (*Connection, *Message)
 
 func (self *Connection) AddHandler(name string, handler fn) {
+	self.registryMu.Lock()
+	defer self.registryMu.Unlock()
 	if _, ok := self.Registry.handlers[name]; !ok {
 		self.Registry.handlers[name] = list.New()
 	}

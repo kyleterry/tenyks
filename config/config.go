@@ -1,10 +1,10 @@
 package config
 
 import (
+	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"os"
-	"errors"
-	"encoding/json"
 
 	"github.com/op/go-logging"
 )
@@ -16,6 +16,7 @@ type Config struct {
 	Redis       RedisConfig
 	Connections []ConnectionConfig
 	LogLocation string
+	Version     string
 }
 
 type RedisConfig struct {

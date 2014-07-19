@@ -37,19 +37,19 @@ func NewConn(conf config.RedisConfig) *Connection {
 }
 
 func (self *Connection) Bootstrap(ircconns map[string]*irc.Connection) {
-	log.Debug("[service] Bootstrapping pubsub")
-	self.In = self.recv()
-	self.Out = self.send()
-	self.pubsub = redis.PubSubConn{self.r}
-
 	// Hook up PrivmsgHandler to all connections
 	for _, ircconn := range ircconns {
 		ircconn.AddHandler("PRIVMSG", self.PrivmsgHandler)
 	}
+
 	self.ircconns = ircconns
+	log.Debug("[service] Bootstrapping pubsub")
+	self.pubsub = redis.PubSubConn{self.r}
+	self.In = self.recv()
+	self.Out = self.send()
 }
 
-func (self *Connection) dialRedis() (redis.Conn, error) {
+func (self *Connection) DialRedis() (redis.Conn, error) {
 	redisAddr := fmt.Sprintf(
 		"%s:%d",
 		self.config.Host,
@@ -77,7 +77,7 @@ func (self *Connection) recv() <-chan []byte {
 }
 
 func (self *Connection) publish(channel, msg string) {
-	c, err := self.dialRedis()
+	c, err := self.DialRedis()
 	if err != nil {
 		panic(err)
 	}

@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	stdlog "log"
 	"os"
-	"fmt"
 
 	"github.com/kyleterry/tenyks/config"
 	"github.com/kyleterry/tenyks/irc"
@@ -11,6 +11,7 @@ import (
 	"github.com/op/go-logging"
 )
 
+var TenyksVersion = "1.0dev"
 var log = logging.MustGetLogger("tenyks")
 var connections map[string]*irc.Connection
 var ircReactors []<-chan bool
@@ -30,15 +31,17 @@ func main() {
 	quit := make(chan bool, 1)
 
 	fmt.Printf(banner + "\n")
+	fmt.Printf(" Version: %s\n\n", TenyksVersion)
 
 	// Make configuration from json file
 	conf, conferr := config.NewConfigAutoDiscover()
 	if conferr != nil {
 		log.Fatal(conferr)
 	}
+	conf.Version = TenyksVersion
 
 	// Configure logging
-	logBackend := logging.NewLogBackend(os.Stdout, "", stdlog.LstdFlags|stdlog.Lshortfile)
+	logBackend := logging.NewLogBackend(os.Stdout, "", stdlog.LstdFlags)
 	logBackend.Color = true
 	logging.SetBackend(logBackend)
 	if conf.Debug {

@@ -31,6 +31,8 @@ func ConnectionReactor(conn *Connection, reactorCtl <-chan bool) {
 }
 
 func dispatch(command string, conn *Connection, msg *Message) {
+	conn.registryMu.Lock()
+	defer conn.registryMu.Unlock()
 	handlers, ok := conn.Registry.handlers[command]
 	if ok {
 		log.Debug("[%s] Dispatching handler `%s`", conn.Name, command)

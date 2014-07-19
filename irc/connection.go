@@ -2,10 +2,11 @@ package irc
 
 import (
 	"bufio"
-	"crypto/tls"
 	"container/list"
+	"crypto/tls"
 	"fmt"
 	"net"
+	"sync"
 
 	"github.com/kyleterry/tenyks/config"
 	"github.com/op/go-logging"
@@ -26,9 +27,10 @@ type Connection struct {
 	sendCtl         chan bool
 	io              *bufio.ReadWriter
 	connected       bool
-	MessagesRecved	uint
-	MessagesSent	uint
-	Registry		*handlerRegistry
+	MessagesRecved  uint
+	MessagesSent    uint
+	Registry        *handlerRegistry
+	registryMu      *sync.Mutex
 }
 
 func NewConn(name string, conf config.ConnectionConfig) *Connection {
@@ -46,6 +48,7 @@ func NewConn(name string, conf config.ConnectionConfig) *Connection {
 		io:              nil,
 		connected:       false,
 		Registry:        registry,
+		registryMu:      &sync.Mutex{},
 	}
 	conn.addBaseHandlers()
 	return conn
