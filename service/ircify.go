@@ -7,6 +7,7 @@ import (
 
 type Message struct {
 	Target       string `json:"target"`
+	Command      string `json:"command"`
 	Mask         string `json:"mask"`
 	Direct       bool   `json:"direct"`
 	Nick         string `json:"nick"`
@@ -16,6 +17,7 @@ type Message struct {
 	User         string `json:"user"`
 	FromChannel  bool   `json:"fromchannel"`
 	From_channel bool   `json:"from_channel"` // Legacy for compat with py version
+	Connection   string `json:"connection"`
 	Payload      string `json:"payload"`
 }
 

@@ -10,6 +10,7 @@ import (
 func (self *Connection) PrivmsgHandler(conn *irc.Connection, msg *irc.Message) {
 	serviceMsg := Message{}
 	serviceMsg.Target = msg.Params[0]
+	serviceMsg.Command = msg.Command
 	serviceMsg.Mask = msg.Host
 	serviceMsg.Direct = isDirect(msg.Trail, conn)
 	serviceMsg.Nick = msg.Nick
@@ -19,6 +20,7 @@ func (self *Connection) PrivmsgHandler(conn *irc.Connection, msg *irc.Message) {
 	serviceMsg.User = msg.Ident
 	serviceMsg.FromChannel = isChannel(msg)
 	serviceMsg.From_channel = isChannel(msg)
+	serviceMsg.Connection = conn.Name
 	if serviceMsg.Direct {
 		serviceMsg.Payload = stripNickOnDirect(msg.Trail, conn.GetCurrentNick())
 	} else {
