@@ -38,15 +38,17 @@ func NewConn(conf config.RedisConfig) *Connection {
 
 func (self *Connection) Bootstrap(ircconns map[string]*irc.Connection) {
 	// Hook up PrivmsgHandler to all connections
-	for _, ircconn := range ircconns {
-		ircconn.AddHandler("PRIVMSG", self.PrivmsgHandler)
-	}
-
 	self.ircconns = ircconns
 	log.Debug("[service] Bootstrapping pubsub")
 	self.pubsub = redis.PubSubConn{self.r}
 	self.In = self.recv()
 	self.Out = self.send()
+}
+
+func (self *Connection) registerIrcHandlers() {
+	for _, ircconn := range self.ircconns {
+		ircconn.AddHandler("PRIVMSG", self.PrivmsgHandler)
+	}
 }
 
 func (self *Connection) DialRedis() (redis.Conn, error) {

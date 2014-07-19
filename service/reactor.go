@@ -7,6 +7,7 @@ import (
 func ConnectionReactor(ircconns map[string]*irc.Connection,
 	conn *Connection) {
 	conn.Bootstrap(ircconns)
+	conn.registerIrcHandlers()
 	for {
 		select {
 		case msg := <-conn.In:
