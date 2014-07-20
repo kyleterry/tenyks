@@ -11,7 +11,10 @@ import (
 	"github.com/op/go-logging"
 )
 
-var TenyksVersion = "1.0"
+const (
+	TenyksVersion = "1.0"
+)
+
 var log = logging.MustGetLogger("tenyks")
 var connections map[string]*irc.Connection
 var ircReactors []<-chan bool
