@@ -55,6 +55,10 @@ cp config.json.example ${HOME}/tenyks-config.json
 
 `tenyks ${HOME}/tenyks-config.json`
 
+If a config file is excluded when running, Tenyks will look for configuration
+in `/etc/tenyks/config.json` first, then
+`${HOME}/.config/tenyks/config.json` then it will give up.
+
 ## Testing
 
 I'm a horrible person. There aren't tests yet. I'll get right on this...
