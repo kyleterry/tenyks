@@ -13,6 +13,19 @@ import (
 
 const (
 	TenyksVersion = "1.0"
+	Usage = `
+Usage: %s [config path | options]
+	Config path:
+		Path to a json configuration. If none is specified, Tenyks will look
+		for a config in common paths (e.g. /etc/tenyks/config.json)
+	
+	Options:
+		--version, -V
+			Used to print Tenyks' version number
+
+		--help, -h
+			This help
+`
 )
 
 var log = logging.MustGetLogger("tenyks")
@@ -32,9 +45,14 @@ var banner string = `
 
 func main() {
 	// Check for version flag
-	if len(os.Args) > 1 && (os.Args[1] == "--version" || os.Args[1] == "-V") {
-		fmt.Println("Tenyks version " + TenyksVersion)
-		os.Exit(0)
+	if len(os.Args) > 1 {
+		if os.Args[1] == "--version" || os.Args[1] == "-V" {
+			fmt.Println("Tenyks version " + TenyksVersion)
+			os.Exit(0)
+		} else if os.Args[1][0] == '-' {
+			fmt.Printf(Usage, os.Args[0])
+			os.Exit(0)
+		}
 	}
 
 	quit := make(chan bool, 1)
