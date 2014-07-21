@@ -9,7 +9,7 @@ type handlerRegistry struct {
 	handlers map[string]*list.List
 }
 
-type fn func (*Connection, *Message)
+type fn func(*Connection, *Message)
 
 func (self *Connection) AddHandler(name string, handler fn) {
 	self.registryMu.Lock()
@@ -20,7 +20,7 @@ func (self *Connection) AddHandler(name string, handler fn) {
 	self.Registry.handlers[name].PushBack(handler)
 }
 
-func (self *Connection) addBaseHandlers () {
+func (self *Connection) addBaseHandlers() {
 	self.AddHandler("bootstrap", (*Connection).BootstrapHandler)
 	self.AddHandler("001", (*Connection).ConnectedHandler)
 	self.AddHandler("433", (*Connection).NickInUseHandler)
@@ -51,7 +51,7 @@ func (self *Connection) BootstrapHandler(msg *Message) {
 func (self *Connection) NickInUseHandler(msg *Message) {
 	log.Info("[%s] Nick `%s` is in use. Next...", self.Name, self.currentNick)
 	self.nickIndex++
-	if len(self.Config.Nicks) >= self.nickIndex + 1 {
+	if len(self.Config.Nicks) >= self.nickIndex+1 {
 		self.Out <- fmt.Sprintf(
 			"NICK %s", self.Config.Nicks[self.nickIndex])
 		self.currentNick = self.Config.Nicks[self.nickIndex]

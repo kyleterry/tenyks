@@ -1,13 +1,13 @@
 package service
 
 import (
-	"time"
 	"sync"
+	"time"
 )
 
 type ServiceRegistry struct {
 	services map[string]*Service
-	regMu *sync.Mutex
+	regMu    *sync.Mutex
 }
 
 func NewServiceRegistry() *ServiceRegistry {
@@ -28,9 +28,9 @@ func (self *ServiceRegistry) RegisterService(name string, srv *Service) {
 }
 
 type Service struct {
-	Name string
-	Online bool
-	LastPing time.Time
+	Name           string
+	Online         bool
+	LastPing       time.Time
 	RespondedCount int
 }
 

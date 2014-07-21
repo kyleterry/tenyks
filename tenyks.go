@@ -28,7 +28,6 @@ Usage: %s [config path | options]
 `
 )
 
-
 var log = logging.MustGetLogger("tenyks")
 var connections irc.IrcConnections
 var ircReactors []<-chan bool

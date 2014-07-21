@@ -6,7 +6,7 @@ import (
 )
 
 type ServiceEngine struct {
-	Reactor *PubSubReactor
+	Reactor  *PubSubReactor
 	Registry *ServiceRegistry
 }
 
@@ -29,7 +29,7 @@ func (self *ServiceEngine) RegisterIrcHandlersFor(conn *irc.Connection) {
 }
 
 type PubSubReactor struct {
-	conn *Connection
+	conn     *Connection
 	ircconns irc.IrcConnections
 }
 
@@ -43,7 +43,7 @@ func NewPubSubReactor(conf config.RedisConfig, ircconns irc.IrcConnections) *Pub
 
 func (self *PubSubReactor) Start() {
 	log.Debug("[service] Starting Pub/Sub reactor")
-	go func(){
+	go func() {
 		for {
 			select {
 			case msg := <-self.conn.In:

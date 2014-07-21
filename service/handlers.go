@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"strings"
+
 	"github.com/kyleterry/tenyks/irc"
 	. "github.com/kyleterry/tenyks/version"
 )
@@ -41,8 +42,8 @@ func isDirect(msg string, conn *irc.Connection) bool {
 		possibleDelimeter := string(msg[len(nick)]) // not an off by one. I just happened to need that index.
 		if msg[:len(nick)] == nick &&
 			(possibleDelimeter == ":" ||
-			possibleDelimeter == "," ||
-			possibleDelimeter == " ") {
+				possibleDelimeter == "," ||
+				possibleDelimeter == " ") {
 			return true
 		}
 	}
@@ -58,7 +59,7 @@ func isChannel(msg *irc.Message) bool {
 
 func stripNickOnDirect(msg string, nick string) string {
 	index := len(nick)
-	if string(msg[len(nick) + 1]) == " " {
+	if string(msg[len(nick)+1]) == " " {
 		index = strings.Index(msg, " ")
 	}
 	index++
