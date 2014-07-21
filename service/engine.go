@@ -11,19 +11,22 @@ type ServiceEngine struct {
 	ircconns irc.IrcConnections
 }
 
-func NewServiceEngine(conf config.RedisConfig, ircconns irc.IrcConnections) *ServiceEngine {
+func NewServiceEngine(conf config.RedisConfig) *ServiceEngine {
 	eng := &ServiceEngine{}
 	eng.Reactor = NewPubSubReactor(conf)
 	eng.Reactor.engine = eng
 	eng.Reactor.conn.engine = eng
 	eng.Registry = NewServiceRegistry()
-	eng.ircconns = ircconns
 	return eng
 }
 
 func (self *ServiceEngine) Start() {
 	log.Info("[service] Starting engine")
 	self.Reactor.Start()
+}
+
+func (self *ServiceEngine) SetIrcConns(ircconns irc.IrcConnections) {
+	self.ircconns = ircconns
 }
 
 func (self *ServiceEngine) RegisterIrcHandlersFor(conn *irc.Connection) {

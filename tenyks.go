@@ -91,11 +91,11 @@ func main() {
 		logging.SetLevel(logging.INFO, "tenyks")
 	}
 
-	eng := service.NewServiceEngine(conf.Redis, connections)
-
 	// Connections map
 	connections = make(irc.IrcConnections)
 	ircReactors = make([]<-chan bool, 0)
+
+	eng := service.NewServiceEngine(conf.Redis)
 
 	// Create connection, spawn reactors and add to the map
 	for _, c := range conf.Connections {
@@ -105,6 +105,8 @@ func main() {
 		go irc.ConnectionReactor(conn, ctl)
 		connections[c.Name] = conn
 	}
+
+	eng.SetIrcConns(connections)
 
 	for _, ircconn := range connections {
 		go eng.RegisterIrcHandlersFor(ircconn)

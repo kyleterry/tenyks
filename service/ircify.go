@@ -73,8 +73,8 @@ func (self *Connection) dispatch(msg []byte) {
 }
 
 func (self *Connection) getIrcConnByName(name string) *irc.Connection {
-	conn := self.engine.ircconns[name]
-	if conn == nil {
+	conn, ok := self.engine.ircconns[name]
+	if !ok {
 		log.Error("[service] Connection `%s` doesn't exist", name)
 	}
 	return conn
