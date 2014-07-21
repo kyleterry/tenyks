@@ -30,6 +30,8 @@ func (self *ServiceEngine) SetIrcConns(ircconns irc.IrcConnections) {
 }
 
 func (self *ServiceEngine) RegisterIrcHandlersFor(conn *irc.Connection) {
+	// wait for connect wait to return true and or be closed before registring
+	// PRIVMSG handlers. This is to prevent race conditions.
 	if val, ok := <-conn.ConnectWait; val == true || !ok { // Wait for connect
 		self.Reactor.conn.RegisterIrcHandlers(conn)
 	}
