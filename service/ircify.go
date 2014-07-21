@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/kyleterry/tenyks/irc"
 )
@@ -40,7 +41,8 @@ func (self *Connection) ircify(msg []byte) {
 		log.Error("[service] Error parsing message: %s", err)
 		return // Just ignore the shit we don't care about
 	}
-	if message.Command == "PRIVMSG" {
+	switch message.Command {
+	case "PRIVMSG":
 		conn := self.getIrcConnByName(message.Connection)
 		if conn != nil {
 			msgStr := fmt.Sprintf("%s %s :%s", message.Command, message.Target, message.Payload)
@@ -49,8 +51,20 @@ func (self *Connection) ircify(msg []byte) {
 			log.Debug("[service] No such connection `%s`. Ignoring.",
 				message.Connection)
 		}
-	} else if message.Command == "REGISTER" {
-		
+	case "REGISTER":
+		meta := message.Meta.(ServiceMeta)
+		srv := &Service{}
+		srv.Name = meta.Name
+		srv.Version = meta.Version
+		srv.Online = true
+		srv.LastPing = time.Now()
+		self.engine.Registry.RegisterService(srv)
+	case "BYE":
+		meta := message.Meta.(ServiceMeta)
+		srv := self.engine.Registry.GetServiceByName(meta.Name)
+		if srv != nil {
+			srv.Online = false
+		}
 	}
 }
 

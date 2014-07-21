@@ -17,18 +17,26 @@ func NewServiceRegistry() *ServiceRegistry {
 	return registry
 }
 
-func (self *ServiceRegistry) RegisterService(name string, srv *Service) {
+func (self *ServiceRegistry) RegisterService(srv *Service) {
 	self.regMu.Lock()
 	defer self.regMu.Unlock()
-	if _, ok := self.services[name]; ok {
-		log.Info("[service] Service `%s` already registered", name)
+	if _, ok := self.services[srv.Name]; ok {
+		log.Info("[service] Service `%s` already registered", srv.Name)
 		return
 	}
-	self.services[name] = srv
+	self.services[srv.Name] = srv
+}
+
+func (self *ServiceRegistry) GetServiceByName(name string) *Service {
+	if srv, ok := self.services[name]; ok {
+		return srv
+	}
+	return nil
 }
 
 type Service struct {
 	Name           string
+	Version        string
 	Online         bool
 	LastPing       time.Time
 	RespondedCount int
