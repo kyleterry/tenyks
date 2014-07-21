@@ -17,10 +17,10 @@ type Connection struct {
 	In       <-chan []byte
 	Out      chan<- string
 	pubsub   redis.PubSubConn
-	ircconns irc.IrcConnections
+	engine   *ServiceEngine
 }
 
-func NewConn(conf config.RedisConfig, ircconns irc.IrcConnections) *Connection {
+func NewConn(conf config.RedisConfig) *Connection {
 	redisAddr := fmt.Sprintf(
 		"%s:%d",
 		conf.Host,
@@ -33,7 +33,6 @@ func NewConn(conf config.RedisConfig, ircconns irc.IrcConnections) *Connection {
 		r:      r,
 		config: &conf,
 	}
-	conn.ircconns = ircconns
 	return conn
 }
 

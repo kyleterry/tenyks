@@ -49,6 +49,8 @@ func (self *Connection) ircify(msg []byte) {
 			log.Debug("[service] No such connection `%s`. Ignoring.",
 				message.Connection)
 		}
+	} else if message.Command == "REGISTER" {
+		
 	}
 }
 
@@ -57,7 +59,7 @@ func (self *Connection) dispatch(msg []byte) {
 }
 
 func (self *Connection) getIrcConnByName(name string) *irc.Connection {
-	conn := self.ircconns[name]
+	conn := self.engine.ircconns[name]
 	if conn == nil {
 		log.Error("[service] Connection `%s` doesn't exist", name)
 	}
