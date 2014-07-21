@@ -1,5 +1,7 @@
 package irc
 
+type IrcConnections map[string]*Connection
+
 func ConnectionReactor(conn *Connection, reactorCtl <-chan bool) {
 	log.Info("[%s] Connecting...", conn.Name)
 	connected := <-conn.Connect()

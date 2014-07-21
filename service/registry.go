@@ -31,6 +31,7 @@ type Service struct {
 	Name string
 	Online bool
 	LastPing time.Time
+	RespondedCount int
 }
 
 func NewService() *Service {

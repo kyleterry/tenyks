@@ -3,23 +3,35 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/kyleterry/tenyks/irc"
 )
 
 type Message struct {
-	Target       string `json:"target"`
-	Command      string `json:"command"`
-	Mask         string `json:"mask"`
-	Direct       bool   `json:"direct"`
-	Nick         string `json:"nick"`
-	Host         string `json:"host"`
-	FullMsg      string `json:"fullmsg"`
-	Full_message string `json:"full_message"` // Legacy for compat with py version
-	User         string `json:"user"`
-	FromChannel  bool   `json:"fromchannel"`
-	From_channel bool   `json:"from_channel"` // Legacy for compat with py version
-	Connection   string `json:"connection"`
-	Payload      string `json:"payload"`
+	Target       string      `json:"target"`
+	Command      string      `json:"command"`
+	Mask         string      `json:"mask"`
+	Direct       bool        `json:"direct"`
+	Nick         string      `json:"nick"`
+	Host         string      `json:"host"`
+	FullMsg      string      `json:"fullmsg"`
+	Full_message string      `json:"full_message"` // Legacy for compat with py version
+	User         string      `json:"user"`
+	FromChannel  bool        `json:"fromchannel"`
+	From_channel bool        `json:"from_channel"` // Legacy for compat with py version
+	Connection   string      `json:"connection"`
+	Payload      string      `json:"payload"`
+	Meta         interface{} `json:"meta"`
+}
+
+type TenyksMeta struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+}
+
+type ServiceMeta struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
 }
 
 func (self *Connection) ircify(msg []byte) {
@@ -38,6 +50,10 @@ func (self *Connection) ircify(msg []byte) {
 				message.Connection)
 		}
 	}
+}
+
+func (self *Connection) dispatch(msg []byte) {
+	self.ircify(msg)
 }
 
 func (self *Connection) getIrcConnByName(name string) *irc.Connection {

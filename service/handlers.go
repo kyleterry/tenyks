@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 	"github.com/kyleterry/tenyks/irc"
+	. "github.com/kyleterry/tenyks/version"
 )
 
 func (self *Connection) PrivmsgHandler(conn *irc.Connection, msg *irc.Message) {
@@ -20,6 +21,7 @@ func (self *Connection) PrivmsgHandler(conn *irc.Connection, msg *irc.Message) {
 	serviceMsg.FromChannel = isChannel(msg)
 	serviceMsg.From_channel = isChannel(msg)
 	serviceMsg.Connection = conn.Name
+	serviceMsg.Meta = &TenyksMeta{"Tenyks", TenyksVersion}
 	if serviceMsg.Direct {
 		serviceMsg.Payload = stripNickOnDirect(msg.Trail, conn.GetCurrentNick())
 	} else {

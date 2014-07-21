@@ -17,10 +17,10 @@ type Connection struct {
 	In       <-chan []byte
 	Out      chan<- string
 	pubsub   redis.PubSubConn
-	ircconns map[string]*irc.Connection
+	ircconns irc.IrcConnections
 }
 
-func NewConn(conf config.RedisConfig) *Connection {
+func NewConn(conf config.RedisConfig, ircconns irc.IrcConnections) *Connection {
 	redisAddr := fmt.Sprintf(
 		"%s:%d",
 		conf.Host,
@@ -36,9 +36,8 @@ func NewConn(conf config.RedisConfig) *Connection {
 	return conn
 }
 
-func (self *Connection) Bootstrap(ircconns map[string]*irc.Connection) {
+func (self *Connection) Bootstrap() {
 	// Hook up PrivmsgHandler to all connections
-	self.ircconns = ircconns
 	log.Debug("[service] Bootstrapping pubsub")
 	self.pubsub = redis.PubSubConn{self.r}
 	self.In = self.recv()
@@ -47,6 +46,7 @@ func (self *Connection) Bootstrap(ircconns map[string]*irc.Connection) {
 
 func (self *Connection) registerIrcHandlers() {
 	for _, ircconn := range self.ircconns {
+		log.Debug("[service] Registring PRIVMSG handler with `%s`", ircconn.Name)
 		ircconn.AddHandler("PRIVMSG", self.PrivmsgHandler)
 	}
 }

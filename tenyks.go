@@ -8,11 +8,11 @@ import (
 	"github.com/kyleterry/tenyks/config"
 	"github.com/kyleterry/tenyks/irc"
 	"github.com/kyleterry/tenyks/service"
+	. "github.com/kyleterry/tenyks/version"
 	"github.com/op/go-logging"
 )
 
 const (
-	TenyksVersion = "1.0"
 	Usage = `
 Usage: %s [config path | options]
 	Config path:
@@ -28,8 +28,9 @@ Usage: %s [config path | options]
 `
 )
 
+
 var log = logging.MustGetLogger("tenyks")
-var connections map[string]*irc.Connection
+var connections irc.IrcConnections
 var ircReactors []<-chan bool
 
 var banner string = `
@@ -44,7 +45,7 @@ var banner string = `
 `
 
 func main() {
-	// Check for version flag
+	// Check for version flag if len(os.Args) > 1 {
 	if len(os.Args) > 1 {
 		if os.Args[1] == "--version" || os.Args[1] == "-V" {
 			fmt.Println("Tenyks version " + TenyksVersion)
@@ -78,7 +79,7 @@ func main() {
 	}
 
 	// Connections map
-	connections = make(map[string]*irc.Connection)
+	connections = make(irc.IrcConnections)
 	ircReactors = make([]<-chan bool, 0)
 
 	// Create connection, spawn reactors and add to the map
@@ -90,8 +91,8 @@ func main() {
 		connections[c.Name] = conn
 	}
 
-	serviceConnection := service.NewConn(conf.Redis)
-	go service.ConnectionReactor(connections, serviceConnection)
+	eng := service.NewServiceEngine(conf.Redis, connections)
+	go eng.Start()
 
 	<-quit
 }
