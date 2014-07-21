@@ -68,9 +68,23 @@ func main() {
 	conf.Version = TenyksVersion
 
 	// Configure logging
-	logBackend := logging.NewLogBackend(os.Stdout, "", stdlog.LstdFlags)
-	logBackend.Color = true
-	logging.SetBackend(logBackend)
+	switch conf.LogLocation {
+	case "syslog":
+		logBackend, logErr := logging.NewSyslogBackend("")
+		if logErr != nil {
+			log.Fatal(logErr)
+		}
+		logging.SetBackend(logBackend)
+	default:
+	case "stdout":
+		flags := stdlog.LstdFlags
+		if conf.Debug {
+			flags = flags|stdlog.Lshortfile
+		}
+		logBackend := logging.NewLogBackend(os.Stdout, "", flags)
+		logBackend.Color = true
+		logging.SetBackend(logBackend)
+	}
 	if conf.Debug {
 		logging.SetLevel(logging.DEBUG, "tenyks")
 	} else {
