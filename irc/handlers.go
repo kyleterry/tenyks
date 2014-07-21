@@ -44,6 +44,8 @@ func (self *Connection) BootstrapHandler(msg *Message) {
 	self.Out <- fmt.Sprintf(
 		"NICK %s", self.Config.Nicks[self.nickIndex])
 	self.currentNick = self.Config.Nicks[self.nickIndex]
+	self.ConnectWait <- true
+	close(self.ConnectWait)
 }
 
 func (self *Connection) NickInUseHandler(msg *Message) {

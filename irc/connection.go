@@ -31,6 +31,7 @@ type Connection struct {
 	MessagesSent    uint
 	Registry        *handlerRegistry
 	registryMu      *sync.Mutex
+	ConnectWait     chan bool
 }
 
 func NewConn(name string, conf config.ConnectionConfig) *Connection {
@@ -49,6 +50,7 @@ func NewConn(name string, conf config.ConnectionConfig) *Connection {
 		connected:       false,
 		Registry:        registry,
 		registryMu:      &sync.Mutex{},
+		ConnectWait:     make(chan bool, 1),
 	}
 	conn.addBaseHandlers()
 	return conn

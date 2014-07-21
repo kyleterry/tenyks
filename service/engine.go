@@ -19,7 +19,13 @@ func NewServiceEngine(conf config.RedisConfig, ircconns irc.IrcConnections) *Ser
 
 func (self *ServiceEngine) Start() {
 	log.Info("[service] Starting engine")
-	go self.Reactor.Start()
+	self.Reactor.Start()
+}
+
+func (self *ServiceEngine) RegisterIrcHandlersFor(conn *irc.Connection) {
+	if val, ok := <-conn.ConnectWait; val == true || !ok { // Wait for connect
+		self.Reactor.conn.RegisterIrcHandlers(conn)
+	}
 }
 
 type PubSubReactor struct {
@@ -30,13 +36,12 @@ type PubSubReactor struct {
 func NewPubSubReactor(conf config.RedisConfig, ircconns irc.IrcConnections) *PubSubReactor {
 	reactor := &PubSubReactor{}
 	reactor.ircconns = ircconns
-	reactor.conn = NewConn(conf, reactor.ircconns)
+	reactor.conn = NewConn(conf, ircconns)
 	reactor.conn.Bootstrap()
 	return reactor
 }
 
 func (self *PubSubReactor) Start() {
-	self.conn.registerIrcHandlers()
 	log.Debug("[service] Starting Pub/Sub reactor")
 	go func(){
 		for {

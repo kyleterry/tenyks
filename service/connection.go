@@ -33,6 +33,7 @@ func NewConn(conf config.RedisConfig, ircconns irc.IrcConnections) *Connection {
 		r:      r,
 		config: &conf,
 	}
+	conn.ircconns = ircconns
 	return conn
 }
 
@@ -44,11 +45,10 @@ func (self *Connection) Bootstrap() {
 	self.Out = self.send()
 }
 
-func (self *Connection) registerIrcHandlers() {
-	for _, ircconn := range self.ircconns {
-		log.Debug("[service] Registring PRIVMSG handler with `%s`", ircconn.Name)
-		ircconn.AddHandler("PRIVMSG", self.PrivmsgHandler)
-	}
+func (self *Connection) RegisterIrcHandlers(conn *irc.Connection) {
+	log.Debug("[service] Registring IRC Handlers")
+	log.Debug("[service] Registring PRIVMSG handler with `%s`", conn.Name)
+	conn.AddHandler("PRIVMSG", self.PrivmsgHandler)
 }
 
 func (self *Connection) DialRedis() (redis.Conn, error) {
