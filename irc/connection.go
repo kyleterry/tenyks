@@ -113,6 +113,7 @@ func (self *Connection) Disconnect() {
 	self.connected = false
 	self.socket.Close()
 	self.socket = nil
+	self.ConnectWait = make(chan bool, 1)
 }
 
 func (self *Connection) send() chan<- string {
