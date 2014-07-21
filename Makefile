@@ -1,0 +1,1 @@
+all: scripts/make.sh
