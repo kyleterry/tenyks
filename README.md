@@ -70,7 +70,7 @@ TODO
 ## Help me
 
 I'm a new Go programmer. Surely there's some shitty shit in here. You can help
-my out by creating an issue on Github explaining how dumb I am. Or you can patch
+me out by creating an issue on Github explaining how dumb I am. Or you can patch
 the dumbness, make a pull request and tell me what I did wrong and why you made
 the change you did. I'm open to criticism as long as it's done in a respectful
 and "I'm teaching you something new" kind of way.
