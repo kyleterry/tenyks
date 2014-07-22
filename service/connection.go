@@ -12,12 +12,12 @@ import (
 var log = logging.MustGetLogger("tenyks")
 
 type Connection struct {
-	r        redis.Conn
-	config   *config.RedisConfig
-	In       <-chan []byte
-	Out      chan<- string
-	pubsub   redis.PubSubConn
-	engine   *ServiceEngine
+	r      redis.Conn
+	config *config.RedisConfig
+	In     <-chan []byte
+	Out    chan<- string
+	pubsub redis.PubSubConn
+	engine *ServiceEngine
 }
 
 func NewConn(conf config.RedisConfig) *Connection {

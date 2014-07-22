@@ -38,8 +38,8 @@ func (self *ServiceEngine) RegisterIrcHandlersFor(conn *irc.Connection) {
 }
 
 type PubSubReactor struct {
-	conn     *Connection
-	engine   *ServiceEngine
+	conn   *Connection
+	engine *ServiceEngine
 }
 
 func NewPubSubReactor(conf config.RedisConfig) *PubSubReactor {

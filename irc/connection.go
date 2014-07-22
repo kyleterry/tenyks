@@ -177,11 +177,11 @@ func (self *Connection) watchdog() {
 		<-time.After(time.Second * 60)
 		dispatch("send_ping", self, nil)
 		select {
-			case <- self.PongIn:
-				continue
-			case <-time.After(time.Second * 20):
-				self.Disconnect()
-				break
+		case <-self.PongIn:
+			continue
+		case <-time.After(time.Second * 20):
+			self.Disconnect()
+			break
 		}
 	}
 }
