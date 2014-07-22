@@ -23,6 +23,12 @@ run: build
 test:
 	go test ./src/...
 
+clean: vendor_clean
+	rm -rf ./bin
+
+install: 
+	install ./bin/tenyks /usr/local/bin
+
 vendor_clean:
 	rm -dRf ./_vendor/src
 
