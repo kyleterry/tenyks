@@ -15,12 +15,16 @@ func ConnectionReactor(conn *Connection, reactorCtl <-chan bool) {
 					log.Error("[%s] Could not connect.", conn.Name)
 					break
 				}
+				dispatch("bootstrap", conn, nil)
 			}
 			select {
-			case rawmsg := <-conn.In:
+			case rawmsg, ok := <-conn.In:
+				if !ok { // Conn closed the channel because of a disconnect.
+					continue
+				}
 				msg := ParseMessage(rawmsg)
-				msg.Conn = conn
 				if msg != nil { // Just ignore invalid messages. Who knows...
+					msg.Conn = conn
 					dispatch(msg.Command, conn, msg)
 				}
 			case <-reactorCtl:

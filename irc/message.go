@@ -80,7 +80,10 @@ func ParseMessage(rawMsg string) *Message {
 			msg.Ident = msg.Prefix[nickIndex+1 : userIndex]
 			msg.Host = msg.Prefix[userIndex+1:]
 		}
-	} // Done with prefix
+		// Done with prefix
+	} else if rawMsg[0] == ' ' {
+		return nil
+	}
 
 	tmpCommand := strings.SplitN(rawMsg, " :", 2)
 	if len(tmpCommand) > 1 { // There seems to be a command, args and a trail

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/kyleterry/tenyks/config"
 	"github.com/op/go-logging"
@@ -18,13 +19,13 @@ type Connection struct {
 	Name            string
 	Config          config.ConnectionConfig
 	currentNick     string
+	currentServer   string
 	nickIndex       int
 	connectAttempts uint
 	usingSSL        bool
 	socket          net.Conn
 	In              <-chan string
 	Out             chan<- string
-	sendCtl         chan bool
 	io              *bufio.ReadWriter
 	connected       bool
 	MessagesRecved  uint
@@ -32,10 +33,11 @@ type Connection struct {
 	Registry        *handlerRegistry
 	registryMu      *sync.Mutex
 	ConnectWait     chan bool
+	LastPong        time.Time
+	PongIn          chan bool
 }
 
 func NewConn(name string, conf config.ConnectionConfig) *Connection {
-	sendCtl := make(chan bool, 1)
 	registry := new(handlerRegistry)
 	registry.handlers = make(map[string]*list.List)
 	conn := &Connection{
@@ -45,12 +47,12 @@ func NewConn(name string, conf config.ConnectionConfig) *Connection {
 		connectAttempts: 0,
 		usingSSL:        conf.Ssl,
 		socket:          nil,
-		sendCtl:         sendCtl,
 		io:              nil,
 		connected:       false,
 		Registry:        registry,
 		registryMu:      &sync.Mutex{},
 		ConnectWait:     make(chan bool, 1),
+		PongIn:          make(chan bool, 1),
 	}
 	conn.addBaseHandlers()
 	return conn
@@ -84,6 +86,7 @@ func (self *Connection) Connect() chan bool {
 					log.Error("[%s] Connection failed... Retrying.",
 						self.Name)
 					retries += 1
+					time.Sleep(time.Second * time.Duration(retries))
 					continue
 				}
 			} else {
@@ -108,12 +111,14 @@ func (self *Connection) Connect() chan bool {
 }
 
 func (self *Connection) Disconnect() {
-	self.sendCtl <- true
-	close(self.Out)
-	self.connected = false
-	self.socket.Close()
-	self.socket = nil
-	self.ConnectWait = make(chan bool, 1)
+	if self.connected {
+		log.Debug("[%s] Disconnect called", self.Name)
+		close(self.Out)
+		self.connected = false
+		self.socket.Close()
+		self.socket = nil
+		self.ConnectWait = make(chan bool, 1)
+	}
 }
 
 func (self *Connection) send() chan<- string {
@@ -123,12 +128,13 @@ func (self *Connection) send() chan<- string {
 		log.Debug("[%s] Starting send loop", self.Name)
 		for {
 			select {
-			case line := <-c:
+			case line, ok := <-c:
+				if !ok {
+					log.Debug("[%s] Stopping send loop", self.Name)
+					return
+				}
 				self.MessagesSent += 1
 				self.write(line)
-			case <-self.sendCtl:
-				log.Debug("[%s] Stopping send loop", self.Name)
-				return
 			}
 		}
 	}()
@@ -150,6 +156,7 @@ func (self *Connection) recv() <-chan string {
 			rawLine, err := self.io.ReadString('\n')
 			if err != nil {
 				self.Disconnect()
+				close(c)
 				break
 			}
 			if rawLine != "" {
@@ -162,6 +169,23 @@ func (self *Connection) recv() <-chan string {
 	return c
 }
 
+// watchdog will occasionally PING the server and hope to hear back a PONG.
+// If no PONG is recieved in reasonable amount of time, it's safe to assume
+// we have been disconnected.
+func (self *Connection) watchdog() {
+	for {
+		<-time.After(time.Second * 60)
+		dispatch("send_ping", self, nil)
+		select {
+			case <- self.PongIn:
+				continue
+			case <-time.After(time.Second * 20):
+				self.Disconnect()
+				break
+		}
+	}
+}
+
 func (self *Connection) IsConnected() bool {
 	return self.connected
 }
@@ -171,9 +195,9 @@ func (self *Connection) GetCurrentNick() string {
 }
 
 func (self *Connection) String() string {
-	msg := "Tenyks Connection to " + self.Name + ".\n"
+	msg := "Tenyks Connection for " + self.Name + ".\n"
 	if self.connected {
-		msg += "Connected\n"
+		msg += "Connected to " + self.currentServer + "\n"
 	} else {
 		msg += "Disconnected\n"
 	}
