@@ -1,5 +1,5 @@
 package version
 
-const(
+const (
 	TenyksVersion = "1.0"
 )

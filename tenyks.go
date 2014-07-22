@@ -32,7 +32,7 @@ var log = logging.MustGetLogger("tenyks")
 var connections irc.IrcConnections
 var ircReactors []<-chan bool
 
-var banner string = `
+var banner = `
   _                   _         
  | |                 | |        
  | |_ ___ _ __  _   _| | _____  
