@@ -1,20 +1,28 @@
-.PHONY: build doc fmt lint run test vendor_clean vendor_get vendor_update vet
+.PHONY: build doc fmt lint run test vendor-get
 
-GOPATH := ${PWD}/_vendor:${GOPATH}
+GO ?= go
+BUILDDIR := $(CURDIR)/build
+GOPATH := $(BUILDDIR)
 export GOPATH
 PREFIX?=/usr/local
 INSTALL_BIN=$(PREFIX)/bin/
 
 default: build
 
-build: vet
-	go build -v -o ./bin/tenyks ./tenyks.go
+build-setup:
+	@echo "Linking relative packages to GOPATH"
+	@mkdir -p $(GOPATH)/src/github.com/kyleterry
+	@test -d "${GOPATH}/src/github.com/kyleterry/tenyks" || ln -s "$(CURDIR)" "$(GOPATH)/src/github.com/kyleterry/tenyks"
+
+
+build: vendor-get build-setup
+	$(GO) build -v -o ./bin/tenyks ./tenyks
 
 doc:
 	godoc -http=:6060 -index
 
 fmt:
-	go fmt ./src/...
+	$(GO) fmt ./src/...
 
 lint:
 	golint ./src
@@ -23,9 +31,10 @@ run: build
 	./bin/tenyks
 
 test:
-	go test ./src/...
+	$(GO) test ./src/...
 
-clean: vendor_clean
+clean:
+	rm -rf $(BUILDDIR)
 	rm -rf ./bin
 
 install: 
@@ -34,18 +43,7 @@ install:
 uninstall:
 	rm -rf $(INSTALL_BIN)tenyks
 
-vendor_clean:
-	rm -dRf ./_vendor/src
-
-vendor_get: vendor_clean
-	GOPATH=${PWD}/_vendor go get -d -u -v \
+vendor-get:
+	GOPATH=$(GOPATH) $(GO) get -d -u -v \
+	github.com/garyburd/redigo/redis \
 	github.com/op/go-logging
-
-vendor_update: vendor_get
-	rm -rf `find ./_vendor/src -type d -name .git` \
-	&& rm -rf `find ./_vendor/src -type d -name .hg` \
-	&& rm -rf `find ./_vendor/src -type d -name .bzr` \
-	&& rm -rf `find ./_vendor/src -type d -name .svn`
-
-vet:
-	go vet .

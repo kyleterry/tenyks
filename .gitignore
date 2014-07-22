@@ -6,6 +6,6 @@ settings.py
 pudb
 build
 dist
-tenyks
 bin
 _vendor
+build
