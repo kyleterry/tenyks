@@ -39,7 +39,6 @@ things.
 ```bash
 git clone https://github.com/kyleterry/tenyks
 cd tenyks
-make vendor_get
 make # tenyks will be in ./bin
 sudo make install
 ```
