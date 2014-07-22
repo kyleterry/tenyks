@@ -33,14 +33,18 @@ install golang`.
 
 ### Building
 
-You can build with the [Go tool](http://golang.org/cmd/go/).
+You can build with the make, which calls [Go tool](http://golang.org/cmd/go/)
+things.
 
 ```bash
 git clone https://github.com/kyleterry/tenyks
 cd tenyks
-go build
-go install
+make vendor_get
+make
+sudo make install
 ```
+
+`tenyks` should now be in `/usr/local/bin/tenyks`.
 
 ### Configuration
 

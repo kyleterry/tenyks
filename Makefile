@@ -2,6 +2,8 @@
 
 GOPATH := ${PWD}/_vendor:${GOPATH}
 export GOPATH
+PREFIX?=/usr/local
+INSTALL_BIN=$(PREFIX)/bin/
 
 default: build
 
@@ -27,7 +29,10 @@ clean: vendor_clean
 	rm -rf ./bin
 
 install: 
-	install ./bin/tenyks /usr/local/bin
+	install ./bin/tenyks $(INSTALL_BIN)tenyks
+
+uninstall:
+	rm -rf $(INSTALL_BIN)tenyks
 
 vendor_clean:
 	rm -dRf ./_vendor/src
