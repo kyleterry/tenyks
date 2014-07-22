@@ -40,11 +40,21 @@ things.
 git clone https://github.com/kyleterry/tenyks
 cd tenyks
 make vendor_get
-make
+make # tenyks will be in ./bin
 sudo make install
 ```
 
-`tenyks` should now be in `/usr/local/bin/tenyks`.
+`tenyks` should now be in `/usr/local/bin/tenyks` (or whatever you chose for
+your PREFIX)
+
+### Uninstall
+
+Why would you ever want to do that?
+
+```bash
+cd /path/to/tenyks
+sudo make uninstall
+```
 
 ### Configuration
 
