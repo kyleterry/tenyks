@@ -9,3 +9,4 @@ dist
 bin
 _vendor
 build
+.vagrant
