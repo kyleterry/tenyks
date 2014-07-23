@@ -9,18 +9,18 @@
     },
     "connections": [
         {
-            "name": "freenode",
-            "host": "irc.freenode.net",
-            "port": 6697,
+            "name": "localhost",
+            "host": "localhost",
+            "port": 6667,
             "retries": 5,
             "password": "",
-            "nicks": ["tenyks-demo"],
+            "nicks": ["tenyks"],
             "ident": "tenyks",
             "realname": "tenyks IRC bot",
             "commands": [],
-            "admins": ["vhost-"],
-            "channels": ["#infoforcefeed"],
-            "ssl": true
+            "admins": ["kyle"],
+            "channels": ["#tenyks"],
+            "ssl": false
         }
     ],
     "logLocation": "stdout" // stdout or syslog
