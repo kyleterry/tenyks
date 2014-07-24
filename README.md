@@ -78,7 +78,77 @@ I'm a horrible person. There aren't tests yet. I'll get right on this...
 
 ## Services
 
-TODO
+### To Services
+
+Example JSON payload sent to services:
+
+```json
+{
+    "target":"#tenyks",
+    "command":"PRIVMSG",
+    "mask":"unaffiliated/vhost-",
+    "direct":true,
+    "nick":"vhost-",
+    "host":"unaffiliated/vhost-",
+    "fullmsg":":vhost-!~vhost@unaffiliated/vhost- PRIVMSG #tenyks :tenyks-demo: weather 97217",
+    "full_message":":vhost-!~vhost@unaffiliated/vhost- PRIVMSG #tenyks :tenyks-demo: weather 97217",
+    "user":"~vhost",
+    "fromchannel":true,
+    "from_channel":true,
+    "connection":"freenode",
+    "payload":"weather 97217",
+    "meta":{
+        "name":"Tenyks",
+        "version":"1.0"
+    }
+}
+```
+
+fullmsg, full_message and fromchannel from_channel are for backwards
+compatibility with older services.
+
+### To Tenyks for IRC
+
+Example JSON response from a service to Tenyks destined for IRC
+
+```json
+{
+    "target":"#tenyks",
+    "command":"PRIVMSG",
+    "fromchannel":true,
+    "from_channel":true,
+    "connection":"freenode",
+    "payload":"Portland, OR is 63.4 F (17.4 C) and Overcast; windchill is NA; winds are Calm",
+    "meta":{
+        "name":"TenyksWunderground",
+        "version":"1.1"
+    }
+}
+```
+
+### Service Registration
+
+```json
+{
+    "command":"REGISTER",
+    "meta":{
+        "name":"TenyksWunderground",
+        "version":"1.1"
+    }
+}
+```
+
+### Service going offline
+
+```json
+{
+    "command":"BYE",
+    "meta":{
+        "name":"TenyksWunderground",
+        "version":"1.1"
+    }
+}
+```
 
 ## Help me
 
