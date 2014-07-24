@@ -23,5 +23,5 @@
             "ssl": false
         }
     ],
-    "logLocation": "stdout" // stdout or syslog
+    "logLocation": "stdout"
 }
