@@ -3,7 +3,7 @@
  | |                 | |        
  | |_ ___ _ __  _   _| | _____  
  | __/ _ \ '_ \| | | | |/ / __| 
- | ||  __/ | | | |_| |   <\__ \  irc bot.
+ | ||  __/ | | | |_| |   <\__ \  The IRC bot for hackers.
   \__\___|_| |_|\__, |_|\_\___/ 
                  __/ |          
                 |___/           
@@ -21,7 +21,10 @@ the same method.
 This design, while not anything new, is very flexible because one can write
 their service in any number of languages. The current service implementation
 used for proof of concept is written in Python. You can find that
-[here](./legacy/tenyks/client).
+[here](./legacy/tenyks/client). It's also beneficial because you can take down
+or bring up services without the need to restart the bot or implement a
+complicated hot pluggable core. Services that crash also don't run the risk of
+taking everything else down with it.
 
 ## Installation and building
 
@@ -150,6 +153,10 @@ Example JSON response from a service to Tenyks destined for IRC
 }
 ```
 
+### Lets make a service!
+
+TODO
+
 ## Help me
 
 I'm a new Go programmer. Surely there's some shitty shit in here. You can help
@@ -157,6 +164,16 @@ me out by creating an issue on Github explaining how dumb I am. Or you can patch
 the dumbness, make a pull request and tell me what I did wrong and why you made
 the change you did. I'm open to criticism as long as it's done in a respectful
 and "I'm teaching you something new" kind of way.
+
+## The future
+
+I'm using Redis pub/sub right now. It's pretty coupled to that, but I plan to
+implement a more pluggable communication backend.
+
+I also plan on trying to implement pub/sub over web sockets that will allow
+for communication over TLS and have authentication baked in. One use-case is
+giving your friends authentication tokens they can use to authenticate their
+services with your IRC bot. If someone is trouble, you cut them off.
 
 ## Credit where credit is due
 
