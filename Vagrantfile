@@ -5,20 +5,21 @@
 VAGRANTFILE_API_VERSION = "2"
 
 $script = <<SCRIPT
-sudo apt-get update
-sudo apt-get -y dist-upgrade
-sudo apt-get -y install ngircd redis-server
+apt-get update
+apt-get -q -y install ngircd redis-server wget
 cd /tmp
 wget http://golang.org/dl/go1.3.src.tar.gz
 tar xvf go1.3.src.tar.gz
 cd go/src
 ./all.bash
+cd ..
+cp bin/go* /usr/local/bin/
 cd /vagrant
 make
-sudo make install
+make install
 [ -f /usr/local/bin/tenyks ] || echo "Tenyks did not install" && exit 1
-sudo mkdir /etc/tenyks
-sudo cp config.json.example /etc/tenyks/config.json
+mkdir /etc/tenyks
+cp config.json.example /etc/tenyks/config.json
 SCRIPT
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
@@ -42,7 +43,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
-  config.vm.network "private_network", ip: "192.168.33.10"
+  config.vm.network "private_network", ip: "192.168.33.66"
 
   config.vm.hostname = "tenyks"
 
