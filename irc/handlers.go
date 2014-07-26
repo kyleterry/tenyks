@@ -3,22 +3,43 @@ package irc
 import (
 	"container/list"
 	"fmt"
+	"sync"
 	"time"
 )
 
-type handlerRegistry struct {
-	handlers map[string]*list.List
+type HandlerRegistry struct {
+	handlers   map[string]*list.List
+	registryMu *sync.Mutex
 }
 
-type fn func(*Connection, *Message)
+func NewHandlerRegistry() *HandlerRegistry {
+	return &HandlerRegistry{registryMu: &sync.Mutex{}}
+}
 
-func (self *Connection) AddHandler(name string, handler fn) {
+func (self *HandlerRegistry) AddHandler(name string, handler *Handler) {
 	self.registryMu.Lock()
 	defer self.registryMu.Unlock()
-	if _, ok := self.Registry.handlers[name]; !ok {
-		self.Registry.handlers[name] = list.New()
+	if _, ok := self.handlers[name]; !ok {
+		self.handlers[name] = list.New()
 	}
-	self.Registry.handlers[name].PushBack(handler)
+	self.handlers[name].PushBack(handler)
+}
+
+type Handler struct {
+	Fn func(...interface{})
+}
+
+func NewHandler(fn func(...interface{})) *Handler {
+	return &Handler{fn}
+}
+
+type ircfn func(*Connection, *Message)
+
+func (self *Connection) AddHandler(name string, fn ircfn) {
+	handler := NewHandler(func(p ...interface{}) {
+		fn(p[0].(*Connection), p[1].(*Message))
+	})
+	self.Registry.AddHandler(name, handler)
 }
 
 func (self *Connection) addBaseHandlers() {

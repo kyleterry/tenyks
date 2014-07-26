@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
-	"sync"
 	"time"
 
 	"github.com/kyleterry/tenyks/config"
@@ -30,15 +29,14 @@ type Connection struct {
 	connected       bool
 	MessagesRecved  uint
 	MessagesSent    uint
-	Registry        *handlerRegistry
-	registryMu      *sync.Mutex
+	Registry        *HandlerRegistry
 	ConnectWait     chan bool
 	LastPong        time.Time
 	PongIn          chan bool
 }
 
 func NewConn(name string, conf config.ConnectionConfig) *Connection {
-	registry := new(handlerRegistry)
+	registry := NewHandlerRegistry()
 	registry.handlers = make(map[string]*list.List)
 	conn := &Connection{
 		Name:            name,
@@ -50,7 +48,6 @@ func NewConn(name string, conf config.ConnectionConfig) *Connection {
 		io:              nil,
 		connected:       false,
 		Registry:        registry,
-		registryMu:      &sync.Mutex{},
 		ConnectWait:     make(chan bool, 1),
 		PongIn:          make(chan bool, 1),
 	}
