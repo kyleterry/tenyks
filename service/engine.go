@@ -24,6 +24,7 @@ func NewServiceEngine(conf config.RedisConfig) *ServiceEngine {
 
 func (self *ServiceEngine) Start() {
 	log.Info("[service] Starting engine")
+	self.addBaseHandlers()
 	self.Reactor.Start()
 }
 

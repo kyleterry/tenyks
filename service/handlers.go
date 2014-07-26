@@ -9,13 +9,19 @@ import (
 	. "github.com/kyleterry/tenyks/version"
 )
 
-type servicefn func(*Message)
+type servicefn func(*Connection, *Message)
 
 func (self *ServiceEngine) AddHandler(name string, fn servicefn) {
 	handler := irc.NewHandler(func(p ...interface{}) {
-		fn(p[0].(*Message))
+		fn(p[0].(*Connection), p[1].(*Message))
 	})
 	self.CommandRg.AddHandler(name, handler)
+}
+
+func (self *ServiceEngine) addBaseHandlers() {
+	self.AddHandler("PRIVMSG", (*Connection).PrivmsgServiceHandler)
+	self.AddHandler("REGISTER", (*Connection).RegisterServiceHandler)
+	self.AddHandler("BYE", (*Connection).ByeServiceHandler)
 }
 
 func (self *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message) {
