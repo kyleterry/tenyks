@@ -21,7 +21,8 @@ build-setup:
 
 build: vendor-get build-setup
 	@echo "$(OK_COLOR)===> Building$(NO_COLOR)"
-	$(GO) build -v -o ./bin/tenyks ./tenyks
+	$(GO) build -o ./bin/tenyks ./tenyks
+	@echo "$(OK_COLOR)===> Done building$(NO_COLOR)"
 
 doc:
 	godoc -http=:6060 -index
@@ -32,13 +33,16 @@ fmt:
 lint:
 	golint ./src
 
-run: build
-	./bin/tenyks
+run:
+	@echo "$(OK_COLOR)===> Running$(NO_COLOR)"
+	$(GO) run --race tenyks/tenyks.go
 
 test:
+	@echo "$(OK_COLOR)===> Testing$(NO_COLOR)"
 	$(GO) test ./src/...
 
 clean:
+	@echo "$(WARN_COLOR)===> Cleaning$(NO_COLOR)"
 	rm -rf $(BUILDDIR)
 	rm -rf ./bin
 
@@ -47,6 +51,7 @@ install:
 	install ./bin/tenyks $(INSTALL_BIN)tenyks
 
 uninstall:
+	@echo "$(WARN_COLOR)===> Uninstalling$(NO_COLOR)"
 	rm -rf $(INSTALL_BIN)tenyks
 
 vendor-get:
