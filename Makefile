@@ -37,10 +37,6 @@ run:
 	@echo "$(OK_COLOR)===> Running$(NO_COLOR)"
 	$(GO) run --race tenyks/tenyks.go
 
-test:
-	@echo "$(OK_COLOR)===> Testing$(NO_COLOR)"
-	$(GO) test ./src/...
-
 clean:
 	@echo "$(WARN_COLOR)===> Cleaning$(NO_COLOR)"
 	rm -rf $(BUILDDIR)
