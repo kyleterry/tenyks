@@ -58,10 +58,10 @@ func (self *Connection) ircify(msg []byte) {
 		srv.Version = meta.Version
 		srv.Online = true
 		srv.LastPing = time.Now()
-		self.engine.Registry.RegisterService(srv)
+		self.engine.ServiceRg.RegisterService(srv)
 	case "BYE":
 		meta := message.Meta.(ServiceMeta)
-		srv := self.engine.Registry.GetServiceByName(meta.Name)
+		srv := self.engine.ServiceRg.GetServiceByName(meta.Name)
 		if srv != nil {
 			srv.Online = false
 		}

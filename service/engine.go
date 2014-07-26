@@ -7,7 +7,8 @@ import (
 
 type ServiceEngine struct {
 	Reactor  *PubSubReactor
-	Registry *ServiceRegistry
+	ServiceRg *ServiceRegistry
+	CommandRg *irc.HandlerRegistry
 	ircconns irc.IrcConnections
 }
 
@@ -16,7 +17,8 @@ func NewServiceEngine(conf config.RedisConfig) *ServiceEngine {
 	eng.Reactor = NewPubSubReactor(conf)
 	eng.Reactor.engine = eng
 	eng.Reactor.conn.engine = eng
-	eng.Registry = NewServiceRegistry()
+	eng.ServiceRg = NewServiceRegistry()
+	eng.CommandRg = irc.NewHandlerRegistry()
 	return eng
 }
 
