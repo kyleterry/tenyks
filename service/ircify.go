@@ -2,8 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"fmt"
-	"time"
 
 	"github.com/kyleterry/tenyks/irc"
 )
@@ -41,29 +39,14 @@ func (self *Connection) ircify(msg []byte) {
 		log.Error("[service] Error parsing message: %s", err)
 		return // Just ignore the shit we don't care about
 	}
-	switch message.Command {
-	case "PRIVMSG":
-		conn := self.getIrcConnByName(message.Connection)
-		if conn != nil {
-			msgStr := fmt.Sprintf("%s %s :%s", message.Command, message.Target, message.Payload)
-			conn.Out <- msgStr
-		} else {
-			log.Debug("[service] No such connection `%s`. Ignoring.",
-				message.Connection)
-		}
-	case "REGISTER":
-		meta := message.Meta.(ServiceMeta)
-		srv := &Service{}
-		srv.Name = meta.Name
-		srv.Version = meta.Version
-		srv.Online = true
-		srv.LastPing = time.Now()
-		self.engine.ServiceRg.RegisterService(srv)
-	case "BYE":
-		meta := message.Meta.(ServiceMeta)
-		srv := self.engine.ServiceRg.GetServiceByName(meta.Name)
-		if srv != nil {
-			srv.Online = false
+	self.engine.CommandRg.RegistryMu.Lock()
+	defer self.engine.CommandRg.RegistryMu.Unlock()
+	handlers, ok := self.engine.CommandRg.Handlers[message.Command]
+	if ok {
+		log.Debug("[service] Dispatching handler `%s`", message.Command)
+		for i := handlers.Front(); i != nil; i = i.Next() {
+			handler := i.Value.(*irc.Handler)
+			go handler.Fn(msg)
 		}
 	}
 }
@@ -72,12 +55,7 @@ func (self *Connection) dispatch(msg []byte) {
 	self.ircify(msg)
 }
 
-func (self *Connection) getIrcConnByName(name string) *irc.Connection {
-	conn, ok := self.engine.ircconns[name]
-	if !ok {
-		log.Error("[service] Connection `%s` doesn't exist", name)
-	}
-	return conn
+func dispatch(command string, conn *Connection, msg *Message) {
 }
 
 func NewMessageFromBytes(msg []byte) (message *Message, err error) {

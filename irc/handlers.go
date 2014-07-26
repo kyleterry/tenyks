@@ -8,21 +8,21 @@ import (
 )
 
 type HandlerRegistry struct {
-	handlers   map[string]*list.List
-	registryMu *sync.Mutex
+	Handlers   map[string]*list.List
+	RegistryMu *sync.Mutex
 }
 
 func NewHandlerRegistry() *HandlerRegistry {
-	return &HandlerRegistry{registryMu: &sync.Mutex{}}
+	return &HandlerRegistry{RegistryMu: &sync.Mutex{}}
 }
 
 func (self *HandlerRegistry) AddHandler(name string, handler *Handler) {
-	self.registryMu.Lock()
-	defer self.registryMu.Unlock()
-	if _, ok := self.handlers[name]; !ok {
-		self.handlers[name] = list.New()
+	self.RegistryMu.Lock()
+	defer self.RegistryMu.Unlock()
+	if _, ok := self.Handlers[name]; !ok {
+		self.Handlers[name] = list.New()
 	}
-	self.handlers[name].PushBack(handler)
+	self.Handlers[name].PushBack(handler)
 }
 
 type Handler struct {

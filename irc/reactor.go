@@ -37,9 +37,9 @@ func ConnectionReactor(conn *Connection, reactorCtl <-chan bool) {
 }
 
 func dispatch(command string, conn *Connection, msg *Message) {
-	conn.Registry.registryMu.Lock()
-	defer conn.Registry.registryMu.Unlock()
-	handlers, ok := conn.Registry.handlers[command]
+	conn.Registry.RegistryMu.Lock()
+	defer conn.Registry.RegistryMu.Unlock()
+	handlers, ok := conn.Registry.Handlers[command]
 	if ok {
 		log.Debug("[%s] Dispatching handler `%s`", conn.Name, command)
 		for i := handlers.Front(); i != nil; i = i.Next() {

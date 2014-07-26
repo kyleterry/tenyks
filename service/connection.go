@@ -102,6 +102,14 @@ func (self *Connection) getTenyksChannel() string {
 	return channel
 }
 
+func (self *Connection) getIrcConnByName(name string) *irc.Connection {
+	conn, ok := self.engine.ircconns[name]
+	if !ok {
+		log.Error("[service] Connection `%s` doesn't exist", name)
+	}
+	return conn
+}
+
 func (self *Connection) send() chan<- string {
 	c := make(chan string, 1000)
 	log.Debug("[service] Spawning send loop")

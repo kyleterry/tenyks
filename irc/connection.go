@@ -37,7 +37,7 @@ type Connection struct {
 
 func NewConn(name string, conf config.ConnectionConfig) *Connection {
 	registry := NewHandlerRegistry()
-	registry.handlers = make(map[string]*list.List)
+	registry.Handlers = make(map[string]*list.List)
 	conn := &Connection{
 		Name:            name,
 		Config:          conf,
