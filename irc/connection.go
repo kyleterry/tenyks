@@ -34,6 +34,8 @@ type Connection struct {
 	PongIn          chan bool
 }
 
+// NewConn will create a new instance of an irc.Connection.
+// It will return *irc.Connection
 func NewConn(name string, conf config.ConnectionConfig) *Connection {
 	registry := NewHandlerRegistry()
 	conn := &Connection{
