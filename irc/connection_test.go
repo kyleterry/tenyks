@@ -9,7 +9,7 @@ import (
 	_"code.google.com/p/gomock/gomock"
 )
 
-func TestNewConn(t *testing.T) {
+func TestNewConnNoDial(t *testing.T) {
 	conf := config.ConnectionConfig{
 		Name: "test",
 		Ssl: true,

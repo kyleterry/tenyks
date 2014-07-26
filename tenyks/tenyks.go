@@ -60,6 +60,9 @@ func main() {
 	fmt.Printf(banner + "\n")
 	fmt.Printf(" Version: %s\n\n", TenyksVersion)
 
+	config.ConfigSearch.AddPath("/etc/tenyks/config.json")
+	config.ConfigSearch.AddPath(os.Getenv("HOME") + "/.config/tenyks/config.json")
+
 	// Make configuration from json file
 	conf, conferr := config.NewConfigAutoDiscover()
 	if conferr != nil {

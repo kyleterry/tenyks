@@ -11,6 +11,16 @@ import (
 
 var log = logging.MustGetLogger("tenyks")
 
+type configPaths struct {
+	paths []string
+}
+
+var ConfigSearch configPaths
+
+func (self *configPaths) AddPath(path string) {
+	ConfigSearch.paths = append(ConfigSearch.paths, path)
+}
+
 type Config struct {
 	Debug       bool
 	Redis       RedisConfig
@@ -43,21 +53,21 @@ type ConnectionConfig struct {
 	Ssl      bool
 }
 
+// discoverConfig will check to see if a config has been passed to tenyks on
+// the command line or it will iterate over ConfigSearch paths and look for a
+// config in the paths made with *configPaths.AddPath().
+// It will return a string of either the path found to have a config or "".
 func discoverConfig() string {
-	// TODO: This is temporary. Please refactor
-	var filename string
 	if len(os.Args) > 1 {
-		filename = os.Args[1]
+		return os.Args[1]
 	} else {
-		if _, err := os.Stat("/etc/tenyks/config.json"); err == nil {
-			filename = "/etc/tenyks/config.json"
-		} else if _, err := os.Stat(os.Getenv("HOME") + "/.config/tenyks/config.json"); err == nil {
-			filename = os.Getenv("HOME") + "/.config/tenyks/config.json"
-		} else {
-			return ""
+		for _, path := range ConfigSearch.paths {
+			if _, err := os.Stat(path); err == nil {
+				return path
+			}
 		}
 	}
-	return filename
+	return ""
 }
 
 func NewConfigAutoDiscover() (conf *Config, err error) {
