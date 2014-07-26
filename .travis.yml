@@ -5,6 +5,7 @@ go:
 
 install:
   - go get ./...
+  - go get code.google.com/p/gomock/gomock
 
 script: go test ./...
 
