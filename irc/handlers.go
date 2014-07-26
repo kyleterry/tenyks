@@ -13,7 +13,10 @@ type HandlerRegistry struct {
 }
 
 func NewHandlerRegistry() *HandlerRegistry {
-	return &HandlerRegistry{RegistryMu: &sync.Mutex{}}
+	return &HandlerRegistry{
+		Handlers: make(map[string]*list.List),
+		RegistryMu: &sync.Mutex{},
+	}
 }
 
 func (self *HandlerRegistry) AddHandler(name string, handler *Handler) {

@@ -2,7 +2,6 @@ package irc
 
 import (
 	"bufio"
-	"container/list"
 	"crypto/tls"
 	"fmt"
 	"net"
@@ -37,7 +36,6 @@ type Connection struct {
 
 func NewConn(name string, conf config.ConnectionConfig) *Connection {
 	registry := NewHandlerRegistry()
-	registry.Handlers = make(map[string]*list.List)
 	conn := &Connection{
 		Name:            name,
 		Config:          conf,
