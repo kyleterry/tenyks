@@ -20,12 +20,12 @@ type Config struct {
 }
 
 type RedisConfig struct {
-	Host          string `json:"host","localhost"`
-	Port          int
-	Db            int
-	Password      string
-	TenyksPrefix  string
-	ServicePrefix string
+	Host           string `json:"host","localhost"`
+	Port           int
+	Db             int
+	Password       string
+	TenyksChannel  string
+	ServiceChannel string
 }
 
 type ConnectionConfig struct {

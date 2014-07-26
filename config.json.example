@@ -4,8 +4,8 @@
         "port": 6379,
         "db": 0,
         "password": "",
-        "tenyksPrefix": "tenyks.robot",
-        "servicePrefix": "tenyks.service"
+        "tenyksChannel": "tenyks.robot.broadcast",
+        "serviceChannel": "tenyks.service.broadcast"
     },
     "connections": [
         {

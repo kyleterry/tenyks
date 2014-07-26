@@ -87,11 +87,19 @@ func (self *Connection) publish(channel, msg string) {
 }
 
 func (self *Connection) getServiceChannel() string {
-	return self.config.ServicePrefix + ".broadcast"
+	channel := "tenyks.service.broadcast"
+	if self.config.ServiceChannel != "" {
+		channel = self.config.ServiceChannel
+	}
+	return channel
 }
 
 func (self *Connection) getTenyksChannel() string {
-	return self.config.TenyksPrefix + ".broadcast"
+	channel := "tenyks.robot.broadcast"
+	if self.config.TenyksChannel != "" {
+		channel = self.config.TenyksChannel
+	}
+	return channel
 }
 
 func (self *Connection) send() chan<- string {
