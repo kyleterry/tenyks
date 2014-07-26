@@ -215,11 +215,11 @@ func (self *Connection) GetCurrentNick() string {
 }
 
 func (self *Connection) String() string {
-	msg := "Tenyks Connection for " + self.Name + ".\n"
+	msg := "Tenyks Connection for " + self.Name + "; "
 	if self.connected {
-		msg += "Connected to " + self.currentServer + "\n"
+		msg += "Connected to " + self.currentServer
 	} else {
-		msg += "Disconnected\n"
+		msg += "Disconnected"
 	}
 	return msg
 }
