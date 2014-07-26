@@ -53,8 +53,9 @@ func NewConn(name string, conf config.ConnectionConfig) *Connection {
 	return conn
 }
 
-// Goroutine that returns a channel that is true if connected successfully
-// and false if not.
+// Connect is a goroutine that returns a channel that is true if connected
+// successfully and false if not.
+// It returns a bool channel that when closed or is passed true means success.
 func (self *Connection) Connect() chan bool {
 	c := make(chan bool, 1)
 	go func() {
@@ -105,6 +106,8 @@ func (self *Connection) Connect() chan bool {
 	return c
 }
 
+// Disconnect will hangup the connection with IRC and reset channels and other
+// important bootstrap attributes back to the defaults.
 func (self *Connection) Disconnect() {
 	if self.connected {
 		log.Debug("[%s] Disconnect called", self.Name)
@@ -116,6 +119,9 @@ func (self *Connection) Disconnect() {
 	}
 }
 
+// send will kick off a gorouting that will loop forever. It will recieve data
+// on a channel and send that to the IRC socket.
+// It will return a string channel when called.
 func (self *Connection) send() chan<- string {
 	c := make(chan string, 1000)
 	// goroutine for sending data to the IRC server
@@ -136,13 +142,26 @@ func (self *Connection) send() chan<- string {
 	return c
 }
 
+// write will recieve a string and write it to the IO buffer. It then flushes
+// the buffer which in turn will call write() on the socket.
+// It might return an error if something goes wrong.
 func (self *Connection) write(line string) error {
-	self.io.WriteString(line + "\r\n")
-	self.io.Flush()
+	_, wrerr := self.io.WriteString(line + "\r\n")
+	if wrerr != nil {
+		return wrerr
+	}
+	flerr := self.io.Flush()
+	if flerr != nil {
+		return flerr
+	}
 	return nil
 }
 
-// Recv channel factory
+// recv will kick off a goroutine that will loop forever. It will recieve data
+// from a bufio reader and send that to a string channel. Since sockets can 
+// send nil when a disconnect occurs, it has a minor responsibility of calling
+// the Disconnect method when that happens.
+// It will return a string channel when called.
 func (self *Connection) recv() <-chan string {
 	c := make(chan string, 1000)
 	// goroutine for receiving data from the IRC server
@@ -181,10 +200,14 @@ func (self *Connection) watchdog() {
 	}
 }
 
+// IsConnected can be called to detemine if a connection is still connected.
+// It returns a bool
 func (self *Connection) IsConnected() bool {
 	return self.connected
 }
 
+// GetCurrentNick will return the nick currently being used in the IRC connection
+// It returns a string
 func (self *Connection) GetCurrentNick() string {
 	return self.currentNick
 }
