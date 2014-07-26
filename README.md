@@ -74,7 +74,9 @@ cp config.json.example ${HOME}/tenyks-config.json
 
 If a config file is excluded when running, Tenyks will look for configuration
 in `/etc/tenyks/config.json` first, then
-`${HOME}/.config/tenyks/config.json` then it will give up.
+`${HOME}/.config/tenyks/config.json` then it will give up. These are defined
+in tenyks/tenyks.go and added with ConfigSearch.AddPath(). If you feel more
+paths should be searched, please feel free to add it and submit a pull request.
 
 ## Testing
 
