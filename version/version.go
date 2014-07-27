@@ -1,5 +1,5 @@
 package version
 
 const (
-	TenyksVersion = "1.0"
+	TenyksVersion = "2.0"
 )
