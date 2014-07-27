@@ -46,7 +46,7 @@ func (self *Connection) ircify(msg []byte) {
 		log.Debug("[service] Dispatching handler `%s`", message.Command)
 		for i := handlers.Front(); i != nil; i = i.Next() {
 			handler := i.Value.(*irc.Handler)
-			go handler.Fn(msg)
+			go handler.Fn(self, message)
 		}
 	}
 }
