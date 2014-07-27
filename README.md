@@ -27,7 +27,9 @@ or bring up services without the need to restart the bot or implement a
 complicated hot pluggable core. Services that crash also don't run the risk of
 taking everything else down with it.
 
-## Installation and building
+## Installation and whatnot
+
+Current supported Go version is 1.3
 
 Since Tenyks is pretty new, you will need to build the bot yourself. Step 1 is
 making sure you have a redis-server running. I won't go into detail there as I'm
@@ -68,7 +70,7 @@ get started. You just need to swap out the server information.
 cp config.json.example ${HOME}/tenyks-config.json
 ```
 
-## Running
+### Running
 
 `tenyks ${HOME}/tenyks-config.json`
 
