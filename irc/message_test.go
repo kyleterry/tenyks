@@ -18,4 +18,8 @@ func TestParseMessage(t *testing.T) {
 	if msg.Trail != "tenyks: messages are awesome" {
 		t.Error("Expected", "tenyks: messages are awesome", "got", msg)
 	}
+
+	if msg.Params[0] != "#tenyks" {
+		t.Error("Expected", "#tenyks", "got", msg.Params[0])
+	}
 }
