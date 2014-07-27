@@ -160,7 +160,7 @@ Example JSON response from a service to Tenyks destined for IRC
 
 This service is in python and uses the
 [tenyks-service](https://github.com/kyleterry/tenyks-service) package. You can
-install that with pip: `pip install tenyks-service`.
+install that with pip: `pip install tenyksservice`.
 
 ```python
 from tenyksservice import TenyksService, run_service
