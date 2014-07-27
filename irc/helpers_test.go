@@ -25,3 +25,11 @@ func TestIsChannel(t *testing.T) {
 		t.Error("Expected", false, "got", true)
 	}
 }
+
+//func TestStripNickOnDirect(msg string, nick string) {
+func TestStripNickOnDirect(t *testing.T) {
+	new_msg := StripNickOnDirect("kyle: this is a message", "kyle")
+	if new_msg != "this is a message" {
+		t.Error("Expected", "this is a message", "got", new_msg)
+	}
+}
