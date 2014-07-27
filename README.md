@@ -80,7 +80,8 @@ paths should be searched, please feel free to add it and submit a pull request.
 
 ## Testing
 
-I'm a horrible person. There aren't tests yet. I'll get right on this...
+I'm a horrible person. ~~There aren't tests yet. I'll get right on this...~~.
+There are only a few tests.
 
 ## Services
 
