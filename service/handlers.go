@@ -29,7 +29,7 @@ func (self *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message
 	serviceMsg.Target = msg.Params[0]
 	serviceMsg.Command = msg.Command
 	serviceMsg.Mask = msg.Host
-	serviceMsg.Direct = irc.IsDirect(msg.Trail, conn)
+	serviceMsg.Direct = irc.IsDirect(msg.Trail, conn.GetCurrentNick())
 	serviceMsg.Nick = msg.Nick
 	serviceMsg.Host = msg.Host
 	serviceMsg.FullMsg = msg.RawMsg

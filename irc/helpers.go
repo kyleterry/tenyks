@@ -4,8 +4,8 @@ import (
 	"strings"
 )
 
-func IsDirect(msg string, conn *Connection) bool {
-	nick := conn.GetCurrentNick()
+func IsDirect(msg string, currentNick string) bool {
+	nick := currentNick
 	if len(msg) > len(nick) {
 		possibleDelimeter := string(msg[len(nick)]) // not an off by one. I just happened to need that index.
 		if msg[:len(nick)] == nick &&
