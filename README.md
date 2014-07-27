@@ -22,7 +22,7 @@ the same method.
 This design, while not anything new, is very flexible because one can write
 their service in any number of languages. The current service implementation
 used for proof of concept is written in Python. You can find that
-[here](./legacy/tenyks/client). It's also beneficial because you can take down
+[here](https://github.com/kyleterry/tenyks-service). It's also beneficial because you can take down
 or bring up services without the need to restart the bot or implement a
 complicated hot pluggable core. Services that crash also don't run the risk of
 taking everything else down with it.
