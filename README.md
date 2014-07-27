@@ -158,7 +158,44 @@ Example JSON response from a service to Tenyks destined for IRC
 
 ### Lets make a service!
 
-TODO
+This service is in python and uses the
+[tenyks-service](https://github.com/kyleterry/tenyks-service) package. You can
+install that with pip: `pip install tenyks-service`.
+
+```python
+from tenyksservice import TenyksService, run_service
+
+
+class Hello(TenyksService):
+    direct_only = True
+    irc_message_filters = {
+        'hello': [r"^(?i)(hi|hello|sup|hey), I'm (?P<name>(.*))$"]
+    }
+
+    def handle_hello(self, data, match):
+        name = match.groupdict()['name']
+        self.logger.debug('Saying hello to {name}'.format(name=name))
+        self.send('How are you {name}?!'.format(name=name), data)
+
+
+def main():
+    run_service(Hello)
+
+
+if __name__ == '__main__':
+    main()
+```
+
+Okay, we need to generate some settings for our new service.
+
+```bash
+tenyks-service-mkconfig hello >> hello_settings.py
+```
+
+Now lets run it: `python main.py hello_settings.py`
+
+If you now join the channel that tenyks is in and say "tenyks: hello, I'm Alice"
+then tenyks should respond with "How are you Alice?!".
 
 ## Help me
 
