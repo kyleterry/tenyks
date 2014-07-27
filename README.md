@@ -215,6 +215,9 @@ for communication over TLS and have authentication baked in. One use-case is
 giving your friends authentication tokens they can use to authenticate their
 services with your IRC bot. If someone is trouble, you cut them off.
 
+I'm also planning a 2.0 branch which will use ZeroMQ instead of Redis. I like
+embedded stuff.
+
 ## Credit where credit is due
 
 Service oriented anything isn't new. This idea came from an old
