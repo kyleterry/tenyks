@@ -35,8 +35,8 @@ func (self *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message
 	serviceMsg.FullMsg = msg.RawMsg
 	serviceMsg.Full_message = msg.RawMsg
 	serviceMsg.User = msg.Ident
-	serviceMsg.FromChannel = irc.IsChannel(msg)
-	serviceMsg.From_channel = irc.IsChannel(msg)
+	serviceMsg.FromChannel = irc.IsChannel(msg.Params[0])
+	serviceMsg.From_channel = irc.IsChannel(msg.Params[0])
 	serviceMsg.Connection = conn.Name
 	serviceMsg.Meta = &TenyksMeta{"Tenyks", TenyksVersion}
 	if serviceMsg.Direct {

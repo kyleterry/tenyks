@@ -18,8 +18,8 @@ func IsDirect(msg string, currentNick string) bool {
 	return false
 }
 
-func IsChannel(msg *Message) bool {
-	if string(msg.Params[0][0]) == "#" {
+func IsChannel(target string) bool {
+	if string(target[0]) == "#" {
 		return true
 	}
 	return false

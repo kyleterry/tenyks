@@ -15,3 +15,13 @@ func TestIsDirect(t *testing.T) {
 		t.Error("Expected", false, "got", true)
 	}
 }
+
+func TestIsChannel(t *testing.T) {
+	if !IsChannel("#test") {
+		t.Error("Expected", true, "got", false)
+	}
+
+	if IsChannel("test") {
+		t.Error("Expected", false, "got", true)
+	}
+}
