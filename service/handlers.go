@@ -80,3 +80,21 @@ func (self *Connection) ByeServiceHandler(msg *Message) {
 		srv.Online = false
 	}
 }
+
+type ServiceListMessage struct {
+	Services map[string]*Service `json:"services"`
+	Command string `json:"command"`
+	Meta TenyksMeta `json:"meta"`
+}
+
+func (self *Connection) ListServiceHandler(msg *Message) {
+	serviceList := &ServiceListMessage{}
+	serviceList.Services = self.engine.ServiceRg.services
+	serviceList.Command = "SERVICES"
+	serviceList.Meta = TenyksMeta{"Tenyks", TenyksVersion}
+	jsonBytes, err := json.Marshal(serviceList)
+	if err != nil {
+		log.Fatal(err)
+	}
+	self.Out <- string(jsonBytes[:])
+}

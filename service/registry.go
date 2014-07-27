@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"sync"
 	"time"
 )
@@ -45,4 +46,12 @@ type Service struct {
 func NewService() *Service {
 	service := &Service{}
 	return service
+}
+
+func (self *Service) String() string {
+	online := "offline"
+	if self.Online {
+		online = "online"
+	}
+	return fmt.Sprintf(self.Name, online)
 }
