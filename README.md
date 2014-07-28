@@ -200,6 +200,14 @@ Now lets run it: `python main.py hello_settings.py`
 If you now join the channel that tenyks is in and say "tenyks: hello, I'm Alice"
 then tenyks should respond with "How are you Alice?!".
 
+### More Examples
+
+There is a repository with some services on my Github called
+[tenyks-contrib](https://github.com/kyleterry/tenyks-contrib). These are all
+using the older tenyksclient class and will probably work out of the box with
+Tenyks. I'm going to work on moving them to the newer
+[tenyks-service](https://github.com/kyleterry/tenyks-service) class.
+
 ## Help me
 
 I'm a new Go programmer. Surely there's some shitty shit in here. You can help
