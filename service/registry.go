@@ -23,6 +23,8 @@ func (self *ServiceRegistry) RegisterService(srv *Service) {
 	defer self.regMu.Unlock()
 	if _, ok := self.services[srv.Name]; ok {
 		log.Info("[service] Service `%s` already registered", srv.Name)
+		srv, _ = self.services[srv.Name]
+		srv.Online = ServiceOnline
 		return
 	}
 	self.services[srv.Name] = srv
@@ -40,6 +42,7 @@ type Service struct {
 	Version        string
 	Online         bool
 	LastPing       time.Time
+	LastPong       time.Time
 	RespondedCount int
 }
 
