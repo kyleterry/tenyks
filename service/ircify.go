@@ -55,9 +55,6 @@ func (self *Connection) dispatch(msg []byte) {
 	self.ircify(msg)
 }
 
-func dispatch(command string, conn *Connection, msg *Message) {
-}
-
 func NewMessageFromBytes(msg []byte) (message *Message, err error) {
 	message = new(Message)
 	jsonerr := json.Unmarshal(msg, &message)
