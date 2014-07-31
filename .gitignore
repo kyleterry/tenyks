@@ -10,3 +10,8 @@ bin
 _vendor
 build
 .vagrant
+_cache
+_site
+site
+site.o
+site.hi
