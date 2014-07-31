@@ -83,9 +83,11 @@ paths should be searched, please feel free to add it and submit a pull request.
 ### Vagrant
 
 If you want to play _right fucking now_, you can just use vagrant: `vagrant up`
-and then `vagrant ssh`. Tenyks should be build and available in your `$PATH`.
+and then `vagrant ssh`. Tenyks should be built and available in your `$PATH`.
 There is also an IRC and Redis server running. You can connect to that IRC
 server on `192.168.33.66` with your IRC client.
+
+Just run `tenyks & && disown` from the vagrant box and start playing.
 
 ## Testing
 
