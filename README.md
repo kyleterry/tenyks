@@ -80,6 +80,13 @@ in `/etc/tenyks/config.json` first, then
 in tenyks/tenyks.go and added with ConfigSearch.AddPath(). If you feel more
 paths should be searched, please feel free to add it and submit a pull request.
 
+### Vagrant
+
+If you want to play _right fucking now_, you can just use vagrant: `vagrant up`
+and then `vagrant ssh`. Tenyks should be build and available in your `$PATH`.
+There is also an IRC and Redis server running. You can connect to that IRC
+server on `192.168.33.66` with your IRC client.
+
 ## Testing
 
 I'm a horrible person. ~~There aren't tests yet. I'll get right on this...~~.
