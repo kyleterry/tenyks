@@ -22,7 +22,6 @@ func (self *ServiceEngine) addBaseHandlers() {
 	self.AddHandler("PRIVMSG", (*Connection).PrivmsgServiceHandler)
 	self.AddHandler("REGISTER", (*Connection).RegisterServiceHandler)
 	self.AddHandler("BYE", (*Connection).ByeServiceHandler)
-	self.AddHandler("PONG", (*Connection).PongServiceHandler)
 }
 
 func (self *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message) {
@@ -39,7 +38,7 @@ func (self *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message
 	serviceMsg.FromChannel = irc.IsChannel(msg.Params[0])
 	serviceMsg.From_channel = irc.IsChannel(msg.Params[0])
 	serviceMsg.Connection = conn.Name
-	serviceMsg.Meta = &Meta{"Tenyks", TenyksVersion}
+	serviceMsg.Meta = &TenyksMeta{"Tenyks", TenyksVersion}
 	if serviceMsg.Direct {
 		serviceMsg.Payload = irc.StripNickOnDirect(msg.Trail, conn.GetCurrentNick())
 	} else {
@@ -65,8 +64,7 @@ func (self *Connection) PrivmsgServiceHandler(msg *Message) {
 }
 
 func (self *Connection) RegisterServiceHandler(msg *Message) {
-	meta := msg.Meta
-	log.Debug("[service] %s wants to register", meta.Name)
+	meta := msg.Meta.(ServiceMeta)
 	srv := &Service{}
 	srv.Name = meta.Name
 	srv.Version = meta.Version
@@ -76,8 +74,7 @@ func (self *Connection) RegisterServiceHandler(msg *Message) {
 }
 
 func (self *Connection) ByeServiceHandler(msg *Message) {
-	meta := msg.Meta
-	log.Debug("[service] %s is hanging up", meta.Name)
+	meta := msg.Meta.(ServiceMeta)
 	srv := self.engine.ServiceRg.GetServiceByName(meta.Name)
 	if srv != nil {
 		srv.Online = false
@@ -86,15 +83,15 @@ func (self *Connection) ByeServiceHandler(msg *Message) {
 
 type ServiceListMessage struct {
 	Services map[string]*Service `json:"services"`
-	Command  string              `json:"command"`
-	Meta     *Meta               `json:"meta"`
+	Command string `json:"command"`
+	Meta TenyksMeta `json:"meta"`
 }
 
 func (self *Connection) ListServiceHandler(msg *Message) {
 	serviceList := &ServiceListMessage{}
 	serviceList.Services = self.engine.ServiceRg.services
 	serviceList.Command = "SERVICES"
-	serviceList.Meta = &Meta{"Tenyks", TenyksVersion}
+	serviceList.Meta = TenyksMeta{"Tenyks", TenyksVersion}
 	jsonBytes, err := json.Marshal(serviceList)
 	if err != nil {
 		log.Fatal(err)
