@@ -8,7 +8,7 @@ import (
 )
 
 type ServiceRegistry struct {
-	services map[string]*Service
+	services map[uuid.UUID]*Service
 	regMu    *sync.Mutex
 }
 
@@ -22,7 +22,7 @@ func NewServiceRegistry() *ServiceRegistry {
 func (self *ServiceRegistry) RegisterService(srv *Service) {
 	self.regMu.Lock()
 	defer self.regMu.Unlock()
-	if _, ok := self.services[srv.Name]; ok {
+	if _, ok := self.services[srv.UUID]; ok {
 		log.Info("[service] Service `%s` already registered", srv.Name)
 		srv, _ = self.services[srv.Name]
 		srv.Online = ServiceOnline
