@@ -5,20 +5,15 @@
 VAGRANTFILE_API_VERSION = "2"
 
 $script = <<SCRIPT
-apt-get update
-apt-get -q -y install ngircd redis-server wget
-cd /tmp
-wget http://golang.org/dl/go1.3.src.tar.gz
-tar xvf go1.3.src.tar.gz
-cd go/src
-./all.bash
-cd ..
-cp bin/go* /usr/local/bin/
-cd /vagrant
+apt-get update -qq
+apt-get -q -y install ngircd redis-server wget golang git
+mkdir -p /tmp/tenyks
+cd /tmp/tenyks
+cp -r /vagrant/* /tmp/tenyks
 make
 make install
-[ -f /usr/local/bin/tenyks ] || echo "Tenyks did not install" && exit 1
-mkdir /etc/tenyks
+make clean
+mkdir -p /etc/tenyks
 cp config.json.example /etc/tenyks/config.json
 SCRIPT
 
@@ -28,8 +23,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # please see the online documentation at vagrantup.com.
 
   # Every Vagrant virtual environment requires a box to build off of.
-  config.vm.box = "debian_73"
-  config.vm.box_url = "http://puppet-vagrant-boxes.puppetlabs.com/debian-73-x64-virtualbox-nocm.box"
+  config.vm.box = "ubuntu/trusty64"
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
