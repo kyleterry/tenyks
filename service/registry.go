@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 	"time"
+	"code.google.com/p/go-uuid/uuid"
 )
 
 type ServiceRegistry struct {
@@ -39,6 +40,7 @@ func (self *ServiceRegistry) GetServiceByName(name string) *Service {
 
 type Service struct {
 	Name           string
+	UUID           uuid.UUID
 	Version        string
 	Online         bool
 	LastPing       time.Time

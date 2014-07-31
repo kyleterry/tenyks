@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 
+	"code.google.com/p/go-uuid/uuid"
 	"github.com/kyleterry/tenyks/irc"
 )
 
@@ -24,8 +25,9 @@ type Message struct {
 }
 
 type Meta struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
+	Name    string    `json:"name"`
+	Version string    `json:"version"`
+	UUID    uuid.UUID `json:"UUID"`
 }
 
 func (self *Connection) ircify(msg []byte) {
