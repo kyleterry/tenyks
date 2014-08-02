@@ -217,6 +217,9 @@ using the older tenyksclient class and will probably work out of the box with
 Tenyks. I'm going to work on moving them to the newer
 [tenyks-service](https://github.com/kyleterry/tenyks-service) class.
 
+A good example of something more dynamic is the [Weather
+service](https://github.com/kyleterry/tenyks-contrib/blob/master/src/tenykswunderground/main.py).
+
 ## Help me
 
 I'm a new Go programmer. Surely there's some shitty shit in here. You can help
