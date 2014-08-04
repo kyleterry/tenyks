@@ -1,3 +1,4 @@
-Look into https://github.com/tools/godep
-ZeroMQ
-https://github.com/mitchellh/colorstring
+* Look into https://github.com/tools/godep
+* ZeroMQ
+* https://github.com/mitchellh/colorstring
+* Ping services on thier own pubsub channels (maybe)
