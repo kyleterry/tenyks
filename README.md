@@ -10,8 +10,10 @@
                 |___/           
 ```
 
-Tenyks is a service oriented IRC bot rewritten in Go. Service/core
-communication is handled by Redis Pub/Sub via json payloads.
+Tenyks is a computer program designed to relay messages between connections to
+IRC networks and custom built services written in any number of languages.
+More detailed, Tenyks is a service oriented IRC bot rewritten in Go.
+Service/core communication is handled by Redis Pub/Sub via json payloads.
 
 The core acts like a relay between IRC channels and remote services. When a
 message comes in from IRC, that message is turned into a json data structure,
