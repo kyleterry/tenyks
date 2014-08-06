@@ -2,3 +2,4 @@
 * ZeroMQ
 * https://github.com/mitchellh/colorstring
 * Ping services on thier own pubsub channels (maybe)
+* Port some python-tenyks tasks to github issue tracker
