@@ -32,10 +32,8 @@ func (self *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message
 	serviceMsg.Direct = irc.IsDirect(msg.Trail, conn.GetCurrentNick())
 	serviceMsg.Nick = msg.Nick
 	serviceMsg.Host = msg.Host
-	serviceMsg.FullMsg = msg.RawMsg
 	serviceMsg.Full_message = msg.RawMsg
 	serviceMsg.User = msg.Ident
-	serviceMsg.FromChannel = irc.IsChannel(msg.Params[0])
 	serviceMsg.From_channel = irc.IsChannel(msg.Params[0])
 	serviceMsg.Connection = conn.Name
 	serviceMsg.Meta = &TenyksMeta{"Tenyks", TenyksVersion}
@@ -83,8 +81,8 @@ func (self *Connection) ByeServiceHandler(msg *Message) {
 
 type ServiceListMessage struct {
 	Services map[string]*Service `json:"services"`
-	Command string `json:"command"`
-	Meta TenyksMeta `json:"meta"`
+	Command  string              `json:"command"`
+	Meta     TenyksMeta          `json:"meta"`
 }
 
 func (self *Connection) ListServiceHandler(msg *Message) {

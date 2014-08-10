@@ -110,10 +110,8 @@ Example JSON payload sent to services:
     "direct":true,
     "nick":"vhost-",
     "host":"unaffiliated/vhost-",
-    "fullmsg":":vhost-!~vhost@unaffiliated/vhost- PRIVMSG #tenyks :tenyks-demo: weather 97217",
     "full_message":":vhost-!~vhost@unaffiliated/vhost- PRIVMSG #tenyks :tenyks-demo: weather 97217",
     "user":"~vhost",
-    "fromchannel":true,
     "from_channel":true,
     "connection":"freenode",
     "payload":"weather 97217",
@@ -124,9 +122,6 @@ Example JSON payload sent to services:
 }
 ```
 
-fullmsg, full_message and fromchannel from_channel are for backwards
-compatibility with older services.
-
 ### To Tenyks for IRC
 
 Example JSON response from a service to Tenyks destined for IRC
@@ -135,7 +130,6 @@ Example JSON response from a service to Tenyks destined for IRC
 {
     "target":"#tenyks",
     "command":"PRIVMSG",
-    "fromchannel":true,
     "from_channel":true,
     "connection":"freenode",
     "payload":"Portland, OR is 63.4 F (17.4 C) and Overcast; windchill is NA; winds are Calm",
