@@ -46,7 +46,6 @@ func (self *Connection) AddHandler(name string, fn ircfn) {
 }
 
 func (self *Connection) addBaseHandlers() {
-	initCommandHandlers()
 	self.AddHandler("bootstrap", (*Connection).BootstrapHandler)
 	self.AddHandler("send_ping", (*Connection).SendPing)
 	self.AddHandler("001", (*Connection).ConnectedHandler)
@@ -100,6 +99,7 @@ func (self *Connection) NickInUseHandler(msg *Message) {
 
 func (self *Connection) ConnectedHandler(msg *Message) {
 	log.Info("[%s] Sending user commands", self.Name)
+	initCommandHandlers()
 	for _, commandHook := range self.Config.Commands {
 		ircsafe, err := ConvertSlashCommand(commandHook)
 		if err != nil { // If there's an error, just try to send commandHook
