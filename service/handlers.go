@@ -33,10 +33,8 @@ func (self *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message
 	serviceMsg.Direct = irc.IsDirect(msg.Trail, conn.GetCurrentNick())
 	serviceMsg.Nick = msg.Nick
 	serviceMsg.Host = msg.Host
-	serviceMsg.FullMsg = msg.RawMsg
 	serviceMsg.Full_message = msg.RawMsg
 	serviceMsg.User = msg.Ident
-	serviceMsg.FromChannel = irc.IsChannel(msg.Params[0])
 	serviceMsg.From_channel = irc.IsChannel(msg.Params[0])
 	serviceMsg.Connection = conn.Name
 	serviceMsg.Meta = &Meta{"Tenyks", TenyksVersion}

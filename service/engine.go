@@ -8,10 +8,10 @@ import (
 )
 
 type ServiceEngine struct {
-	Reactor  *PubSubReactor
+	Reactor   *PubSubReactor
 	ServiceRg *ServiceRegistry
 	CommandRg *irc.HandlerRegistry
-	ircconns irc.IrcConnections
+	ircconns  irc.IrcConnections
 }
 
 func NewServiceEngine(conf config.RedisConfig) *ServiceEngine {

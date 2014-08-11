@@ -10,8 +10,10 @@
                 |___/           
 ```
 
-Tenyks is a service oriented IRC bot rewritten in Go. Service/core
-communication is handled by Redis Pub/Sub via json payloads.
+Tenyks is a computer program designed to relay messages between connections to
+IRC networks and custom built services written in any number of languages.
+More detailed, Tenyks is a service oriented IRC bot rewritten in Go.
+Service/core communication is handled by Redis Pub/Sub via json payloads.
 
 The core acts like a relay between IRC channels and remote services. When a
 message comes in from IRC, that message is turned into a json data structure,
@@ -80,6 +82,15 @@ in `/etc/tenyks/config.json` first, then
 in tenyks/tenyks.go and added with ConfigSearch.AddPath(). If you feel more
 paths should be searched, please feel free to add it and submit a pull request.
 
+### Vagrant
+
+If you want to play _right fucking now_, you can just use vagrant: `vagrant up`
+and then `vagrant ssh`. Tenyks should be built and available in your `$PATH`.
+There is also an IRC and Redis server running. You can connect to that IRC
+server on `192.168.33.66` with your IRC client.
+
+Just run `tenyks & && disown` from the vagrant box and start playing.
+
 ## Testing
 
 I'm a horrible person. ~~There aren't tests yet. I'll get right on this...~~.
@@ -99,10 +110,8 @@ Example JSON payload sent to services:
     "direct":true,
     "nick":"vhost-",
     "host":"unaffiliated/vhost-",
-    "fullmsg":":vhost-!~vhost@unaffiliated/vhost- PRIVMSG #tenyks :tenyks-demo: weather 97217",
     "full_message":":vhost-!~vhost@unaffiliated/vhost- PRIVMSG #tenyks :tenyks-demo: weather 97217",
     "user":"~vhost",
-    "fromchannel":true,
     "from_channel":true,
     "connection":"freenode",
     "payload":"weather 97217",
@@ -113,9 +122,6 @@ Example JSON payload sent to services:
 }
 ```
 
-fullmsg, full_message and fromchannel from_channel are for backwards
-compatibility with older services.
-
 ### To Tenyks for IRC
 
 Example JSON response from a service to Tenyks destined for IRC
@@ -124,7 +130,6 @@ Example JSON response from a service to Tenyks destined for IRC
 {
     "target":"#tenyks",
     "command":"PRIVMSG",
-    "fromchannel":true,
     "from_channel":true,
     "connection":"freenode",
     "payload":"Portland, OR is 63.4 F (17.4 C) and Overcast; windchill is NA; winds are Calm",
@@ -207,6 +212,9 @@ There is a repository with some services on my Github called
 using the older tenyksclient class and will probably work out of the box with
 Tenyks. I'm going to work on moving them to the newer
 [tenyks-service](https://github.com/kyleterry/tenyks-service) class.
+
+A good example of something more dynamic is the [Weather
+service](https://github.com/kyleterry/tenyks-contrib/blob/master/src/tenykswunderground/main.py).
 
 ## Help me
 
