@@ -14,9 +14,11 @@ type Message struct {
 	Direct       bool   `json:"direct"`
 	Nick         string `json:"nick"`
 	Host         string `json:"host"`
-	Full_message string `json:"full_message"`
+	FullMsg      string `json:"fullmsg"`
+	Full_message string `json:"full_message"` // Legacy for compat with py version
 	User         string `json:"user"`
-	From_channel bool   `json:"from_channel"`
+	FromChannel  bool   `json:"fromchannel"`
+	From_channel bool   `json:"from_channel"` // Legacy for compat with py version
 	Connection   string `json:"connection"`
 	Payload      string `json:"payload"`
 	Meta         *Meta  `json:"meta"`
