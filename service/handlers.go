@@ -37,7 +37,7 @@ func (self *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message
 	serviceMsg.User = msg.Ident
 	serviceMsg.From_channel = irc.IsChannel(msg.Params[0])
 	serviceMsg.Connection = conn.Name
-	serviceMsg.Meta = &Meta{"Tenyks", TenyksVersion}
+	serviceMsg.Meta = &Meta{"Tenyks", TenyksVersion, nil}
 	if serviceMsg.Direct {
 		serviceMsg.Payload = irc.StripNickOnDirect(msg.Trail, conn.GetCurrentNick())
 	} else {
@@ -76,7 +76,7 @@ func (self *Connection) RegisterServiceHandler(msg *Message) {
 func (self *Connection) ByeServiceHandler(msg *Message) {
 	meta := msg.Meta
 	log.Debug("[service] %s is hanging up", meta.Name)
-	srv := self.engine.ServiceRg.GetServiceByName(meta.Name)
+	srv := self.engine.ServiceRg.GetServiceByUUID(meta.Name)
 	if srv != nil {
 		srv.Online = false
 	}
@@ -92,7 +92,7 @@ func (self *Connection) ListServiceHandler(msg *Message) {
 	serviceList := &ServiceListMessage{}
 	serviceList.Services = self.engine.ServiceRg.services
 	serviceList.Command = "SERVICES"
-	serviceList.Meta = &Meta{"Tenyks", TenyksVersion}
+	serviceList.Meta = &Meta{"Tenyks", TenyksVersion, nil}
 	jsonBytes, err := json.Marshal(serviceList)
 	if err != nil {
 		log.Fatal(err)
