@@ -23,15 +23,17 @@ func (self *ServiceRegistry) RegisterService(srv *Service) {
 	self.regMu.Lock()
 	defer self.regMu.Unlock()
 	if _, ok := self.services[srv.UUID.String()]; ok {
-		log.Info("[service] Service `%s` already registered", srv.Name)
-		srv, _ = self.services[srv.Name]
+		log.Info("[service] Service `%s` already registered", srv.UUID.String())
+		srv, _ = self.services[srv.UUID.String()]
 		srv.Online = ServiceOnline
 		return
 	}
-	self.services[srv.Name] = srv
+	self.services[srv.UUID.String()] = srv
 }
 
 func (self *ServiceRegistry) GetServiceByUUID(uuid string) *Service {
+	self.regMu.Lock()
+	defer self.regMu.Unlock()
 	if srv, ok := self.services[uuid]; ok {
 		return srv
 	}

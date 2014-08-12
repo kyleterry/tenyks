@@ -28,7 +28,9 @@ func (self *Connection) PingServices() {
 
 		services := self.engine.ServiceRg.services
 		for _, service := range services {
-			service.LastPing = time.Now()
+			if service.Online {
+				service.LastPing = time.Now()
+			}
 		}
 	}
 }

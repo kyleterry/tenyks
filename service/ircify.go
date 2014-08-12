@@ -2,30 +2,42 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 
 	"code.google.com/p/go-uuid/uuid"
 	"github.com/kyleterry/tenyks/irc"
 )
 
 type Message struct {
-	Target       string      `json:"target"`
-	Command      string      `json:"command"`
-	Mask         string      `json:"mask"`
-	Direct       bool        `json:"direct"`
-	Nick         string      `json:"nick"`
-	Host         string      `json:"host"`
-	Full_message string      `json:"full_message"` // Legacy for compat with py version
-	User         string      `json:"user"`
-	From_channel bool        `json:"from_channel"` // Legacy for compat with py version
-	Connection   string      `json:"connection"`
-	Payload      string      `json:"payload"`
-	Meta         *Meta       `json:"meta"`
+	Target       string `json:"target"`
+	Command      string `json:"command"`
+	Mask         string `json:"mask"`
+	Direct       bool   `json:"direct"`
+	Nick         string `json:"nick"`
+	Host         string `json:"host"`
+	Full_message string `json:"full_message"` // Legacy for compat with py version
+	User         string `json:"user"`
+	From_channel bool   `json:"from_channel"` // Legacy for compat with py version
+	Connection   string `json:"connection"`
+	Payload      string `json:"payload"`
+	Meta         *Meta  `json:"meta"`
 }
 
+type UUID uuid.UUID
+
 type Meta struct {
-	Name    string    `json:"name"`
-	Version string    `json:"version"`
-	UUID    uuid.UUID `json:"UUID"`
+	Name    string `json:"name"`
+	Version string `json:"version"`
+	UUID    UUID   `json:"UUID"`
+}
+
+func (self *UUID) UnmarshalJSON(b []byte) error {
+	id := uuid.Parse(string(b[:]))
+	if id == nil {
+		return errors.New("Could not parse UUID")
+	}
+	*self = UUID(id)
+	return nil
 }
 
 func (self *Connection) ircify(msg []byte) {
