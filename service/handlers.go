@@ -64,11 +64,11 @@ func (self *Connection) PrivmsgServiceHandler(msg *Message) {
 
 func (self *Connection) RegisterServiceHandler(msg *Message) {
 	meta := msg.Meta
-	if meta.UUID == nil {
+	if meta.SID == nil {
 		log.Error("[service] ERROR: UUID required to register with Tenyks")
 		return
 	}
-	log.Debug("[service] %s (%s) wants to register", meta.UUID.String(), meta.Name)
+	log.Debug("[service] %s (%s) wants to register", meta.SID.UUID.String(), meta.Name)
 	srv := &Service{}
 	srv.Name = meta.Name
 	srv.Version = meta.Version
