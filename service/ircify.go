@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 
 	"code.google.com/p/go-uuid/uuid"
 	"github.com/kyleterry/tenyks/irc"
@@ -23,20 +24,22 @@ type Message struct {
 	Meta         *Meta  `json:"meta"`
 }
 
-type UUID uuid.UUID
+type ServiceID struct {
+	UUID uuid.UUID
+}
 
 type Meta struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
-	UUID    UUID   `json:"UUID"`
+	SID     *ServiceID `json:"UUID"`
 }
 
-func (self *UUID) UnmarshalJSON(b []byte) error {
-	id := uuid.Parse(string(b[:]))
-	if id == nil {
+func (self *ServiceID) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), "\"")
+	self.UUID = uuid.Parse(s)
+	if self.UUID == nil {
 		return errors.New("Could not parse UUID")
 	}
-	*self = UUID(id)
 	return nil
 }
 

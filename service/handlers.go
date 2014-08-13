@@ -74,6 +74,7 @@ func (self *Connection) RegisterServiceHandler(msg *Message) {
 	srv.Version = meta.Version
 	srv.Online = true
 	srv.LastPing = time.Now()
+	srv.UUID = meta.SID.UUID
 	self.engine.ServiceRg.RegisterService(srv)
 }
 
