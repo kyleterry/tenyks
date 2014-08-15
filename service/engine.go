@@ -2,6 +2,7 @@ package service
 
 import (
 	"time"
+	"fmt"
 
 	"github.com/kyleterry/tenyks/config"
 	"github.com/kyleterry/tenyks/irc"
@@ -50,9 +51,15 @@ func (self *ServiceEngine) serviceWatchdog() {
 		log.Debug("[service] Checking service health")
 		services := self.ServiceRg.services
 		for name, service := range services {
-			if time.Since(service.LastPong) > time.Duration(time.Second * 400) {
-				log.Debug("[service] %s seems to have gone offline", name)
-				service.Online = ServiceOffline
+			if service.Online {
+				fmt.Printf("%+v\n", service)
+				log.Debug("[service] Checking %s", name)
+				pongDuration := time.Since(service.LastPong)
+				testDuration := time.Duration(time.Second * 400)
+				if int(pongDuration) > int(testDuration) {
+					log.Debug("[service] %s seems to have gone offline", name)
+					service.Online = ServiceOffline
+				}
 			}
 		}
 	}
@@ -64,6 +71,8 @@ func (self *ServiceEngine) UpdateService(name string, status bool) {
 		service := self.ServiceRg.services[name]
 		service.Online = status
 		if status {
+			log.Debug("[service] Updating LastPong for %s",
+				service.UUID.String())
 			service.LastPong = time.Now()
 		}
 	}
