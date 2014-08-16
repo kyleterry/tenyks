@@ -166,8 +166,11 @@ Example JSON response from a service to Tenyks destined for IRC
 
 ### Commands for registration that go to services
 
-Services can register with tenyks. This will allow you to list the services
-currently online from the bot. The commands sent to services are:
+Services can register with Tenyks. This will allow you to list the services
+currently online from the bot. This is not persistent. If you shut down the bot,
+then all the service UUIDs that were registered go away.
+
+The commands sent to services are:
 
 ```json
 {
