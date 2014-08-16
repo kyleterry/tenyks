@@ -164,7 +164,7 @@ Example JSON response from a service to Tenyks destined for IRC
 }
 ```
 
-### Service registration
+### Commands for registration that go to services
 
 Services can register with tenyks. This will allow you to list the services
 currently online from the bot. The commands sent to services are:
