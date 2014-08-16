@@ -44,6 +44,8 @@ func (self *Connection) Bootstrap() {
 	self.Out = self.send()
 }
 
+// RegisterIRCHandlers will is what connections handler functions to IRC
+// connection instances.
 func (self *Connection) RegisterIrcHandlers(conn *irc.Connection) {
 	log.Debug("[service] Registring IRC Handlers")
 	log.Debug("[service] Registring PRIVMSG handler with `%s`", conn.Name)

@@ -1,8 +1,8 @@
 package service
 
 import (
+	"encoding/json"
 	"time"
-	"fmt"
 
 	"github.com/kyleterry/tenyks/config"
 	"github.com/kyleterry/tenyks/irc"
@@ -29,6 +29,7 @@ func (self *ServiceEngine) Start() {
 	log.Info("[service] Starting engine")
 	self.addBaseHandlers()
 	self.Reactor.Start()
+	go self.NotifyServicesAboutStart()
 	go self.serviceWatchdog()
 	go self.Reactor.conn.PingServices()
 }
@@ -52,7 +53,6 @@ func (self *ServiceEngine) serviceWatchdog() {
 		services := self.ServiceRg.services
 		for name, service := range services {
 			if service.Online {
-				fmt.Printf("%+v\n", service)
 				log.Debug("[service] Checking %s", name)
 				pongDuration := time.Since(service.LastPong)
 				testDuration := time.Duration(time.Second * 400)
@@ -66,16 +66,33 @@ func (self *ServiceEngine) serviceWatchdog() {
 }
 
 // UpdateService is used to update the service state.
-func (self *ServiceEngine) UpdateService(name string, status bool) {
-	if _, ok := self.ServiceRg.services[name]; ok {
-		service := self.ServiceRg.services[name]
+func (self *ServiceEngine) UpdateService(uuid string, status bool) {
+	self.ServiceRg.regMu.Lock()
+	defer self.ServiceRg.regMu.Unlock()
+	if _, ok := self.ServiceRg.services[uuid]; ok {
+		service := self.ServiceRg.services[uuid]
 		service.Online = status
 		if status {
-			log.Debug("[service] Updating LastPong for %s",
+			log.Debug("[service] %s responded with PONG",
 				service.UUID.String())
 			service.LastPong = time.Now()
 		}
 	}
+}
+
+// NotifyServicesAboutStart that the bot came online. This should prompt
+// services to send the REGISTER command.
+func (self *ServiceEngine) NotifyServicesAboutStart() {
+	log.Debug("[service] Notifying Services that Tenyks came online")
+	msg := &Message{
+		Command: "HELLO",
+		Payload: "!tenyks",
+	}
+	jsonBytes, err := json.Marshal(msg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	self.Reactor.conn.Out <- string(jsonBytes[:])
 }
 
 type PubSubReactor struct {
