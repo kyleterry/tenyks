@@ -164,6 +164,30 @@ Example JSON response from a service to Tenyks destined for IRC
 }
 ```
 
+### Service registration
+
+Services can register with tenyks. This will allow you to list the services
+currently online from the bot. The commands sent to services are:
+
+```json
+{
+  "command": "HELLO",
+  "payload": "!tenyks"
+}
+```  
+`HELLO` will tell services that Tenyks has come online and they can register if
+they want to.
+
+```json
+{
+  "command": "PING",
+  "payload": "!tenyks"
+}
+```  
+`PING` will expect services to respond with `PONG`.
+
+List and Help commands are coming soon.
+
 ### Lets make a service!
 
 This service is in python and uses the
