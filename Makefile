@@ -57,4 +57,3 @@ vendor-get:
 	github.com/op/go-logging \
 	github.com/pebbe/zmq4 \
 	code.google.com/p/gomock/gomock
-

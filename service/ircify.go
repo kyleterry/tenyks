@@ -2,35 +2,45 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
+	"strings"
 
+	"code.google.com/p/go-uuid/uuid"
 	"github.com/kyleterry/tenyks/irc"
 )
 
 type Message struct {
-	Target       string      `json:"target"`
-	Command      string      `json:"command"`
-	Mask         string      `json:"mask"`
-	Direct       bool        `json:"direct"`
-	Nick         string      `json:"nick"`
-	Host         string      `json:"host"`
-	FullMsg      string      `json:"fullmsg"`
-	Full_message string      `json:"full_message"` // Legacy for compat with py version
-	User         string      `json:"user"`
-	FromChannel  bool        `json:"fromchannel"`
-	From_channel bool        `json:"from_channel"` // Legacy for compat with py version
-	Connection   string      `json:"connection"`
-	Payload      string      `json:"payload"`
-	Meta         interface{} `json:"meta"`
+	Target       string `json:"target"`
+	Command      string `json:"command"`
+	Mask         string `json:"mask"`
+	Direct       bool   `json:"direct"`
+	Nick         string `json:"nick"`
+	Host         string `json:"host"`
+	Full_message string `json:"full_message"` // Legacy for compat with py version
+	User         string `json:"user"`
+	From_channel bool   `json:"from_channel"` // Legacy for compat with py version
+	Connection   string `json:"connection"`
+	Payload      string `json:"payload"`
+	Meta         *Meta  `json:"meta"`
 }
 
-type TenyksMeta struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
+type ServiceID struct {
+	UUID uuid.UUID
 }
 
-type ServiceMeta struct {
+type Meta struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
+	SID     *ServiceID `json:"UUID"`
+}
+
+func (self *ServiceID) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), "\"")
+	self.UUID = uuid.Parse(s)
+	if self.UUID == nil {
+		return errors.New("Could not parse UUID")
+	}
+	return nil
 }
 
 func (self *Connection) ircify(msg []byte) {
@@ -53,9 +63,6 @@ func (self *Connection) ircify(msg []byte) {
 
 func (self *Connection) dispatch(msg []byte) {
 	self.ircify(msg)
-}
-
-func dispatch(command string, conn *Connection, msg *Message) {
 }
 
 func NewMessageFromBytes(msg []byte) (message *Message, err error) {

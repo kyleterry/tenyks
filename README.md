@@ -10,8 +10,10 @@
                 |___/           
 ```
 
-Tenyks is a service oriented IRC bot rewritten in Go. Service/core
-communication is handles by Redis Pub/Sub via json payloads.
+Tenyks is a computer program designed to relay messages between connections to
+IRC networks and custom built services written in any number of languages.
+More detailed, Tenyks is a service oriented IRC bot rewritten in Go.
+Service/core communication is handled by Redis Pub/Sub via json payloads.
 
 The core acts like a relay between IRC channels and remote services. When a
 message comes in from IRC, that message is turned into a json data structure,
@@ -22,12 +24,14 @@ the same method.
 This design, while not anything new, is very flexible because one can write
 their service in any number of languages. The current service implementation
 used for proof of concept is written in Python. You can find that
-[here](./legacy/tenyks/client). It's also beneficial because you can take down
+[here](https://github.com/kyleterry/tenyks-service). It's also beneficial because you can take down
 or bring up services without the need to restart the bot or implement a
 complicated hot pluggable core. Services that crash also don't run the risk of
 taking everything else down with it.
 
-## Installation and building
+## Installation and whatnot
+
+Current supported Go version is 1.3
 
 Since Tenyks is pretty new, you will need to build the bot yourself. Step 1 is
 making sure you have a redis-server running. I won't go into detail there as I'm
@@ -68,7 +72,7 @@ get started. You just need to swap out the server information.
 cp config.json.example ${HOME}/tenyks-config.json
 ```
 
-## Running
+### Running
 
 `tenyks ${HOME}/tenyks-config.json`
 
@@ -78,9 +82,19 @@ in `/etc/tenyks/config.json` first, then
 in tenyks/tenyks.go and added with ConfigSearch.AddPath(). If you feel more
 paths should be searched, please feel free to add it and submit a pull request.
 
+### Vagrant
+
+If you want to play _right fucking now_, you can just use vagrant: `vagrant up`
+and then `vagrant ssh`. Tenyks should be built and available in your `$PATH`.
+There is also an IRC and Redis server running. You can connect to that IRC
+server on `192.168.33.66` with your IRC client.
+
+Just run `tenyks & && disown` from the vagrant box and start playing.
+
 ## Testing
 
-I'm a horrible person. There aren't tests yet. I'll get right on this...
+I'm a horrible person. ~~There aren't tests yet. I'll get right on this...~~.
+There are only a few tests.
 
 ## Services
 
@@ -96,10 +110,8 @@ Example JSON payload sent to services:
     "direct":true,
     "nick":"vhost-",
     "host":"unaffiliated/vhost-",
-    "fullmsg":":vhost-!~vhost@unaffiliated/vhost- PRIVMSG #tenyks :tenyks-demo: weather 97217",
     "full_message":":vhost-!~vhost@unaffiliated/vhost- PRIVMSG #tenyks :tenyks-demo: weather 97217",
     "user":"~vhost",
-    "fromchannel":true,
     "from_channel":true,
     "connection":"freenode",
     "payload":"weather 97217",
@@ -110,9 +122,6 @@ Example JSON payload sent to services:
 }
 ```
 
-fullmsg, full_message and fromchannel from_channel are for backwards
-compatibility with older services.
-
 ### To Tenyks for IRC
 
 Example JSON response from a service to Tenyks destined for IRC
@@ -121,7 +130,6 @@ Example JSON response from a service to Tenyks destined for IRC
 {
     "target":"#tenyks",
     "command":"PRIVMSG",
-    "fromchannel":true,
     "from_channel":true,
     "connection":"freenode",
     "payload":"Portland, OR is 63.4 F (17.4 C) and Overcast; windchill is NA; winds are Calm",
@@ -156,11 +164,38 @@ Example JSON response from a service to Tenyks destined for IRC
 }
 ```
 
+### Commands for registration that go to services
+
+Services can register with Tenyks. This will allow you to list the services
+currently online from the bot. This is not persistent. If you shut down the bot,
+then all the service UUIDs that were registered go away.
+
+The commands sent to services are:
+
+```json
+{
+  "command": "HELLO",
+  "payload": "!tenyks"
+}
+```  
+`HELLO` will tell services that Tenyks has come online and they can register if
+they want to.
+
+```json
+{
+  "command": "PING",
+  "payload": "!tenyks"
+}
+```  
+`PING` will expect services to respond with `PONG`.
+
+List and Help commands are coming soon.
+
 ### Lets make a service!
 
 This service is in python and uses the
 [tenyks-service](https://github.com/kyleterry/tenyks-service) package. You can
-install that with pip: `pip install tenyks-service`.
+install that with pip: `pip install tenyksservice`.
 
 ```python
 from tenyksservice import TenyksService, run_service
@@ -197,6 +232,17 @@ Now lets run it: `python main.py hello_settings.py`
 If you now join the channel that tenyks is in and say "tenyks: hello, I'm Alice"
 then tenyks should respond with "How are you Alice?!".
 
+### More Examples
+
+There is a repository with some services on my Github called
+[tenyks-contrib](https://github.com/kyleterry/tenyks-contrib). These are all
+using the older tenyksclient class and will probably work out of the box with
+Tenyks. I'm going to work on moving them to the newer
+[tenyks-service](https://github.com/kyleterry/tenyks-service) class.
+
+A good example of something more dynamic is the [Weather
+service](https://github.com/kyleterry/tenyks-contrib/blob/master/src/tenykswunderground/main.py).
+
 ## Help me
 
 I'm a new Go programmer. Surely there's some shitty shit in here. You can help
@@ -214,6 +260,9 @@ I also plan on trying to implement pub/sub over web sockets that will allow
 for communication over TLS and have authentication baked in. One use-case is
 giving your friends authentication tokens they can use to authenticate their
 services with your IRC bot. If someone is trouble, you cut them off.
+
+I'm also planning a 2.0 branch which will use ZeroMQ instead of Redis. I like
+embedded stuff.
 
 ## Credit where credit is due
 

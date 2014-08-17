@@ -22,6 +22,7 @@ func (self *ServiceEngine) addBaseHandlers() {
 	self.AddHandler("PRIVMSG", (*Connection).PrivmsgServiceHandler)
 	self.AddHandler("REGISTER", (*Connection).RegisterServiceHandler)
 	self.AddHandler("BYE", (*Connection).ByeServiceHandler)
+	self.AddHandler("PONG", (*Connection).PongServiceHandler)
 }
 
 func (self *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message) {
@@ -32,13 +33,11 @@ func (self *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message
 	serviceMsg.Direct = irc.IsDirect(msg.Trail, conn.GetCurrentNick())
 	serviceMsg.Nick = msg.Nick
 	serviceMsg.Host = msg.Host
-	serviceMsg.FullMsg = msg.RawMsg
 	serviceMsg.Full_message = msg.RawMsg
 	serviceMsg.User = msg.Ident
-	serviceMsg.FromChannel = irc.IsChannel(msg.Params[0])
 	serviceMsg.From_channel = irc.IsChannel(msg.Params[0])
 	serviceMsg.Connection = conn.Name
-	serviceMsg.Meta = &TenyksMeta{"Tenyks", TenyksVersion}
+	serviceMsg.Meta = &Meta{"Tenyks", TenyksVersion, nil}
 	if serviceMsg.Direct {
 		serviceMsg.Payload = irc.StripNickOnDirect(msg.Trail, conn.GetCurrentNick())
 	} else {
@@ -64,18 +63,25 @@ func (self *Connection) PrivmsgServiceHandler(msg *Message) {
 }
 
 func (self *Connection) RegisterServiceHandler(msg *Message) {
-	meta := msg.Meta.(ServiceMeta)
+	meta := msg.Meta
+	if meta.SID == nil {
+		log.Error("[service] ERROR: UUID required to register with Tenyks")
+		return
+	}
+	log.Debug("[service] %s (%s) wants to register", meta.SID.UUID.String(), meta.Name)
 	srv := &Service{}
 	srv.Name = meta.Name
 	srv.Version = meta.Version
 	srv.Online = true
 	srv.LastPing = time.Now()
+	srv.UUID = meta.SID.UUID
 	self.engine.ServiceRg.RegisterService(srv)
 }
 
 func (self *Connection) ByeServiceHandler(msg *Message) {
-	meta := msg.Meta.(ServiceMeta)
-	srv := self.engine.ServiceRg.GetServiceByName(meta.Name)
+	meta := msg.Meta
+	log.Debug("[service] %s (%s) is hanging up", meta.SID.UUID.String(), meta.Name)
+	srv := self.engine.ServiceRg.GetServiceByUUID(meta.Name)
 	if srv != nil {
 		srv.Online = false
 	}
@@ -83,18 +89,53 @@ func (self *Connection) ByeServiceHandler(msg *Message) {
 
 type ServiceListMessage struct {
 	Services map[string]*Service `json:"services"`
-	Command string `json:"command"`
-	Meta TenyksMeta `json:"meta"`
+	Command  string              `json:"command"`
+	Meta     *Meta               `json:"meta"`
 }
 
 func (self *Connection) ListServiceHandler(msg *Message) {
 	serviceList := &ServiceListMessage{}
 	serviceList.Services = self.engine.ServiceRg.services
 	serviceList.Command = "SERVICES"
-	serviceList.Meta = TenyksMeta{"Tenyks", TenyksVersion}
+	serviceList.Meta = &Meta{"Tenyks", TenyksVersion, nil}
 	jsonBytes, err := json.Marshal(serviceList)
 	if err != nil {
 		log.Fatal(err)
 	}
 	self.Out <- string(jsonBytes[:])
+}
+
+const (
+	ServiceOnline = true
+	ServiceOffline = false
+)
+
+func (self *Connection) PingServices() {
+	log.Debug("[service] Starting pinger")
+	for {
+		<-time.After(time.Second * 120)
+		log.Debug("[service] PINGing services")
+		msg := &Message{
+			Command: "PING",
+			Payload: "!tenyks",
+		}
+		jsonBytes, err := json.Marshal(msg)
+		if err != nil {
+			log.Error("Cannot marshal PING message")
+			continue
+		}
+		self.Out <- string(jsonBytes[:])
+
+		services := self.engine.ServiceRg.services
+		for _, service := range services {
+			if service.Online {
+				service.LastPing = time.Now()
+			}
+		}
+	}
+}
+
+func (self *Connection) PongServiceHandler(msg *Message) {
+	meta := msg.Meta
+	self.engine.UpdateService(meta.SID.UUID.String(), ServiceOnline)
 }

@@ -1,2 +1,0 @@
-PING = 'ping'
-PONG = 'pong'

@@ -29,8 +29,6 @@ Usage: %s [config path | options]
 )
 
 var log = logging.MustGetLogger("tenyks")
-var connections irc.IrcConnections
-var ircReactors []<-chan bool
 
 var banner = `
   _                   _         
@@ -95,8 +93,8 @@ func main() {
 	}
 
 	// Connections map
-	connections = make(irc.IrcConnections)
-	ircReactors = make([]<-chan bool, 0)
+	connections := make(irc.IrcConnections)
+	ircReactors := make([]<-chan bool, 0)
 
 	eng := service.NewServiceEngine(conf.Redis)
 
