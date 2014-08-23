@@ -3,7 +3,7 @@ package service
 import (
 	"fmt"
 
-	"github.com/garyburd/redigo/redis"
+	"github.com/pebbe/zmq4"
 	"github.com/kyleterry/tenyks/config"
 	"github.com/kyleterry/tenyks/irc"
 	"github.com/op/go-logging"

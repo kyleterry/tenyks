@@ -23,19 +23,9 @@ func (self *configPaths) AddPath(path string) {
 
 type Config struct {
 	Debug       bool
-	Redis       RedisConfig
 	Connections []ConnectionConfig
 	LogLocation string
 	Version     string
-}
-
-type RedisConfig struct {
-	Host           string `json:"host","localhost"`
-	Port           int
-	Db             int
-	Password       string
-	TenyksChannel  string
-	ServiceChannel string
 }
 
 type ConnectionConfig struct {
