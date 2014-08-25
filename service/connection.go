@@ -3,7 +3,7 @@ package service
 import (
 	"fmt"
 
-	"github.com/pebbe/zmq4"
+	zmq "github.com/pebbe/zmq4"
 	"github.com/kyleterry/tenyks/config"
 	"github.com/kyleterry/tenyks/irc"
 	"github.com/op/go-logging"
@@ -12,25 +12,15 @@ import (
 var log = logging.MustGetLogger("tenyks")
 
 type Connection struct {
-	r      redis.Conn
-	config *config.RedisConfig
+	config *config.ServiceConfig
 	In     <-chan []byte
 	Out    chan<- string
-	pubsub redis.PubSubConn
+	publisher *zmq.Socket
 	engine *ServiceEngine
 }
 
-func NewConn(conf config.RedisConfig) *Connection {
-	redisAddr := fmt.Sprintf(
-		"%s:%d",
-		conf.Host,
-		conf.Port)
-	r, err := redis.Dial("tcp", redisAddr)
-	if err != nil {
-		log.Fatal(err)
-	}
+func NewConn(conf *config.ServiceConfig) *Connection {
 	conn := &Connection{
-		r:      r,
 		config: &conf,
 	}
 	return conn
@@ -39,7 +29,8 @@ func NewConn(conf config.RedisConfig) *Connection {
 func (self *Connection) Bootstrap() {
 	// Hook up PrivmsgHandler to all connections
 	log.Debug("[service] Bootstrapping pubsub")
-	self.pubsub = redis.PubSubConn{self.r}
+	self.publisher = zmq.NewSocket(zmq.PUB)
+	self.publisher.Bind("tcp://*:6669")
 	self.In = self.recv()
 	self.Out = self.send()
 }
@@ -50,18 +41,6 @@ func (self *Connection) RegisterIrcHandlers(conn *irc.Connection) {
 	log.Debug("[service] Registring IRC Handlers")
 	log.Debug("[service] Registring PRIVMSG handler with `%s`", conn.Name)
 	conn.AddHandler("PRIVMSG", self.PrivmsgIrcHandler)
-}
-
-func (self *Connection) DialRedis() (redis.Conn, error) {
-	redisAddr := fmt.Sprintf(
-		"%s:%d",
-		self.config.Host,
-		self.config.Port)
-	r, err := redis.Dial("tcp", redisAddr)
-	if err != nil {
-		return nil, err
-	}
-	return r, nil
 }
 
 func (self *Connection) recv() <-chan []byte {
@@ -80,12 +59,10 @@ func (self *Connection) recv() <-chan []byte {
 }
 
 func (self *Connection) publish(channel, msg string) {
-	c, err := self.DialRedis()
+	_, err := self.publisher.SendMessage(msg)
 	if err != nil {
-		panic(err)
+		log.Error(err)
 	}
-	defer c.Close()
-	c.Do("PUBLISH", channel, msg)
 }
 
 func (self *Connection) getServiceChannel() string {
