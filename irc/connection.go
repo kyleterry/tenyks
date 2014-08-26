@@ -138,6 +138,10 @@ func (self *Connection) send() chan<- string {
 				}
 				self.MessagesSent += 1
 				self.write(line)
+				if self.Config.FloodProtection {
+					duration, _ := time.ParseDuration("500ms")
+					<-time.After(duration)
+				}
 			}
 		}
 	}()

@@ -39,18 +39,19 @@ type RedisConfig struct {
 }
 
 type ConnectionConfig struct {
-	Name     string
-	Host     string
-	Port     int
-	Retries  int
-	Password string
-	Nicks    []string
-	Ident    string
-	Realname string
-	Commands []string
-	Admins   []string
-	Channels []string
-	Ssl      bool
+	Name            string
+	Host            string
+	Port            int
+	Retries         int
+	FloodProtection bool
+	Password        string
+	Nicks           []string
+	Ident           string
+	Realname        string
+	Commands        []string
+	Admins          []string
+	Channels        []string
+	Ssl             bool
 }
 
 // discoverConfig will check to see if a config has been passed to tenyks on
