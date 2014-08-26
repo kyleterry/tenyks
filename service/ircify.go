@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"code.google.com/p/go-uuid/uuid"
+	"github.com/ugorji/go/codec"
 	"github.com/kyleterry/tenyks/irc"
 )
 
