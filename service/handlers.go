@@ -80,7 +80,7 @@ func (self *Connection) RegisterServiceHandler(msg *Message) {
 
 func (self *Connection) ByeServiceHandler(msg *Message) {
 	meta := msg.Meta
-	if meta.SID.UUID != nil {
+	if meta.SID != nil && meta.SID.UUID != nil {
 		log.Debug("[service] %s (%s) is hanging up", meta.SID.UUID.String(), meta.Name)
 		srv := self.engine.ServiceRg.GetServiceByUUID(meta.Name)
 		if srv != nil {
