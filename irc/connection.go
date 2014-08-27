@@ -14,23 +14,39 @@ import (
 var log = logging.MustGetLogger("tenyks")
 
 type Connection struct {
+	// Name of the network (e.g. freenode, efnet, localhost)
 	Name            string
+	// Network configuration
 	Config          config.ConnectionConfig
+	// Set to the current nick in use on the server
 	currentNick     string
+	// Set to the current server connected to in the network.
 	currentServer   string
+	// Current index in the array of nicks
 	nickIndex       int
-	connectAttempts uint
+	// Whether or not we are connected with SSL (TLS)
 	usingSSL        bool
+	// This is the socket used to communicate with IRC
 	socket          net.Conn
+	// Channel used to capture messages coming in from IRC
 	In              <-chan string
+	// Channel used to send messages to IRC
 	Out             chan<- string
+	// bufio readerwriter instance
 	io              *bufio.ReadWriter
+	// are we currently connected?
 	connected       bool
+	// How many messages we have recieved. Reset when tenyks is restarted.
 	MessagesRecved  uint
+	// How mant messages we have sent. Reset when tenyks is restarted.
 	MessagesSent    uint
+	// Handler registry. These handle various commands from IRC.
 	Registry        *HandlerRegistry
+	// Channel used to tell things to wait for the connection to succeed before spawning goroutines.
 	ConnectWait     chan bool
+	// Last PONG recieved from the network.
 	LastPong        time.Time
+	// Channel for the connection watchdog.
 	PongIn          chan bool
 }
 
@@ -42,7 +58,6 @@ func NewConn(name string, conf config.ConnectionConfig) *Connection {
 		Name:            name,
 		Config:          conf,
 		nickIndex:       0,
-		connectAttempts: 0,
 		usingSSL:        conf.Ssl,
 		socket:          nil,
 		io:              nil,
