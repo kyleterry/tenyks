@@ -2,7 +2,7 @@ package irc
 
 // IRC RFC2812: http://tools.ietf.org/html/rfc2812
 // If you make modifications, please follow the spec guidelines.
-// If you code that conflicts with the spec, please file a bug report on Github.
+// If you find code that conflicts with the spec, please file a bug report on Github.
 
 import (
 	"bufio"
