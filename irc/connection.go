@@ -1,5 +1,9 @@
 package irc
 
+// IRC RFC2812: http://tools.ietf.org/html/rfc2812
+// If you make modifications, please follow the spec guidelines.
+// If you code that conflicts with the spec, please file a bug report on Github.
+
 import (
 	"bufio"
 	"crypto/tls"
@@ -167,6 +171,11 @@ func (self *Connection) send() chan<- string {
 // the buffer which in turn will call write() on the socket.
 // It might return an error if something goes wrong.
 func (self *Connection) write(line string) error {
+	if len(line) > 510 {
+		// IRC RFC 2812 states the max length for messages is 512 INCLUDING cr-lf.
+		log.Warning("[%s] Message is too long. Truncating...", self.Name)
+		line = line[:510] // Silently truncate to 510 chars as per IRC spec
+	}
 	_, wrerr := self.io.WriteString(line + "\r\n")
 	if wrerr != nil {
 		return wrerr
