@@ -64,7 +64,7 @@ func (self *Connection) PrivmsgServiceHandler(msg *Message) {
 
 func (self *Connection) RegisterServiceHandler(msg *Message) {
 	meta := msg.Meta
-	if meta.SID == nil {
+	if meta.SID == nil || meta.SID.UUID == nil {
 		log.Error("[service] ERROR: UUID required to register with Tenyks")
 		return
 	}
@@ -80,10 +80,12 @@ func (self *Connection) RegisterServiceHandler(msg *Message) {
 
 func (self *Connection) ByeServiceHandler(msg *Message) {
 	meta := msg.Meta
-	log.Debug("[service] %s (%s) is hanging up", meta.SID.UUID.String(), meta.Name)
-	srv := self.engine.ServiceRg.GetServiceByUUID(meta.Name)
-	if srv != nil {
-		srv.Online = false
+	if meta.SID != nil && meta.SID.UUID != nil {
+		log.Debug("[service] %s (%s) is hanging up", meta.SID.UUID.String(), meta.Name)
+		srv := self.engine.ServiceRg.GetServiceByUUID(meta.Name)
+		if srv != nil {
+			srv.Online = false
+		}
 	}
 }
 
@@ -137,5 +139,7 @@ func (self *Connection) PingServices() {
 
 func (self *Connection) PongServiceHandler(msg *Message) {
 	meta := msg.Meta
-	self.engine.UpdateService(meta.SID.UUID.String(), ServiceOnline)
+	if meta.SID != nil && meta.SID.UUID != nil {
+		self.engine.UpdateService(meta.SID.UUID.String(), ServiceOnline)
+	}
 }

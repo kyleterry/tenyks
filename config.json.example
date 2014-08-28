@@ -13,6 +13,7 @@
             "host": "localhost",
             "port": 6667,
             "retries": 5,
+            "floodProtection": true,
             "password": "",
             "nicks": ["tenyks"],
             "ident": "tenyks",

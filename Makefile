@@ -53,7 +53,7 @@ uninstall:
 vendor-get:
 	@echo "$(OK_COLOR)===> Fetching dependencies$(NO_COLOR)"
 	GOPATH=$(GOPATH) $(GO) get -d -u -v \
-	github.com/garyburd/redigo/redis \
 	github.com/op/go-logging \
 	github.com/pebbe/zmq4 \
-	code.google.com/p/gomock/gomock
+	code.google.com/p/gomock/gomock \
+	code.google.com/p/go-uuid/uuid
