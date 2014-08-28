@@ -6,6 +6,9 @@ service in the language of their choice. If you are a lisper, you can use Common
 Lisp or Clojue. If you are a pythonista or a rubist, You can use one of those
 languages.
 
+Tenyks follows [RFC2812](http://tools.ietf.org/html/rfc2812). Please follow the
+spec if you are going to make modifications to the `irc` package.
+
 If you would like to contribute to Tenyks, please make pull requests or file bug
 reports with features requests and issues.
 
