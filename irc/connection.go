@@ -48,6 +48,8 @@ type Connection struct {
 	LastPong        time.Time
 	// Channel for the connection watchdog.
 	PongIn          chan bool
+	// Number of retry attempts the connection made
+	retries         int
 }
 
 // NewConn will create a new instance of an irc.Connection.
@@ -65,6 +67,7 @@ func NewConn(name string, conf config.ConnectionConfig) *Connection {
 		Registry:        registry,
 		ConnectWait:     make(chan bool, 1),
 		PongIn:          make(chan bool, 1),
+		retries:         0,
 	}
 	conn.addBaseHandlers()
 	return conn
@@ -76,9 +79,9 @@ func NewConn(name string, conf config.ConnectionConfig) *Connection {
 func (self *Connection) Connect() chan bool {
 	c := make(chan bool, 1)
 	go func() {
-		retries := 0
+		self.retries = 0
 		for {
-			if retries > self.Config.Retries {
+			if self.retries > self.Config.Retries {
 				log.Error("[%s] Max retries reached.",
 					self.Name)
 				c <- false
@@ -98,14 +101,14 @@ func (self *Connection) Connect() chan bool {
 				if err != nil {
 					log.Error("[%s] Connection failed... Retrying.",
 						self.Name)
-					retries += 1
-					time.Sleep(time.Second * time.Duration(retries))
+					self.retries += 1
+					time.Sleep(time.Second * time.Duration(self.retries))
 					continue
 				}
 			} else {
 				socket, err = net.Dial("tcp", server)
 				if err != nil {
-					retries += 1
+					self.retries += 1
 					continue
 				}
 			}
@@ -225,6 +228,10 @@ func (self *Connection) watchdog() {
 // It returns a bool
 func (self *Connection) IsConnected() bool {
 	return self.connected
+}
+
+func (self *Connection) GetRetries() int {
+	return self.retries
 }
 
 // GetCurrentNick will return the nick currently being used in the IRC connection
