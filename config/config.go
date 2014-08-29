@@ -59,7 +59,7 @@ type ConnectionConfig struct {
 // config in the paths made with *configPaths.AddPath().
 // It will return a string of either the path found to have a config or "".
 func discoverConfig() string {
-	if len(os.Args) > 1 {
+	if len(os.Args) > 1 && os.Args[1][:4] != "-test" {
 		return os.Args[1]
 	} else {
 		for _, path := range ConfigSearch.paths {

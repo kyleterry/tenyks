@@ -65,7 +65,7 @@ func TestCanConnectToIRC(t *testing.T) {
 	conn := NewConn("mockirc", MakeConnConfig())
 	wait := conn.Connect()
 	<-wait
-	defer conn.Disconnect()
+	//defer conn.Disconnect()
 	
 	if conn.GetRetries() > 0 {
 		t.Error("Expected", 0, "got", conn.GetRetries())

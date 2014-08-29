@@ -1,33 +1,9 @@
 package irc
 
 import (
-	"regexp"
 	"strings"
 	"time"
 )
-
-// Extend Regexp for map support
-type ircRegexp struct {
-	*regexp.Regexp
-}
-
-// Maps all captured names and their values
-func (r *ircRegexp) FindStringSubmatchMap(s string) map[string]string {
-	matches := make(map[string]string)
-
-	match := r.FindStringSubmatch(s)
-	if match == nil {
-		return matches
-	}
-
-	for i, name := range r.SubexpNames() {
-		if i == 0 || name == "" {
-			continue
-		}
-		matches[name] = match[i]
-	}
-	return matches
-}
 
 type Message struct {
 	Prefix  string

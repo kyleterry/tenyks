@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"strings"
 )
 
 type MockIRC struct {
@@ -62,11 +63,29 @@ func (irc *MockIRC) connectionWorker(conn net.Conn) {
 		if err != nil {
 			fmt.Println(err)
 		}
-		irc.handleMessage(msg, conn)
+		irc.handleMessage(msg, io)
 	}
 }
 
-func (irc *MockIRC) handleMessage(msg string, conn net.Conn) {
+func (irc *MockIRC) handleMessage(msg string, io *bufio.ReadWriter) {
+	msg = strings.TrimSuffix(msg, "\r\n")
+	var err error
+	if val, ok := irc.events[msg]; ok {
+		for _, response := range val.responses {
+			_, err = io.WriteString(response + "\r\n")
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			err = io.Flush()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+		}
+	} else {
+		fmt.Printf("Nothing to do for %s\n", msg)
+	}
 	fmt.Println(msg)
 }
 
