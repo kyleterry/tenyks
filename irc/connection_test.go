@@ -56,16 +56,14 @@ func MakeConnConfig() config.ConnectionConfig {
 	}
 }
 
-func TestCanConnectToIRC(t *testing.T) {
+func TestCanConnectAndDisconnect(t *testing.T) {
 	ircServer := mockirc.New("mockirc.tenyks.io", 0)
-	ircServer.When("PING mockirc.tenyks.io").Respond(":PONG mockirc.tenyks.io")
 	ircServer.Start()
 	defer ircServer.Stop()
 
 	conn := NewConn("mockirc", MakeConnConfig())
 	wait := conn.Connect()
 	<-wait
-	//defer conn.Disconnect()
 	
 	if conn.GetRetries() > 0 {
 		t.Error("Expected", 0, "got", conn.GetRetries())
@@ -75,5 +73,30 @@ func TestCanConnectToIRC(t *testing.T) {
 		t.Error("Expected", true, "got", false)
 	}
 
-	dispatch("bootstrap", conn, nil)
+	conn.Disconnect()
+
+	if conn.IsConnected() {
+		t.Error("Expected", false, "got", true)
+	}
+}
+
+func TestCanHandshakeWithIRC(t *testing.T) {
+	ircServer := mockirc.New("mockirc.tenyks.io", 0)
+	ircServer.When("USER tenyks localhost something :tenyks").Respond(":101 :Welcome")
+	ircServer.Start()
+	defer ircServer.Stop()
+
+	conn := NewConn("mockirc", MakeConnConfig())
+	wait := conn.Connect()
+	<-wait
+
+	conn.BootstrapHandler(nil)
+	<-conn.ConnectWait
+
+	msg := string(<-conn.In)
+	if msg != ":101 :Welcome\r\n" {
+		t.Error("Expected :101 :Welcome", "got", msg)
+	}
+
+	conn.Disconnect()
 }
