@@ -80,9 +80,10 @@ func TestCanConnectAndDisconnect(t *testing.T) {
 	}
 }
 
-func TestCanHandshakeWithIRC(t *testing.T) {
+func TestCanHandshakeAndWorkWithIRC(t *testing.T) {
 	ircServer := mockirc.New("mockirc.tenyks.io", 0)
 	ircServer.When("USER tenyks localhost something :tenyks").Respond(":101 :Welcome")
+	ircServer.When("PING localhost").Respond(":PONG localhost")
 	ircServer.Start()
 	defer ircServer.Stop()
 
@@ -96,6 +97,16 @@ func TestCanHandshakeWithIRC(t *testing.T) {
 	msg := string(<-conn.In)
 	if msg != ":101 :Welcome\r\n" {
 		t.Error("Expected :101 :Welcome", "got", msg)
+	}
+
+	conn.SendPing(nil)
+	select {
+	case msg := <-conn.In:
+		if msg != ":PONG mockirc\r\n" {
+			t.Error("Expected", ":PONG mockirc", "got", msg)
+		}
+	case <-time.After(time.Second * 5):
+		t.Error("Timed out before getting a response back from mockirc")
 	}
 
 	conn.Disconnect()
