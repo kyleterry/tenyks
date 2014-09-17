@@ -33,6 +33,14 @@ func initCommandHandlers() {
 		}
 		return fmt.Sprintf("PRIVMSG %s :%s", target, fullcmd)
 	}
+	commandHandlers["join"] = func(fullcmd string) string {
+		cmdindex := strings.Index(fullcmd, " ")
+		if cmdindex == -1 {
+			return ""
+		}
+		fullcmd = fullcmd[cmdindex+1:]
+		return fmt.Sprintf("JOIN %s", fullcmd)
+	}
 }
 
 func ConvertSlashCommand(fullcmd string) (string, error) {

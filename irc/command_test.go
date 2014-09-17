@@ -24,3 +24,18 @@ func TestSlashCommandConversion(t *testing.T) {
 		t.Error("Expected", "error", "got", nil)
 	}
 }
+
+func TestJoinCommandConversion(t *testing.T) {
+	initCommandHandlers()
+
+	cmd := "/join #foobar"
+	expected := "JOIN #foobar"
+
+	got, err := ConvertSlashCommand(cmd)
+
+	if got != expected {
+		t.Error("Expected", expected, "got", got)
+	} else if err != nil {
+		t.Error("Error", err)
+	}
+}
