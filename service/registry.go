@@ -56,9 +56,9 @@ func NewService() *Service {
 }
 
 func (self *Service) String() string {
-	online := "offline"
+	state := "offline"
 	if self.Online {
-		online = "online"
+		state = "online"
 	}
-	return fmt.Sprintf(self.Name, online)
+	return fmt.Sprintf("%s %s", self.Name, state)
 }

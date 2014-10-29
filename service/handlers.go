@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+	"strings"
 
 	"github.com/kyleterry/tenyks/irc"
 	. "github.com/kyleterry/tenyks/version"
@@ -51,6 +52,22 @@ func (self *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message
 	self.Out <- string(jsonBytes[:])
 }
 
+func (self *Connection) ListServicesIrcHandler(conn *irc.Connection, msg *irc.Message) {
+	if irc.IsDirect(msg.Trail, conn.GetCurrentNick()) {
+		if strings.Contains(msg.RawMsg, "!services") {
+			log.Debug("[service] List services triggered")
+			if len(self.engine.ServiceRg.services) > 0 {
+				for _, service := range self.engine.ServiceRg.services {
+					outMessage := fmt.Sprintf("%s", service)
+					conn.Out <- msg.GetDMString(outMessage)
+				}
+			} else {
+				conn.Out <- msg.GetDMString("No services registered")
+			}
+		}
+	}
+}
+
 func (self *Connection) PrivmsgServiceHandler(msg *Message) {
 	conn := self.getIrcConnByName(msg.Connection)
 	if conn != nil {
@@ -82,8 +99,9 @@ func (self *Connection) ByeServiceHandler(msg *Message) {
 	meta := msg.Meta
 	if meta.SID != nil && meta.SID.UUID != nil {
 		log.Debug("[service] %s (%s) is hanging up", meta.SID.UUID.String(), meta.Name)
-		srv := self.engine.ServiceRg.GetServiceByUUID(meta.Name)
+		srv := self.engine.ServiceRg.GetServiceByUUID(meta.SID.UUID.String())
 		if srv != nil {
+			log.Debug("[service] Settings state to `offline` for `%s`", srv.Name)
 			srv.Online = false
 		}
 	}
