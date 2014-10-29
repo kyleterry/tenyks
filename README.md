@@ -198,13 +198,13 @@ This service is in python and uses the
 install that with pip: `pip install tenyksservice`.
 
 ```python
-from tenyksservice import TenyksService, run_service
+from tenyksservice import TenyksService, run_service, FilterChain
 
 
 class Hello(TenyksService):
-    direct_only = True
     irc_message_filters = {
-        'hello': [r"^(?i)(hi|hello|sup|hey), I'm (?P<name>(.*))$"]
+        'hello': FilterChain([r"^(?i)(hi|hello|sup|hey), I'm (?P<name>(.*))$"],
+                             direct_only=False)
     }
 
     def handle_hello(self, data, match):
