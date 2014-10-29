@@ -6,7 +6,7 @@ VAGRANTFILE_API_VERSION = "2"
 
 $script = <<SCRIPT
 apt-get update -qq
-apt-get -q -y install ngircd redis-server wget golang git
+apt-get -q -y install ngircd redis-server wget golang git mercurial
 mkdir -p /tmp/tenyks
 cd /tmp/tenyks
 cp -r /vagrant/* /tmp/tenyks

@@ -40,6 +40,28 @@ func (self *ServiceRegistry) GetServiceByUUID(uuid string) *Service {
 	return nil
 }
 
+func (self *ServiceRegistry) GetServiceByName(name string) *Service {
+	self.regMu.Lock()
+	defer self.regMu.Unlock()
+	for _, service := range self.services {
+		if service.Name == name {
+			return service
+		}
+	}
+	return nil
+}
+
+func (self *ServiceRegistry) IsService(name string) bool {
+	self.regMu.Lock()
+	defer self.regMu.Unlock()
+	for _, service := range self.services {
+		if service.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
 type Service struct {
 	Name           string
 	UUID           uuid.UUID
