@@ -72,20 +72,22 @@ func (self *Connection) HelpIrcHandler(conn *irc.Connection, msg *irc.Message) {
 	if irc.IsDirect(msg.Trail, conn.GetCurrentNick()) {
 		trail := irc.StripNickOnDirect(msg.Trail, conn.GetCurrentNick())
 		if strings.HasPrefix(trail, "!help") {
-			trail_pieces := strings.Split(trail, " ")
+			trail_pieces := strings.Fields(trail)
 			if len(trail_pieces) > 1 {
-				if self.engine.ServiceRg.IsService(string(trail[1])) {
-					service := self.engine.ServiceRg.GetServiceByName(string(trail[1]))
+				if self.engine.ServiceRg.IsService(trail_pieces[1]) {
+					service := self.engine.ServiceRg.GetServiceByName(trail_pieces[1])
 					if service == nil {
 						conn.Out <- msg.GetDMString(
-							fmt.Sprintf("No such service `%s`", trail[1]))
+							fmt.Sprintf("No such service `%s`", trail_pieces[1]))
 						return
 					}
 					serviceMsg := &Message{
 						Target: msg.Nick,
+						Nick: msg.Nick,
 						Direct: true,
 						From_channel: false,
 						Command: "PRIVMSG",
+						Connection: conn.Name,
 						Payload: fmt.Sprintf("!help %s", service.UUID.String()),
 					}
 					jsonBytes, err := json.Marshal(serviceMsg)
@@ -94,7 +96,6 @@ func (self *Connection) HelpIrcHandler(conn *irc.Connection, msg *irc.Message) {
 						return
 					}
 					self.Out <- string(jsonBytes[:])
-
 				} else {
 					conn.Out <- msg.GetDMString(
 						fmt.Sprintf("No such service `%s`", trail[1]))
