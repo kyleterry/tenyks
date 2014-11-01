@@ -66,6 +66,7 @@ type Service struct {
 	Name           string
 	UUID           uuid.UUID
 	Version        string
+	Description    string
 	Online         bool
 	LastPing       time.Time
 	LastPong       time.Time
@@ -82,5 +83,5 @@ func (self *Service) String() string {
 	if self.Online {
 		state = "online"
 	}
-	return fmt.Sprintf("%s %s", self.Name, state)
+	return fmt.Sprintf("%s (%s) - %s", self.Name, state, self.Description)
 }

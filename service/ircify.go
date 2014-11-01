@@ -29,9 +29,10 @@ type ServiceID struct {
 }
 
 type Meta struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
-	SID     *ServiceID `json:"UUID"`
+	Name        string     `json:"name"`
+	Version     string     `json:"version"`
+	SID         *ServiceID `json:"UUID"`
+	Description string     `json:"description"`
 }
 
 func (self *ServiceID) UnmarshalJSON(b []byte) error {

@@ -38,7 +38,7 @@ func (self *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message
 	serviceMsg.User = msg.Ident
 	serviceMsg.From_channel = irc.IsChannel(msg.Params[0])
 	serviceMsg.Connection = conn.Name
-	serviceMsg.Meta = &Meta{"Tenyks", TenyksVersion, nil}
+	serviceMsg.Meta = &Meta{"Tenyks", TenyksVersion, nil, ""}
 	if serviceMsg.Direct {
 		serviceMsg.Payload = irc.StripNickOnDirect(msg.Trail, conn.GetCurrentNick())
 	} else {
@@ -133,6 +133,7 @@ func (self *Connection) RegisterServiceHandler(msg *Message) {
 	srv := &Service{}
 	srv.Name = meta.Name
 	srv.Version = meta.Version
+	srv.Description = meta.Description
 	srv.Online = true
 	srv.LastPing = time.Now()
 	srv.UUID = meta.SID.UUID
@@ -149,24 +150,6 @@ func (self *Connection) ByeServiceHandler(msg *Message) {
 			srv.Online = false
 		}
 	}
-}
-
-type ServiceListMessage struct {
-	Services map[string]*Service `json:"services"`
-	Command  string              `json:"command"`
-	Meta     *Meta               `json:"meta"`
-}
-
-func (self *Connection) ListServiceHandler(msg *Message) {
-	serviceList := &ServiceListMessage{}
-	serviceList.Services = self.engine.ServiceRg.services
-	serviceList.Command = "SERVICES"
-	serviceList.Meta = &Meta{"Tenyks", TenyksVersion, nil}
-	jsonBytes, err := json.Marshal(serviceList)
-	if err != nil {
-		log.Fatal(err)
-	}
-	self.Out <- string(jsonBytes[:])
 }
 
 const (
