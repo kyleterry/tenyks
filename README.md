@@ -96,6 +96,18 @@ Just run `tenyks & && disown` from the vagrant box and start playing.
 I'm a horrible person. ~~There aren't tests yet. I'll get right on this...~~.
 There are only a few tests.
 
+## Builtins
+
+Tenyks comes with very few commands that the core responds to directly. You can
+get a list of services and get help for those services.
+
+`tenyks: !services` will list services that have registered with the bot
+through the service [registration API.](#service-registration).  
+`tenyks: !help` will show a quick help menu of all the commands available to
+tenyks.  
+`tenyks: !help servicename` will ask the service to sent their help message to
+the user.
+
 ## Services
 
 ### To Services
@@ -142,24 +154,38 @@ Example JSON response from a service to Tenyks destined for IRC
 
 ### Service Registration
 
+Registering your service with the bot will let people ask Tenyks which services
+are online and available for use. Registering is not requires; anything
+listening on the pubsub channel can respond without registration.
+
+Each service should have a unique UUID set in it's REGISTER message. An example
+of a valid register message is below:
+
 ```json
 {
     "command":"REGISTER",
     "meta":{
         "name":"TenyksWunderground",
-        "version":"1.1"
+        "version":"1.1",
+        "UUID": "uuid4 here",
+        "description": "Fetched weather for someone who asks"
     }
 }
 ```
 
 ### Service going offline
 
+If the service is shutting down, you should send a BYE message so Tenyks doesn't
+have to timeout the service after PINGs go unresponsive:
+
 ```json
 {
     "command":"BYE",
     "meta":{
         "name":"TenyksWunderground",
-        "version":"1.1"
+        "version":"1.1",
+        "UUID": "uuid4 here",
+        "description": "Fetched weather for someone who asks"
     }
 }
 ```
