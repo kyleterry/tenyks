@@ -14,7 +14,7 @@ type MockIRC struct {
 	ctl        chan bool
 	running    bool
 	events     map[string]*WhenEvent
-	io         *bufio.ReaderWriter
+	io         *bufio.ReadWriter
 }
 
 func New(server string, port int) *MockIRC {
