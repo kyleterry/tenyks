@@ -14,6 +14,7 @@ type MockIRC struct {
 	ctl        chan bool
 	running    bool
 	events     map[string]*WhenEvent
+	io         *bufio.ReaderWriter
 }
 
 func New(server string, port int) *MockIRC {
@@ -54,30 +55,30 @@ func (irc *MockIRC) Stop() {
 }
 
 func (irc *MockIRC) connectionWorker(conn net.Conn) {
-	io := bufio.NewReadWriter(
+	irc.io = bufio.NewReadWriter(
 		bufio.NewReader(conn),
 		bufio.NewWriter(conn))
 	defer conn.Close()
 	for {
-		msg, err := io.ReadString('\n')
+		msg, err := irc.io.ReadString('\n')
 		if err != nil {
 			fmt.Println(err)
 		}
-		irc.handleMessage(msg, io)
+		irc.handleMessage(msg)
 	}
 }
 
-func (irc *MockIRC) handleMessage(msg string, io *bufio.ReadWriter) {
+func (irc *MockIRC) handleMessage(msg string) {
 	msg = strings.TrimSuffix(msg, "\r\n")
 	var err error
 	if val, ok := irc.events[msg]; ok {
 		for _, response := range val.responses {
-			_, err = io.WriteString(response + "\r\n")
+			_, err = irc.io.WriteString(response + "\r\n")
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
-			err = io.Flush()
+			err = irc.io.Flush()
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -89,6 +90,9 @@ func (irc *MockIRC) handleMessage(msg string, io *bufio.ReadWriter) {
 	fmt.Println(msg)
 }
 
+func (irc *MockIRC) Send(thing string) {
+	irc.io.WriteString(thing + "\r\n")
+}
 
 type WhenEvent struct {
 	event     string

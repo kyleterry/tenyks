@@ -45,7 +45,7 @@ func MakeConnConfig() config.ConnectionConfig {
 	return config.ConnectionConfig{
 		Name: "mockirc",
 		Host: "localhost",
-		Port: 6661,
+		Port: 26661,
 		FloodProtection: true,
 		Retries: 5,
 		Nicks: []string{"tenyks", "tenyks-"},
@@ -57,7 +57,7 @@ func MakeConnConfig() config.ConnectionConfig {
 }
 
 func TestCanConnectAndDisconnect(t *testing.T) {
-	ircServer := mockirc.New("mockirc.tenyks.io", 0)
+	ircServer := mockirc.New("mockirc.tenyks.io", 26661)
 	ircServer.Start()
 	defer ircServer.Stop()
 
@@ -81,9 +81,9 @@ func TestCanConnectAndDisconnect(t *testing.T) {
 }
 
 func TestCanHandshakeAndWorkWithIRC(t *testing.T) {
-	ircServer := mockirc.New("mockirc.tenyks.io", 0)
+	ircServer := mockirc.New("mockirc.tenyks.io", 26661)
 	ircServer.When("USER tenyks localhost something :tenyks").Respond(":101 :Welcome")
-	ircServer.When("PING localhost").Respond(":PONG localhost")
+	ircServer.When("PING ").Respond(":PONG")
 	ircServer.Start()
 	defer ircServer.Stop()
 
@@ -102,7 +102,7 @@ func TestCanHandshakeAndWorkWithIRC(t *testing.T) {
 	conn.SendPing(nil)
 	select {
 	case msg := <-conn.In:
-		if msg != ":PONG mockirc\r\n" {
+		if msg != ":PONG\r\n" {
 			t.Error("Expected", ":PONG mockirc", "got", msg)
 		}
 	case <-time.After(time.Second * 5):
