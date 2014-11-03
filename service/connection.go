@@ -48,8 +48,9 @@ func (self *Connection) Bootstrap() {
 // connection instances.
 func (self *Connection) RegisterIrcHandlers(conn *irc.Connection) {
 	log.Debug("[service] Registring IRC Handlers")
-	log.Debug("[service] Registring PRIVMSG handler with `%s`", conn.Name)
 	conn.AddHandler("PRIVMSG", self.PrivmsgIrcHandler)
+	conn.AddHandler("PRIVMSG", self.ListServicesIrcHandler)
+	conn.AddHandler("PRIVMSG", self.HelpIrcHandler)
 }
 
 func (self *Connection) DialRedis() (redis.Conn, error) {

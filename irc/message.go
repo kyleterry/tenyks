@@ -3,6 +3,7 @@ package irc
 import (
 	"strings"
 	"time"
+	"fmt"
 )
 
 type Message struct {
@@ -16,6 +17,7 @@ type Message struct {
 	SentAt  time.Time
 	RawMsg  string
 	Conn    *Connection
+	IsParsed bool
 }
 
 func (m *Message) String() string {
@@ -72,5 +74,11 @@ func ParseMessage(rawMsg string) *Message {
 	if len(msg.Params) > 1 {
 		msg.Params = msg.Params[1:] // and store the remaining params
 	}
+	msg.IsParsed = true
 	return &msg
+}
+
+func (m *Message) GetDMString(newMsg string) string {
+	dm := fmt.Sprintf("PRIVMSG %s :%s", m.Nick, newMsg)
+	return dm
 }
