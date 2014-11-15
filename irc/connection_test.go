@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/kyleterry/tenyks/config"
 	"github.com/kyleterry/tenyks/mockirc"
-	_"code.google.com/p/gomock/gomock"
 )
 
 func TestNewConnNoDial(t *testing.T) {
