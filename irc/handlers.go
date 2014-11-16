@@ -19,13 +19,13 @@ func NewHandlerRegistry() *HandlerRegistry {
 	}
 }
 
-func (self *HandlerRegistry) AddHandler(name string, handler *Handler) {
-	self.RegistryMu.Lock()
-	defer self.RegistryMu.Unlock()
-	if _, ok := self.Handlers[name]; !ok {
-		self.Handlers[name] = list.New()
+func (h *HandlerRegistry) AddHandler(name string, handler *Handler) {
+	h.RegistryMu.Lock()
+	defer h.RegistryMu.Unlock()
+	if _, ok := h.Handlers[name]; !ok {
+		h.Handlers[name] = list.New()
 	}
-	self.Handlers[name].PushBack(handler)
+	h.Handlers[name].PushBack(handler)
 }
 
 type Handler struct {
@@ -38,84 +38,84 @@ func NewHandler(fn func(...interface{})) *Handler {
 
 type ircfn func(*Connection, *Message)
 
-func (self *Connection) AddHandler(name string, fn ircfn) {
+func (conn *Connection) AddHandler(name string, fn ircfn) {
 	handler := NewHandler(func(p ...interface{}) {
 		fn(p[0].(*Connection), p[1].(*Message))
 	})
-	self.Registry.AddHandler(name, handler)
+	conn.Registry.AddHandler(name, handler)
 }
 
-func (self *Connection) addBaseHandlers() {
-	self.AddHandler("bootstrap", (*Connection).BootstrapHandler)
-	self.AddHandler("send_ping", (*Connection).SendPing)
-	self.AddHandler("001", (*Connection).ConnectedHandler)
-	self.AddHandler("433", (*Connection).NickInUseHandler)
-	self.AddHandler("PING", (*Connection).PingHandler)
-	self.AddHandler("PONG", (*Connection).PongHandler)
-	self.AddHandler("CTCP", (*Connection).CTCPHandler)
+func (conn *Connection) addBaseHandlers() {
+	conn.AddHandler("bootstrap", (*Connection).BootstrapHandler)
+	conn.AddHandler("send_ping", (*Connection).SendPing)
+	conn.AddHandler("001", (*Connection).ConnectedHandler)
+	conn.AddHandler("433", (*Connection).NickInUseHandler)
+	conn.AddHandler("PING", (*Connection).PingHandler)
+	conn.AddHandler("PONG", (*Connection).PongHandler)
+	conn.AddHandler("CTCP", (*Connection).CTCPHandler)
 }
 
-func (self *Connection) PingHandler(msg *Message) {
-	log.Debug("[%s] Responding to PING", self.Name)
-	self.Out <- fmt.Sprintf("PONG %s", msg.Trail)
+func (conn *Connection) PingHandler(msg *Message) {
+	log.Debug("[%s] Responding to PING", conn.Name)
+	conn.Out <- fmt.Sprintf("PONG %s", msg.Trail)
 }
 
-func (self *Connection) PongHandler(msg *Message) {
-	self.LastPong = time.Now()
-	self.PongIn <- true
+func (conn *Connection) PongHandler(msg *Message) {
+	conn.LastPong = time.Now()
+	conn.PongIn <- true
 }
 
-func (self *Connection) SendPing(msg *Message) {
-	log.Debug("[%s] Sending PING to server %s", self.Name, self.currentServer)
-	self.Out <- fmt.Sprintf("PING %s", self.currentServer)
+func (conn *Connection) SendPing(msg *Message) {
+	log.Debug("[%s] Sending PING to server %s", conn.Name, conn.currentServer)
+	conn.Out <- fmt.Sprintf("PING %s", conn.currentServer)
 }
 
-func (self *Connection) BootstrapHandler(msg *Message) {
-	log.Info("[%s] Bootstrapping connection", self.Name)
-	self.Out <- fmt.Sprintf(
+func (conn *Connection) BootstrapHandler(msg *Message) {
+	log.Info("[%s] Bootstrapping connection", conn.Name)
+	conn.Out <- fmt.Sprintf(
 		"USER %s %s %s :%s",
-		self.Config.Nicks[0],
-		self.Config.Host,
-		self.Config.Ident,
-		self.Config.Realname)
-	self.Out <- fmt.Sprintf(
-		"NICK %s", self.Config.Nicks[self.nickIndex])
-	self.currentNick = self.Config.Nicks[self.nickIndex]
-	self.ConnectWait <- true
-	close(self.ConnectWait)
+		conn.Config.Nicks[0],
+		conn.Config.Host,
+		conn.Config.Ident,
+		conn.Config.Realname)
+	conn.Out <- fmt.Sprintf(
+		"NICK %s", conn.Config.Nicks[conn.nickIndex])
+	conn.currentNick = conn.Config.Nicks[conn.nickIndex]
+	conn.ConnectWait <- true
+	close(conn.ConnectWait)
 }
 
-func (self *Connection) NickInUseHandler(msg *Message) {
-	log.Info("[%s] Nick `%s` is in use. Next...", self.Name, self.currentNick)
-	self.nickIndex++
-	if len(self.Config.Nicks) >= self.nickIndex+1 {
-		self.Out <- fmt.Sprintf(
-			"NICK %s", self.Config.Nicks[self.nickIndex])
-		self.currentNick = self.Config.Nicks[self.nickIndex]
+func (conn *Connection) NickInUseHandler(msg *Message) {
+	log.Info("[%s] Nick `%s` is in use. Next...", conn.Name, conn.currentNick)
+	conn.nickIndex++
+	if len(conn.Config.Nicks) >= conn.nickIndex+1 {
+		conn.Out <- fmt.Sprintf(
+			"NICK %s", conn.Config.Nicks[conn.nickIndex])
+		conn.currentNick = conn.Config.Nicks[conn.nickIndex]
 	} else {
 		log.Fatal("All nicks in use.")
 	}
 }
 
-func (self *Connection) ConnectedHandler(msg *Message) {
-	log.Info("[%s] Sending user commands", self.Name)
+func (conn *Connection) ConnectedHandler(msg *Message) {
+	log.Info("[%s] Sending user commands", conn.Name)
 	initCommandHandlers()
-	for _, commandHook := range self.Config.Commands {
+	for _, commandHook := range conn.Config.Commands {
 		ircsafe, err := ConvertSlashCommand(commandHook)
 		if err != nil { // If there's an error, just try to send commandHook
 			ircsafe = commandHook
 		}
-		self.Out <- ircsafe
+		conn.Out <- ircsafe
 	}
-	log.Info("[%s] Joining Channels", self.Name)
-	for _, channel := range self.Config.Channels {
-		self.Out <- fmt.Sprintf("JOIN %s", channel)
-		log.Debug("[%s] Joined %s", self.Name, channel)
+	log.Info("[%s] Joining Channels", conn.Name)
+	for _, channel := range conn.Config.Channels {
+		conn.Out <- fmt.Sprintf("JOIN %s", channel)
+		log.Debug("[%s] Joined %s", conn.Name, channel)
 	}
-	self.currentServer = msg.Prefix
-	go self.watchdog()
+	conn.currentServer = msg.Prefix
+	go conn.watchdog()
 }
 
-func (self *Connection) CTCPHandler(msg *Message) {
+func (conn *Connection) CTCPHandler(msg *Message) {
 
 }

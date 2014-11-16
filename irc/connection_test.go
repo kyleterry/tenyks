@@ -56,12 +56,18 @@ func MakeConnConfig() config.ConnectionConfig {
 }
 
 func TestCanConnectAndDisconnect(t *testing.T) {
+	var wait chan bool
+	var err error
 	ircServer := mockirc.New("mockirc.tenyks.io", 26661)
-	ircServer.Start()
+	wait, err = ircServer.Start()
+	if err != nil {
+		t.Fatal("Expected nil", "got", err)
+	}
+	<-wait
 	defer ircServer.Stop()
 
 	conn := NewConn("mockirc", MakeConnConfig())
-	wait := conn.Connect()
+	wait = conn.Connect()
 	<-wait
 	
 	if conn.GetRetries() > 0 {
@@ -80,14 +86,20 @@ func TestCanConnectAndDisconnect(t *testing.T) {
 }
 
 func TestCanHandshakeAndWorkWithIRC(t *testing.T) {
+	var wait chan bool
+	var err error
 	ircServer := mockirc.New("mockirc.tenyks.io", 26661)
 	ircServer.When("USER tenyks localhost something :tenyks").Respond(":101 :Welcome")
 	ircServer.When("PING ").Respond(":PONG")
-	ircServer.Start()
+	wait, err = ircServer.Start()
+	if err != nil {
+		t.Fatal("Expected nil", "got", err)
+	}
 	defer ircServer.Stop()
+	<-wait
 
 	conn := NewConn("mockirc", MakeConnConfig())
-	wait := conn.Connect()
+	wait = conn.Connect()
 	<-wait
 
 	conn.BootstrapHandler(nil)

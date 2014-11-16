@@ -18,8 +18,12 @@ func TestMyIRCInteraction(t *testing.T) {
   // When I recieve "PING mockirc.tenyks.io" on the server, respond back with PONG...
   ircServer.When("PING mockirc.tenyks.io").Respond(":PONG mockirc.tenyks.io")
   ircServer.When("NICK kyle").Respond("... response to NICK")
-  ircServer.Start()
+  wait, err := ircServer.Start()
+  if err != nil {
+    t.Error("Error starting mockirc")
+  }
   defer ircServer.Stop()
+  <-wait // wait for start to fire up channel
 
   myircthing.Dial("localhost:6661")
   myircthing.Bootstrap() //send irc things and what not

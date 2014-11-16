@@ -29,14 +29,17 @@ func New(server string, port int) *MockIRC {
 	return irc
 }
 
-func (irc *MockIRC) Start() error {
+func (irc *MockIRC) Start() (chan bool, error) {
+	wait := make(chan bool, 1)
 	sock, err := net.Listen("tcp", fmt.Sprintf(":%d", irc.Port))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	irc.Socket = sock
 	irc.ctl = make(chan bool, 1)
 	go func() {
+		wait <- true
+		close(wait)
 		for {
 			conn, err := irc.Socket.Accept()
 			if err != nil {
@@ -47,7 +50,7 @@ func (irc *MockIRC) Start() error {
 		}
 	}()
 	irc.running = true
-	return nil
+	return wait, nil
 }
 
 func (irc *MockIRC) Stop() {
