@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"time"
 )
 
 type MockIRC struct {
@@ -55,6 +56,7 @@ func (irc *MockIRC) Start() (chan bool, error) {
 
 func (irc *MockIRC) Stop() {
 	irc.Socket.Close()
+	<-time.After(time.Second)
 }
 
 func (irc *MockIRC) connectionWorker(conn net.Conn) {
