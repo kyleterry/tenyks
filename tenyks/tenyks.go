@@ -4,6 +4,7 @@ import (
 	"fmt"
 	stdlog "log"
 	"os"
+	"flag"
 
 	"github.com/kyleterry/tenyks/config"
 	"github.com/kyleterry/tenyks/irc"
@@ -14,22 +15,24 @@ import (
 
 const (
 	Usage = `
-Usage: %s [config path | options]
-	Config path:
+Usage: %s [-config <CONFIG PATH>] [OPTIONS]
+	CONFIG PATH:
 		Path to a json configuration. If none is specified, Tenyks will look
 		for a config in common paths (e.g. /etc/tenyks/config.json)
 	
-	Options:
-		--version, -V
+	OPTIONS:
+		-version, -V
 			Used to print Tenyks' version number
 
-		--help, -h
+		-help, -h
 			This help
 `
 )
 
 var log = logging.MustGetLogger("tenyks")
-
+var configPath = flag.String("config", "", "Path to a configuration file")
+var versionFlag = flag.Bool("version", false, "Get the current version")
+var helpFlag = flag.Bool("help", false, "Get some help")
 var banner = `
   _                   _         
  | |                 | |        
@@ -41,16 +44,24 @@ var banner = `
                 |___/           
 `
 
+func init() {
+	flag.BoolVar(versionFlag, "v", false, "Get the current version")
+	flag.BoolVar(helpFlag, "h", false, "Get some help")
+}
+
 func main() {
+
+	flag.Parse()
+
 	// Check for version flag if len(os.Args) > 1 {
-	if len(os.Args) > 1 {
-		if os.Args[1] == "--version" || os.Args[1] == "-V" {
-			fmt.Println("Tenyks version " + TenyksVersion)
-			os.Exit(0)
-		} else if os.Args[1][0] == '-' {
-			fmt.Printf(Usage, os.Args[0])
-			os.Exit(0)
-		}
+	if *versionFlag {
+		fmt.Println("Tenyks version " + TenyksVersion)
+		os.Exit(0)
+	}
+
+	if *helpFlag {
+		fmt.Printf(Usage, os.Args[0])
+		os.Exit(0)
 	}
 
 	quit := make(chan bool, 1)
@@ -62,7 +73,7 @@ func main() {
 	config.ConfigSearch.AddPath(os.Getenv("HOME") + "/.config/tenyks/config.json")
 
 	// Make configuration from json file
-	conf, conferr := config.NewConfigAutoDiscover()
+	conf, conferr := config.NewConfigAutoDiscover(configPath)
 	if conferr != nil {
 		log.Fatal(conferr)
 	}
