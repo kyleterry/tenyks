@@ -56,22 +56,17 @@ type Connection struct {
 	retries         int
 }
 
-// NewConn will create a new instance of an irc.Connection.
+// NewConnection will create a new instance of an irc.Connection.
 // It will return *irc.Connection
-func NewConn(name string, conf config.ConnectionConfig) *Connection {
+func NewConnection(name string, conf config.ConnectionConfig) *Connection {
 	registry := NewHandlerRegistry()
 	conn := &Connection{
 		Name:            name,
 		Config:          conf,
-		nickIndex:       0,
 		usingSSL:        conf.Ssl,
-		socket:          nil,
-		io:              nil,
-		connected:       false,
 		Registry:        registry,
 		ConnectWait:     make(chan bool, 1),
 		PongIn:          make(chan bool, 1),
-		retries:         0,
 	}
 	conn.addBaseHandlers()
 	return conn
@@ -84,6 +79,10 @@ func (conn *Connection) Connect() chan bool {
 	c := make(chan bool, 1)
 	go func() {
 		conn.retries = 0
+		var (
+			socket net.Conn
+			err error
+		)
 		for {
 			if conn.retries > conn.Config.Retries {
 				log.Error("[%s] Max retries reached.",
@@ -94,12 +93,7 @@ func (conn *Connection) Connect() chan bool {
 			if conn.socket != nil {
 				break
 			}
-			server := fmt.Sprintf(
-				"%s:%d",
-				conn.Config.Host,
-				conn.Config.Port)
-			var socket net.Conn
-			var err error
+			server := fmt.Sprintf("%s:%d", conn.Config.Host, conn.Config.Port)
 			if conn.usingSSL {
 				socket, err = tls.Dial("tcp", server, nil)
 				if err != nil {
@@ -191,7 +185,7 @@ func (conn *Connection) write(line string) error {
 }
 
 // recv will kick off a goroutine that will loop forever. It will recieve data
-// from a bufio reader and send that to a string channel. Since sockets can 
+// from a bufio reader and send that to a string channel. Since sockets can
 // send nil when a disconnect occurs, it has a minor responsibility of calling
 // the Disconnect method when that happens.
 // It will return a string channel when called.

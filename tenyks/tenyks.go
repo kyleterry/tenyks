@@ -100,7 +100,7 @@ func main() {
 
 	// Create connection, spawn reactors and add to the map
 	for _, c := range conf.Connections {
-		conn := irc.NewConn(c.Name, c)
+		conn := irc.NewConnection(c.Name, c)
 		ctl := make(<-chan bool, 1)
 		ircReactors = append(ircReactors, ctl)
 		go irc.ConnectionReactor(conn, ctl)

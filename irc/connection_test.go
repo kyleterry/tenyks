@@ -9,12 +9,12 @@ import (
 	"github.com/kyleterry/tenyks/mockirc"
 )
 
-func TestNewConnNoDial(t *testing.T) {
+func TestNewConnectionNoDial(t *testing.T) {
 	conf := config.ConnectionConfig{
 		Name: "test",
 		Ssl: true,
 	}
-	conn := NewConn(conf.Name, conf)
+	conn := NewConnection(conf.Name, conf)
 	if conn.Name != conf.Name {
 		t.Error("Expected %s, got %s", conn.Name, conf.Name)
 	}
@@ -66,7 +66,7 @@ func TestCanConnectAndDisconnect(t *testing.T) {
 	<-wait
 	defer ircServer.Stop()
 
-	conn := NewConn("mockirc", MakeConnConfig())
+	conn := NewConnection("mockirc", MakeConnConfig())
 	wait = conn.Connect()
 	<-wait
 	
@@ -98,7 +98,7 @@ func TestCanHandshakeAndWorkWithIRC(t *testing.T) {
 	defer ircServer.Stop()
 	<-wait
 
-	conn := NewConn("mockirc", MakeConnConfig())
+	conn := NewConnection("mockirc", MakeConnConfig())
 	wait = conn.Connect()
 	<-wait
 
