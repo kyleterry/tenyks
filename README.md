@@ -230,13 +230,19 @@ from tenyksservice import TenyksService, run_service, FilterChain
 class Hello(TenyksService):
     irc_message_filters = {
         'hello': FilterChain([r"^(?i)(hi|hello|sup|hey), I'm (?P<name>(.*))$"],
-                             direct_only=False)
+                             direct_only=False),
+        # This is will respond to /msg tenyks this is private
+        'private': FilterChain([r"^this is private$"],
+                             private_only=True)
     }
 
     def handle_hello(self, data, match):
         name = match.groupdict()['name']
         self.logger.debug('Saying hello to {name}'.format(name=name))
         self.send('How are you {name}?!'.format(name=name), data)
+
+    def handle_private(self, data, match):
+        self.send('Hello, private message sender', data)
 
 
 def main():
