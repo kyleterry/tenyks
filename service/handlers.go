@@ -61,61 +61,62 @@ func (self *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message
 }
 
 func (self *Connection) ListServicesIrcHandler(conn *irc.Connection, msg *irc.Message) {
-	if irc.IsDirect(msg.Trail, conn.GetCurrentNick()) {
-		if strings.Contains(msg.RawMsg, "!services") {
-			log.Debug("[service] List services triggered")
-			if len(self.engine.ServiceRg.services) > 0 {
-				for _, service := range self.engine.ServiceRg.services {
-					outMessage := fmt.Sprintf("%s", service)
-					conn.Out <- msg.GetDMString(outMessage)
-				}
-			} else {
-				conn.Out <- msg.GetDMString("No services registered")
+	if strings.Contains(msg.RawMsg, "!services") {
+		log.Debug("[service] List services triggered")
+		if len(self.engine.ServiceRg.services) > 0 {
+			for _, service := range self.engine.ServiceRg.services {
+				outMessage := fmt.Sprintf("%s", service)
+				conn.Out <- msg.GetDMString(outMessage)
 			}
+		} else {
+			conn.Out <- msg.GetDMString("No services registered")
 		}
 	}
 }
 
 func (self *Connection) HelpIrcHandler(conn *irc.Connection, msg *irc.Message) {
+	var trail string
 	if irc.IsDirect(msg.Trail, conn.GetCurrentNick()) {
-		trail := irc.StripNickOnDirect(msg.Trail, conn.GetCurrentNick())
-		if strings.HasPrefix(trail, "!help") {
-			trail_pieces := strings.Fields(trail)
-			if len(trail_pieces) > 1 {
-				if self.engine.ServiceRg.IsService(trail_pieces[1]) {
-					service := self.engine.ServiceRg.GetServiceByName(trail_pieces[1])
-					if service == nil {
-						conn.Out <- msg.GetDMString(
-							fmt.Sprintf("No such service `%s`", trail_pieces[1]))
-						return
-					}
-					serviceMsg := &Message{
-						Target: msg.Nick,
-						Nick: msg.Nick,
-						Direct: true,
-						From_channel: false,
-						Command: "PRIVMSG",
-						Connection: conn.Name,
-						Payload: fmt.Sprintf("!help %s", service.UUID.String()),
-					}
-					jsonBytes, err := json.Marshal(serviceMsg)
-					if err != nil {
-						log.Error("Cannot marshal help message")
-						return
-					}
-					self.Out <- string(jsonBytes[:])
-				} else {
+		trail = irc.StripNickOnDirect(msg.Trail, conn.GetCurrentNick())
+	} else {
+		trail = msg.Trail
+	}
+	if strings.HasPrefix(trail, "!help") {
+		trail_pieces := strings.Fields(trail)
+		if len(trail_pieces) > 1 {
+			if self.engine.ServiceRg.IsService(trail_pieces[1]) {
+				service := self.engine.ServiceRg.GetServiceByName(trail_pieces[1])
+				if service == nil {
 					conn.Out <- msg.GetDMString(
-						fmt.Sprintf("No such service `%s`", trail[1]))
+						fmt.Sprintf("No such service `%s`", trail_pieces[1]))
+					return
 				}
+				serviceMsg := &Message{
+					Target: msg.Nick,
+					Nick: msg.Nick,
+					Direct: true,
+					From_channel: false,
+					Command: "PRIVMSG",
+					Connection: conn.Name,
+					Payload: fmt.Sprintf("!help %s", service.UUID.String()),
+				}
+				jsonBytes, err := json.Marshal(serviceMsg)
+				if err != nil {
+					log.Error("Cannot marshal help message")
+					return
+				}
+				self.Out <- string(jsonBytes[:])
 			} else {
 				conn.Out <- msg.GetDMString(
-					fmt.Sprintf("%s: !help - This help message", conn.GetCurrentNick()))
-				conn.Out <- msg.GetDMString(
-					fmt.Sprintf("%s: !services - List services", conn.GetCurrentNick()))
-				conn.Out <- msg.GetDMString(
-					fmt.Sprintf("%s: !help <servicename> - Get help for a service", conn.GetCurrentNick()))
+					fmt.Sprintf("No such service `%s`", trail[1]))
 			}
+		} else {
+			conn.Out <- msg.GetDMString(
+				fmt.Sprintf("%s: !help - This help message", conn.GetCurrentNick()))
+			conn.Out <- msg.GetDMString(
+				fmt.Sprintf("%s: !services - List services", conn.GetCurrentNick()))
+			conn.Out <- msg.GetDMString(
+				fmt.Sprintf("%s: !help <servicename> - Get help for a service", conn.GetCurrentNick()))
 		}
 	}
 }
