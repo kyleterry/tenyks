@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+	"strings"
 
 	"github.com/kyleterry/tenyks/irc"
 	. "github.com/kyleterry/tenyks/version"
@@ -37,7 +38,7 @@ func (self *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message
 	serviceMsg.User = msg.Ident
 	serviceMsg.From_channel = irc.IsChannel(msg.Params[0])
 	serviceMsg.Connection = conn.Name
-	serviceMsg.Meta = &Meta{"Tenyks", TenyksVersion, nil}
+	serviceMsg.Meta = &Meta{"Tenyks", TenyksVersion, nil, ""}
 	if serviceMsg.Direct {
 		serviceMsg.Payload = irc.StripNickOnDirect(msg.Trail, conn.GetCurrentNick())
 	} else {
@@ -49,6 +50,66 @@ func (self *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message
 		log.Fatal(err)
 	}
 	self.Out <- string(jsonBytes[:])
+}
+
+func (self *Connection) ListServicesIrcHandler(conn *irc.Connection, msg *irc.Message) {
+	if irc.IsDirect(msg.Trail, conn.GetCurrentNick()) {
+		if strings.Contains(msg.RawMsg, "!services") {
+			log.Debug("[service] List services triggered")
+			if len(self.engine.ServiceRg.services) > 0 {
+				for _, service := range self.engine.ServiceRg.services {
+					outMessage := fmt.Sprintf("%s", service)
+					conn.Out <- msg.GetDMString(outMessage)
+				}
+			} else {
+				conn.Out <- msg.GetDMString("No services registered")
+			}
+		}
+	}
+}
+
+func (self *Connection) HelpIrcHandler(conn *irc.Connection, msg *irc.Message) {
+	if irc.IsDirect(msg.Trail, conn.GetCurrentNick()) {
+		trail := irc.StripNickOnDirect(msg.Trail, conn.GetCurrentNick())
+		if strings.HasPrefix(trail, "!help") {
+			trail_pieces := strings.Fields(trail)
+			if len(trail_pieces) > 1 {
+				if self.engine.ServiceRg.IsService(trail_pieces[1]) {
+					service := self.engine.ServiceRg.GetServiceByName(trail_pieces[1])
+					if service == nil {
+						conn.Out <- msg.GetDMString(
+							fmt.Sprintf("No such service `%s`", trail_pieces[1]))
+						return
+					}
+					serviceMsg := &Message{
+						Target: msg.Nick,
+						Nick: msg.Nick,
+						Direct: true,
+						From_channel: false,
+						Command: "PRIVMSG",
+						Connection: conn.Name,
+						Payload: fmt.Sprintf("!help %s", service.UUID.String()),
+					}
+					jsonBytes, err := json.Marshal(serviceMsg)
+					if err != nil {
+						log.Error("Cannot marshal help message")
+						return
+					}
+					self.Out <- string(jsonBytes[:])
+				} else {
+					conn.Out <- msg.GetDMString(
+						fmt.Sprintf("No such service `%s`", trail[1]))
+				}
+			} else {
+				conn.Out <- msg.GetDMString(
+					fmt.Sprintf("%s: !help - This help message", conn.GetCurrentNick()))
+				conn.Out <- msg.GetDMString(
+					fmt.Sprintf("%s: !services - List services", conn.GetCurrentNick()))
+				conn.Out <- msg.GetDMString(
+					fmt.Sprintf("%s: !help <servicename> - Get help for a service", conn.GetCurrentNick()))
+			}
+		}
+	}
 }
 
 func (self *Connection) PrivmsgServiceHandler(msg *Message) {
@@ -72,6 +133,7 @@ func (self *Connection) RegisterServiceHandler(msg *Message) {
 	srv := &Service{}
 	srv.Name = meta.Name
 	srv.Version = meta.Version
+	srv.Description = meta.Description
 	srv.Online = true
 	srv.LastPing = time.Now()
 	srv.UUID = meta.SID.UUID
@@ -82,29 +144,12 @@ func (self *Connection) ByeServiceHandler(msg *Message) {
 	meta := msg.Meta
 	if meta.SID != nil && meta.SID.UUID != nil {
 		log.Debug("[service] %s (%s) is hanging up", meta.SID.UUID.String(), meta.Name)
-		srv := self.engine.ServiceRg.GetServiceByUUID(meta.Name)
+		srv := self.engine.ServiceRg.GetServiceByUUID(meta.SID.UUID.String())
 		if srv != nil {
+			log.Debug("[service] Settings state to `offline` for `%s`", srv.Name)
 			srv.Online = false
 		}
 	}
-}
-
-type ServiceListMessage struct {
-	Services map[string]*Service `json:"services"`
-	Command  string              `json:"command"`
-	Meta     *Meta               `json:"meta"`
-}
-
-func (self *Connection) ListServiceHandler(msg *Message) {
-	serviceList := &ServiceListMessage{}
-	serviceList.Services = self.engine.ServiceRg.services
-	serviceList.Command = "SERVICES"
-	serviceList.Meta = &Meta{"Tenyks", TenyksVersion, nil}
-	jsonBytes, err := json.Marshal(serviceList)
-	if err != nil {
-		log.Fatal(err)
-	}
-	self.Out <- string(jsonBytes[:])
 }
 
 const (

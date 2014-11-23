@@ -1,33 +1,10 @@
 package irc
 
 import (
-	"regexp"
 	"strings"
 	"time"
+	"fmt"
 )
-
-// Extend Regexp for map support
-type ircRegexp struct {
-	*regexp.Regexp
-}
-
-// Maps all captured names and their values
-func (r *ircRegexp) FindStringSubmatchMap(s string) map[string]string {
-	matches := make(map[string]string)
-
-	match := r.FindStringSubmatch(s)
-	if match == nil {
-		return matches
-	}
-
-	for i, name := range r.SubexpNames() {
-		if i == 0 || name == "" {
-			continue
-		}
-		matches[name] = match[i]
-	}
-	return matches
-}
 
 type Message struct {
 	Prefix  string
@@ -40,6 +17,7 @@ type Message struct {
 	SentAt  time.Time
 	RawMsg  string
 	Conn    *Connection
+	IsParsed bool
 }
 
 func (m *Message) String() string {
@@ -96,5 +74,11 @@ func ParseMessage(rawMsg string) *Message {
 	if len(msg.Params) > 1 {
 		msg.Params = msg.Params[1:] // and store the remaining params
 	}
+	msg.IsParsed = true
 	return &msg
+}
+
+func (m *Message) GetDMString(newMsg string) string {
+	dm := fmt.Sprintf("PRIVMSG %s :%s", m.Nick, newMsg)
+	return dm
 }
