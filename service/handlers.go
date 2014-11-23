@@ -28,10 +28,18 @@ func (self *ServiceEngine) addBaseHandlers() {
 
 func (self *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message) {
 	serviceMsg := Message{}
-	serviceMsg.Target = msg.Params[0]
+	if !irc.IsChannel(msg.Params[0]) {
+		serviceMsg.Target = msg.Nick
+	} else {
+		serviceMsg.Target = msg.Params[0]
+	}
 	serviceMsg.Command = msg.Command
 	serviceMsg.Mask = msg.Host
-	serviceMsg.Direct = irc.IsDirect(msg.Trail, conn.GetCurrentNick())
+	if irc.IsDirect(msg.Trail, conn.GetCurrentNick()) || !irc.IsChannel(msg.Params[0]) {
+		serviceMsg.Direct = true
+	} else {
+		serviceMsg.Direct = false
+	}
 	serviceMsg.Nick = msg.Nick
 	serviceMsg.Host = msg.Host
 	serviceMsg.Full_message = msg.RawMsg
@@ -39,7 +47,7 @@ func (self *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message
 	serviceMsg.From_channel = irc.IsChannel(msg.Params[0])
 	serviceMsg.Connection = conn.Name
 	serviceMsg.Meta = &Meta{"Tenyks", TenyksVersion, nil, ""}
-	if serviceMsg.Direct {
+	if serviceMsg.Direct && serviceMsg.From_channel {
 		serviceMsg.Payload = irc.StripNickOnDirect(msg.Trail, conn.GetCurrentNick())
 	} else {
 		serviceMsg.Payload = msg.Trail
