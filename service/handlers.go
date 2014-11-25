@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/kyleterry/tenyks/irc"
-	. "github.com/kyleterry/tenyks/version"
+	"github.com/kyleterry/tenyks/version"
 )
 
 type servicefn func(*Connection, *Message)
@@ -46,7 +46,7 @@ func (self *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message
 	serviceMsg.User = msg.Ident
 	serviceMsg.From_channel = irc.IsChannel(msg.Params[0])
 	serviceMsg.Connection = conn.Name
-	serviceMsg.Meta = &Meta{"Tenyks", TenyksVersion, nil, ""}
+	serviceMsg.Meta = &Meta{"Tenyks", version.TenyksVersion, nil, ""}
 	if serviceMsg.Direct && serviceMsg.From_channel {
 		serviceMsg.Payload = irc.StripNickOnDirect(msg.Trail, conn.GetCurrentNick())
 	} else {
@@ -117,6 +117,24 @@ func (self *Connection) HelpIrcHandler(conn *irc.Connection, msg *irc.Message) {
 				fmt.Sprintf("%s: !services - List services", conn.GetCurrentNick()))
 			conn.Out <- msg.GetDMString(
 				fmt.Sprintf("%s: !help <servicename> - Get help for a service", conn.GetCurrentNick()))
+		}
+	}
+}
+
+func (self *Connection) InfoIrcHandler(conn *irc.Connection, msg *irc.Message) {
+	var trail string
+	if irc.IsDirect(msg.Trail, conn.GetCurrentNick()) {
+		trail = irc.StripNickOnDirect(msg.Trail, conn.GetCurrentNick())
+	} else {
+		trail = msg.Trail
+	}
+	if strings.HasPrefix(trail, "!info") {
+		var info string
+		for _, info = range version.GetInfo() {
+			conn.Out <- msg.GetDMString(info)
+		}
+		for _, info = range conn.GetInfo() {
+			conn.Out <- msg.GetDMString(info)
 		}
 	}
 }

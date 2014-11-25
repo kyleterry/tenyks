@@ -51,6 +51,7 @@ func (self *Connection) RegisterIrcHandlers(conn *irc.Connection) {
 	conn.AddHandler("PRIVMSG", self.PrivmsgIrcHandler)
 	conn.AddHandler("PRIVMSG", self.ListServicesIrcHandler)
 	conn.AddHandler("PRIVMSG", self.HelpIrcHandler)
+	conn.AddHandler("PRIVMSG", self.InfoIrcHandler)
 }
 
 func (self *Connection) DialRedis() (redis.Conn, error) {

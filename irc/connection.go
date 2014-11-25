@@ -44,6 +44,8 @@ type Connection struct {
 	MessagesRecved  uint
 	// How mant messages we have sent. Reset when tenyks is restarted.
 	MessagesSent    uint
+	// Created holds the datetime the connection was created.
+	Created         time.Time
 	// Handler registry. These handle various commands from IRC.
 	Registry        *HandlerRegistry
 	// Channel used to tell things to wait for the connection to succeed before spawning goroutines.
@@ -67,6 +69,7 @@ func NewConnection(name string, conf config.ConnectionConfig) *Connection {
 		Registry:        registry,
 		ConnectWait:     make(chan bool, 1),
 		PongIn:          make(chan bool, 1),
+		Created:         time.Now(),
 	}
 	conn.addBaseHandlers()
 	return conn
@@ -241,6 +244,16 @@ func (conn *Connection) GetRetries() int {
 // It returns a string
 func (conn *Connection) GetCurrentNick() string {
 	return conn.currentNick
+}
+
+func (conn *Connection) GetInfo() []string {
+	var info []string
+	info = append(info,
+		fmt.Sprintf("This connection (%s) has been up since %s", conn.Name,
+			conn.Created),
+		fmt.Sprintf("It has recieved %d messages", conn.MessagesRecved),
+		fmt.Sprintf("It has sent %d messages", conn.MessagesSent))
+	return info
 }
 
 func (conn *Connection) String() string {
