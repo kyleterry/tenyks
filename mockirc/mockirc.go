@@ -54,9 +54,13 @@ func (irc *MockIRC) Start() (chan bool, error) {
 	return wait, nil
 }
 
-func (irc *MockIRC) Stop() {
-	irc.Socket.Close()
+func (irc *MockIRC) Stop() error {
+	err := irc.Socket.Close()
+	if err != nil {
+		return err
+	}
 	<-time.After(time.Second)
+	return nil
 }
 
 func (irc *MockIRC) connectionWorker(conn net.Conn) {
