@@ -41,13 +41,28 @@ func (irc *MockIRC) Start() (chan bool, error) {
 	go func() {
 		wait <- true
 		close(wait)
+
+		accept := func () <-chan net.Conn {
+			a := make(chan net.Conn)
+			go func() {
+				for {
+					conn, err := irc.Socket.Accept()
+					if err != nil {
+						fmt.Println(err)
+					}
+					a <- conn
+				}
+			}()
+			return a
+		}()
+
 		for {
-			conn, err := irc.Socket.Accept()
-			if err != nil {
-				fmt.Println(err)
+			select {
+			case conn := <-accept:
+				go irc.connectionWorker(conn)
+			case <-irc.ctl:
 				return
 			}
-			go irc.connectionWorker(conn)
 		}
 	}()
 	irc.running = true
@@ -55,6 +70,7 @@ func (irc *MockIRC) Start() (chan bool, error) {
 }
 
 func (irc *MockIRC) Stop() error {
+	irc.ctl <- true
 	err := irc.Socket.Close()
 	if err != nil {
 		return err
