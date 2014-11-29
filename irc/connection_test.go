@@ -64,7 +64,6 @@ func TestCanConnectAndDisconnect(t *testing.T) {
 		t.Fatal("Expected nil", "got", err)
 	}
 	<-wait
-	defer ircServer.Stop()
 
 	conn := NewConnection("mockirc", MakeConnConfig())
 	wait = conn.Connect()
@@ -83,6 +82,11 @@ func TestCanConnectAndDisconnect(t *testing.T) {
 	if conn.IsConnected() {
 		t.Error("Expected", false, "got", true)
 	}
+
+	err = ircServer.Stop()
+	if err != nil {
+		t.Fatal("Error stopping mockirc server")
+	}
 }
 
 func TestCanHandshakeAndWorkWithIRC(t *testing.T) {
@@ -95,7 +99,6 @@ func TestCanHandshakeAndWorkWithIRC(t *testing.T) {
 	if err != nil {
 		t.Fatal("Expected nil", "got", err)
 	}
-	defer ircServer.Stop()
 	<-wait
 
 	conn := NewConnection("mockirc", MakeConnConfig())
@@ -121,4 +124,9 @@ func TestCanHandshakeAndWorkWithIRC(t *testing.T) {
 	}
 
 	conn.Disconnect()
+
+	err = ircServer.Stop()
+	if err != nil {
+		t.Fatal("Error stopping mockirc server")
+	}
 }
