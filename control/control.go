@@ -14,7 +14,7 @@ var log = logging.MustGetLogger("tenyks")
 type ControlServer struct {
 	socket   net.Listener
 	ctl      chan bool
-	ircconns *irc.IRCConnections
+	ircconns irc.IRCConnections
 	config   config.ControlConfig
 }
 
@@ -23,7 +23,12 @@ type ControlConnection struct {
 }
 
 type ConnectionArgs struct {
-	name string
+	Name string
+}
+
+type JoinArgs struct {
+	Name string
+	Channel string
 }
 
 func NewControlServer(conf config.ControlConfig) (*ControlServer, error) {
@@ -36,7 +41,7 @@ func NewControlServer(conf config.ControlConfig) (*ControlServer, error) {
 	return cs, nil
 }
 
-func (serv *ControlServer) SetIRCConns(ircconns *irc.IRCConnections) {
+func (serv *ControlServer) SetIRCConns(ircconns irc.IRCConnections) {
 	serv.ircconns = ircconns
 }
 
@@ -99,5 +104,14 @@ func (serv *ControlServer) connectionWorker(controlConn ControlConnection) {
 }
 
 func (serv *ControlServer) DisconnectConnection(args *ConnectionArgs, reply *int) error {
+	return nil
+}
+
+func (serv *ControlServer) JoinChannel(args *JoinArgs, reply *string) error {
+	conn, ok := serv.ircconns[args.Name]
+	if !ok {
+		*reply = "No such connection"
+	}
+	conn
 	return nil
 }
