@@ -31,7 +31,7 @@ type Config struct {
 }
 
 type RedisConfig struct {
-	Host           string `json:"host"`
+	Host           string
 	Port           int
 	Db             int
 	Password       string
