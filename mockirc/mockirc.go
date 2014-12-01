@@ -61,6 +61,7 @@ func (irc *MockIRC) Start() (chan bool, error) {
 			case conn := <-accept:
 				go irc.connectionWorker(conn)
 			case <-irc.ctl:
+				irc.running = false
 				return
 			}
 		}
