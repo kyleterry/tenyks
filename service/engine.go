@@ -12,7 +12,7 @@ type ServiceEngine struct {
 	Reactor   *PubSubReactor
 	ServiceRg *ServiceRegistry
 	CommandRg *irc.HandlerRegistry
-	ircconns  irc.IrcConnections
+	ircconns  irc.IRCConnections
 }
 
 func NewServiceEngine(conf config.RedisConfig) *ServiceEngine {
@@ -34,7 +34,7 @@ func (self *ServiceEngine) Start() {
 	go self.Reactor.conn.PingServices()
 }
 
-func (self *ServiceEngine) SetIrcConns(ircconns irc.IrcConnections) {
+func (self *ServiceEngine) SetIRCConns(ircconns irc.IRCConnections) {
 	self.ircconns = ircconns
 }
 

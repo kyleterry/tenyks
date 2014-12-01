@@ -104,7 +104,7 @@ func main() {
 	}
 
 	// Connections map
-	connections := make(irc.IrcConnections)
+	connections := make(irc.IRCConnections)
 	ircReactors := make([]<-chan bool, 0)
 
 	eng := service.NewServiceEngine(conf.Redis)
@@ -118,7 +118,7 @@ func main() {
 		connections[c.Name] = conn
 	}
 
-	eng.SetIrcConns(connections)
+	eng.SetIRCConns(connections)
 
 	for _, ircconn := range connections {
 		go eng.RegisterIrcHandlersFor(ircconn)
