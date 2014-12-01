@@ -1,14 +1,12 @@
 package control
 
 import (
-	"bufio"
-	"io"
 	"errors"
-	"fmt"
 	"github.com/kyleterry/tenyks/config"
 	"github.com/kyleterry/tenyks/irc"
 	"github.com/op/go-logging"
 	"net"
+	"net/rpc"
 )
 
 var log = logging.MustGetLogger("tenyks")
@@ -22,7 +20,10 @@ type ControlServer struct {
 
 type ControlConnection struct {
 	conn net.Conn
-	io   *bufio.ReadWriter
+}
+
+type ConnectionArgs struct {
+	name string
 }
 
 func NewControlServer(conf config.ControlConfig) (*ControlServer, error) {
@@ -47,6 +48,9 @@ func (serv *ControlServer) Start() (chan bool, error) {
 	}
 	serv.socket = sock
 
+	// Setup RPC
+	rpc.Register(serv)
+
 	go func() {
 		defer close(wait)
 		accept := func() <-chan ControlConnection {
@@ -57,10 +61,7 @@ func (serv *ControlServer) Start() (chan bool, error) {
 					if err != nil {
 						log.Error("Error while accepting connection")
 					}
-					a <- ControlConnection{conn, bufio.NewReadWriter(
-						bufio.NewReader(conn),
-						bufio.NewWriter(conn),
-					)}
+					a <- ControlConnection{conn}
 				}
 			}()
 			return a
@@ -94,23 +95,9 @@ func (serv *ControlServer) Stop() error {
 
 func (serv *ControlServer) connectionWorker(controlConn ControlConnection) {
 	defer controlConn.conn.Close()
-	for {
-		msg, err := controlConn.io.ReadString('\n')
-		if err != nil {
-			if err == io.EOF {
-				log.Info("Client connection closed")
-				return
-			}
-			if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
-				log.Error("Client timeout")
-				return
-			}
-			log.Error("Could not read string from connection")
-		}
-		serv.handleMessage(msg)
-	}
+	rpc.ServeConn(controlConn.conn)
 }
 
-func (serv ControlServer) handleMessage(msg string) {
-	fmt.Println(msg)
+func (serv *ControlServer) DisconnectConnection(args *ConnectionArgs, reply *int) error {
+	return nil
 }
