@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net"
 	"time"
+	"sync"
 
 	"github.com/kyleterry/tenyks/config"
 	"github.com/op/go-logging"
@@ -56,6 +57,10 @@ type Connection struct {
 	PongIn          chan bool
 	// Number of retry attempts the connection made
 	retries         int
+	// Current channels tenyks is in. Jnerula hates state and I don't care.
+	Channels        []string
+	// Yes, I'm sharing memory. Sorry, mom.
+	channelMutex    sync.Mutex
 }
 
 // NewConnection will create a new instance of an irc.Connection.
@@ -254,6 +259,36 @@ func (conn *Connection) GetInfo() []string {
 		fmt.Sprintf("It has recieved %d messages", conn.MessagesRecved),
 		fmt.Sprintf("It has sent %d messages", conn.MessagesSent))
 	return info
+}
+
+func (conn *Connection) IsInChannel(channel string) bool {
+	for _, c := range conn.Channels {
+		if c == channel {
+			return true
+		}
+	}
+	return false
+}
+
+func (conn *Connection) JoinChannel(channel string) {
+	if conn.IsConnected() {
+		conn.channelMutex.Lock()
+		defer conn.channelMutex.Unlock()
+		if !conn.IsInChannel(channel) {
+			conn.Out <- fmt.Sprintf("JOIN %s", channel)
+			
+		}
+	}
+}
+
+func (conn *Connection) PartChannel(channel string) {
+	if conn.IsConnected() {
+		conn.channelMutex.Lock()
+		defer conn.channelMutex.Unlock()
+		if conn.IsInChannel(channel) {
+			conn.Out <- fmt.Sprintf("PART %s", channel)
+		}
+	}
 }
 
 func (conn *Connection) String() string {

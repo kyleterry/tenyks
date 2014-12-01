@@ -26,7 +26,7 @@ type ConnectionArgs struct {
 	Name string
 }
 
-type JoinArgs struct {
+type ChannelArgs struct {
 	Name string
 	Channel string
 }
@@ -107,11 +107,22 @@ func (serv *ControlServer) DisconnectConnection(args *ConnectionArgs, reply *int
 	return nil
 }
 
-func (serv *ControlServer) JoinChannel(args *JoinArgs, reply *string) error {
+func (serv *ControlServer) JoinChannel(args *ChannelArgs, reply *string) error {
 	conn, ok := serv.ircconns[args.Name]
 	if !ok {
 		*reply = "No such connection"
 	}
-	conn
+	conn.JoinChannel(args.Channel)
+	*reply = "OK"
+	return nil
+}
+
+func (serv *ControlServer) PartChannel(args *ChannelArgs, reply *string) error {
+	conn, ok := serv.ircconns[args.Name]
+	if !ok {
+		*reply = "No such connection"
+	}
+	conn.PartChannel(args.Channel)
+	*reply = "OK"
 	return nil
 }
