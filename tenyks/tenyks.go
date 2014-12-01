@@ -28,13 +28,7 @@ Usage: %s [-config <CONFIG PATH>] [OPTIONS]
 		-help, -h
 			This help
 `
-)
-
-var log = logging.MustGetLogger("tenyks")
-var configPath = flag.String("config", "", "Path to a configuration file")
-var versionFlag = flag.Bool("version", false, "Get the current version")
-var helpFlag = flag.Bool("help", false, "Get some help")
-var banner = `
+	banner = `
   _                   _         
  | |                 | |        
  | |_ ___ _ __  _   _| | _____  
@@ -44,6 +38,14 @@ var banner = `
                  __/ |          
                 |___/           
 `
+)
+
+var (
+	log = logging.MustGetLogger("tenyks")
+	configPath = flag.String("config", "", "Path to a configuration file")
+	versionFlag = flag.Bool("version", false, "Get the current version")
+	helpFlag = flag.Bool("help", false, "Get some help")
+)
 
 func init() {
 	flag.BoolVar(versionFlag, "v", false, "Get the current version")
