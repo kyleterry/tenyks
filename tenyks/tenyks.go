@@ -7,6 +7,7 @@ import (
 	"flag"
 
 	"github.com/kyleterry/tenyks/config"
+	"github.com/kyleterry/tenyks/control"
 	"github.com/kyleterry/tenyks/irc"
 	"github.com/kyleterry/tenyks/service"
 	. "github.com/kyleterry/tenyks/version"
@@ -53,7 +54,6 @@ func main() {
 
 	flag.Parse()
 
-	// Check for version flag if len(os.Args) > 1 {
 	if *versionFlag {
 		fmt.Println("Tenyks version " + TenyksVersion)
 		os.Exit(0)
@@ -103,6 +103,25 @@ func main() {
 		logging.SetLevel(logging.INFO, "tenyks")
 	}
 
+	// Starting Control Server
+	if conf.Control.Enabled {
+		log.Debug("Control Server is On")
+		var (
+			err error
+			wait chan bool
+			controlServer *control.ControlServer
+		)
+		controlServer, err = control.NewControlServer(conf.Control)
+		wait, err = controlServer.Start()
+		if err != nil {
+			log.Fatal(err)
+		}
+		<-wait
+		log.Info("Control server listening on %s", conf.Control.Bind)
+	} else {
+		log.Debug("Control Server is Off")
+	}
+
 	// Connections map
 	connections := make(irc.IRCConnections)
 	ircReactors := make([]<-chan bool, 0)
@@ -124,6 +143,7 @@ func main() {
 		go eng.RegisterIrcHandlersFor(ircconn)
 	}
 	go eng.Start()
+
 
 	<-quit
 }

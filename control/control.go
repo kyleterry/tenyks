@@ -2,6 +2,7 @@ package control
 
 import (
 	"bufio"
+	"io"
 	"errors"
 	"fmt"
 	"github.com/kyleterry/tenyks/config"
@@ -66,6 +67,8 @@ func (serv *ControlServer) Start() (chan bool, error) {
 			return a
 		}()
 
+		wait <- true
+
 		for {
 			select {
 			case conn := <-accept:
@@ -75,7 +78,6 @@ func (serv *ControlServer) Start() (chan bool, error) {
 			}
 		}
 
-		wait <- true
 	}()
 
 	return wait, nil
@@ -99,6 +101,14 @@ func (serv *ControlServer) connectionWorker(controlConn ControlConnection) {
 	for {
 		msg, err := controlConn.io.ReadString('\n')
 		if err != nil {
+			if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
+				log.Error("Client timeout")
+				return
+			}
+			if err == io.EOF {
+				log.Error("Client connection lost")
+				return
+			}
 			log.Error("Could not read string from connection")
 		}
 		serv.handleMessage(msg)
