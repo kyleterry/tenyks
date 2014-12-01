@@ -43,8 +43,7 @@ func (irc *MockIRC) Start() (chan bool, error) {
 	irc.Socket = sock
 	irc.ctl = make(chan bool, 1)
 	go func() {
-		wait <- true
-		close(wait)
+		defer close(wait)
 
 		accept := func () <-chan net.Conn {
 			a := make(chan net.Conn)
@@ -59,6 +58,8 @@ func (irc *MockIRC) Start() (chan bool, error) {
 			}()
 			return a
 		}()
+
+		wait <- true
 
 		for {
 			select {

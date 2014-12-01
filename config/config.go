@@ -25,6 +25,7 @@ type Config struct {
 	Debug       bool
 	Redis       RedisConfig
 	Connections []ConnectionConfig
+	Control     ControlConfig
 	LogLocation string
 	Version     string
 }
@@ -52,6 +53,11 @@ type ConnectionConfig struct {
 	Admins          []string
 	Channels        []string
 	Ssl             bool
+}
+
+type ControlConfig struct {
+	Enabled bool
+	Bind string
 }
 
 // discoverConfig will check to see if a config has been passed to tenyks on
