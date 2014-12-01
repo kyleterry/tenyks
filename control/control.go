@@ -17,7 +17,6 @@ type ControlServer struct {
 	socket   net.Listener
 	ctl      chan bool
 	ircconns *irc.IRCConnections
-	conns    []*ControlConnection
 	config   config.ControlConfig
 }
 
@@ -94,19 +93,16 @@ func (serv *ControlServer) Stop() error {
 }
 
 func (serv *ControlServer) connectionWorker(controlConn ControlConnection) {
-	serv.conns = append(serv.conns, &controlConn)
-
 	defer controlConn.conn.Close()
-
 	for {
 		msg, err := controlConn.io.ReadString('\n')
 		if err != nil {
-			if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
-				log.Error("Client timeout")
+			if err == io.EOF {
+				log.Info("Client connection closed")
 				return
 			}
-			if err == io.EOF {
-				log.Error("Client connection lost")
+			if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
+				log.Error("Client timeout")
 				return
 			}
 			log.Error("Could not read string from connection")

@@ -8,6 +8,7 @@ $script = <<SCRIPT
 apt-get update -qq
 apt-get -q -y install ngircd redis-server wget golang git mercurial
 sed -i 's/127.0.0.1/0.0.0.0/g' /etc/redis/redis.conf
+service redis-server restart
 mkdir -p /tmp/tenyks
 cd /tmp/tenyks
 cp -r /vagrant/* /tmp/tenyks
