@@ -18,6 +18,8 @@ type MockIRC struct {
 	io         *bufio.ReadWriter
 }
 
+// New will create a new instance of mockirc.
+// Returns a pointer to a MockIRC struct.
 func New(server string, port int) *MockIRC {
 	irc := &MockIRC{}
 	if port == 0 {
@@ -30,6 +32,8 @@ func New(server string, port int) *MockIRC {
 	return irc
 }
 
+// Start will start the "irc" server and listen on the port passed to New.
+// Returns a channel of type bool or an error.
 func (irc *MockIRC) Start() (chan bool, error) {
 	wait := make(chan bool, 1)
 	sock, err := net.Listen("tcp", fmt.Sprintf(":%d", irc.Port))
@@ -70,6 +74,8 @@ func (irc *MockIRC) Start() (chan bool, error) {
 	return wait, nil
 }
 
+// Stop will send the shutdown message on the control channel and stop the server.
+// It could return an error.
 func (irc *MockIRC) Stop() error {
 	irc.ctl <- true
 	err := irc.Socket.Close()
@@ -80,6 +86,7 @@ func (irc *MockIRC) Stop() error {
 	return nil
 }
 
+//connectionWorker is a non-exported method that will handle incoming connections from Accept.
 func (irc *MockIRC) connectionWorker(conn net.Conn) {
 	irc.io = bufio.NewReadWriter(
 		bufio.NewReader(conn),
@@ -94,6 +101,8 @@ func (irc *MockIRC) connectionWorker(conn net.Conn) {
 	}
 }
 
+// handleMessage will figure out how to handle messages coming in. It looks at the
+// events map to see if it matched anything to send a response.
 func (irc *MockIRC) handleMessage(msg string) {
 	msg = strings.TrimSuffix(msg, "\r\n")
 	var err error
@@ -116,6 +125,7 @@ func (irc *MockIRC) handleMessage(msg string) {
 	fmt.Println(msg)
 }
 
+// Send will write the string to the connection.
 func (irc *MockIRC) Send(thing string) {
 	irc.io.WriteString(thing + "\r\n")
 }
@@ -125,12 +135,18 @@ type WhenEvent struct {
 	responses []string
 }
 
+// When will take a string that represents an event. This stores the event in a map
+// that is checked later when a message comes in over a connection.
+// Example use: `mockircserver.When("PING mockirc").Respond(":PONG mockirc")
+// Returns the new WhenEvent instance for method chaining.
 func (irc *MockIRC) When(event string) *WhenEvent {
 	when := &WhenEvent{event: event}
 	irc.events[event] = when
 	return when
 }
 
+// This will add to a list of reponses to send back when an event is matched.
+// Returns the new WhenEvent instance for method chaining.
 func (when *WhenEvent) Respond(response string) *WhenEvent {
 	when.responses = append(when.responses, response)
 	return when
