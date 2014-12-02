@@ -106,13 +106,13 @@ func main() {
 	}
 
 	// Starting Control Server
+	var (
+		err error
+		wait chan bool
+		controlServer *control.ControlServer
+	)
 	if conf.Control.Enabled {
 		log.Debug("Control Server is On")
-		var (
-			err error
-			wait chan bool
-			controlServer *control.ControlServer
-		)
 		controlServer, err = control.NewControlServer(conf.Control)
 		wait, err = controlServer.Start()
 		if err != nil {
@@ -140,6 +140,9 @@ func main() {
 	}
 
 	eng.SetIRCConns(connections)
+	if conf.Control.Enabled {
+		controlServer.SetIRCConns(connections)
+	}
 
 	for _, ircconn := range connections {
 		go eng.RegisterIrcHandlersFor(ircconn)

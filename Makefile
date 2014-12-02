@@ -22,6 +22,7 @@ build-setup:
 build: vendor-get build-setup
 	@echo "$(OK_COLOR)===> Building$(NO_COLOR)"
 	$(GO) build -o ./bin/tenyks ./tenyks
+	$(GO) build -o ./bin/tenyksctl ./tenyksctl
 	@echo "$(OK_COLOR)===> Done building$(NO_COLOR)"
 
 doc:
@@ -45,6 +46,7 @@ clean:
 install: 
 	@echo "$(OK_COLOR)===> Installing$(NO_COLOR)"
 	install ./bin/tenyks $(INSTALL_BIN)tenyks
+	install ./bin/tenyksctl $(INSTALL_BIN)tenyksctl
 
 uninstall:
 	@echo "$(WARN_COLOR)===> Uninstalling$(NO_COLOR)"
