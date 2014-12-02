@@ -5,6 +5,7 @@ import(
 	"flag"
 	"fmt"
 	"log"
+	"time"
 	
 	"github.com/kyleterry/tenyks/control"
 )
@@ -34,6 +35,13 @@ func main() {
 	args := &control.ChannelArgs{"vagrant", "#test"}
 
 	err = client.Call("ControlServer.JoinChannel", args, &reply)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	<-time.After(time.Second * 10)
+
+	err = client.Call("ControlServer.PartChannel", args, &reply)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -6,6 +6,7 @@ package irc
 
 import (
 	"bufio"
+	"container/list"
 	"crypto/tls"
 	"fmt"
 	"net"
@@ -58,9 +59,9 @@ type Connection struct {
 	// Number of retry attempts the connection made
 	retries         int
 	// Current channels tenyks is in. Jnerula hates state and I don't care.
-	Channels        []string
+	Channels        *list.List
 	// Yes, I'm sharing memory. Sorry, mom.
-	channelMutex    sync.Mutex
+	channelMutex    *sync.Mutex
 }
 
 // NewConnection will create a new instance of an irc.Connection.
@@ -75,6 +76,8 @@ func NewConnection(name string, conf config.ConnectionConfig) *Connection {
 		ConnectWait:     make(chan bool, 1),
 		PongIn:          make(chan bool, 1),
 		Created:         time.Now(),
+		Channels:        list.New(),
+		channelMutex:    &sync.Mutex{},
 	}
 	conn.addBaseHandlers()
 	return conn
@@ -262,31 +265,47 @@ func (conn *Connection) GetInfo() []string {
 }
 
 func (conn *Connection) IsInChannel(channel string) bool {
-	for _, c := range conn.Channels {
-		if c == channel {
+	conn.channelMutex.Lock()
+	defer conn.channelMutex.Unlock()
+	for e := conn.Channels.Front(); e != nil; e = e.Next() {
+		if e.Value.(string) == channel {
 			return true
 		}
 	}
 	return false
 }
 
+func (conn *Connection) GetChannelElement(channel string) *list.Element {
+	conn.channelMutex.Lock()
+	defer conn.channelMutex.Unlock()
+	for e := conn.Channels.Front(); e != nil; e = e.Next() {
+		if e.Value.(string) == channel {
+			return e
+		}
+	}
+	return nil
+}
+
 func (conn *Connection) JoinChannel(channel string) {
 	if conn.IsConnected() {
-		conn.channelMutex.Lock()
-		defer conn.channelMutex.Unlock()
 		if !conn.IsInChannel(channel) {
+			conn.channelMutex.Lock()
+			defer conn.channelMutex.Unlock()
 			conn.Out <- fmt.Sprintf("JOIN %s", channel)
-			
+			conn.Channels.PushFront(channel)
 		}
 	}
 }
 
 func (conn *Connection) PartChannel(channel string) {
 	if conn.IsConnected() {
-		conn.channelMutex.Lock()
-		defer conn.channelMutex.Unlock()
 		if conn.IsInChannel(channel) {
 			conn.Out <- fmt.Sprintf("PART %s", channel)
+			if e := conn.GetChannelElement(channel); e != nil {
+				conn.channelMutex.Lock()
+				defer conn.channelMutex.Unlock()
+				conn.Channels.Remove(e)
+			}
 		}
 	}
 }

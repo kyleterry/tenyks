@@ -108,7 +108,6 @@ func (conn *Connection) ConnectedHandler(msg *Message) {
 		conn.Out <- ircsafe
 	}
 	log.Info("[%s] Joining Channels", conn.Name)
-	// TODO: generalize joins
 	for _, channel := range conn.Config.Channels {
 		conn.JoinChannel(channel)
 		log.Debug("[%s] Joined %s", conn.Name, channel)
