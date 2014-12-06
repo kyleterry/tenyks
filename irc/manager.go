@@ -18,6 +18,7 @@ const (
 type Request struct {
 	RequestType int
 	Requirement int
+	ConnName string
 	Payload interface{}
 }
 
@@ -50,13 +51,29 @@ func (cm *ConnectionManager) Start(done chan bool) chan chan Request {
 						conn := req.Payload.(*Connection)
 						cm.connections[conn.Name] = conn
 					case RtDisconnect:
-						connName := req.Payload.(string)
-						if conn, ok := cm.connections[connName]; ok {
+						conn := cm.ConnFromName(req.ConnName)
+						if conn != nil {
 							conn.Disconnect()
+						}
+					case RtReconnect:
+						conn := cm.ConnFromName(req.ConnName)
+						if conn != nil {
+							conn.Connect()
+						}
+					case RtJoin:
+						conn := cm.ConnFromName(req.ConnName)
+						if conn != nil {
+							conn.JoinChannel(req.Payload.(string))
+						}
+					}
+					case RtPart:
+						conn := cm.ConnFromName(req.ConnName)
+						if conn != nil {
+							conn.PartChannel(req.Payload.(string))
 						}
 					}
 				case <-done:
-				case <-time.After(time.Second * 5):
+				case <-time.After(time.Second * 2):
 				}
 			case <-done:
 				return
@@ -65,6 +82,13 @@ func (cm *ConnectionManager) Start(done chan bool) chan chan Request {
 	}()
 
 	return c
+}
+
+func (cm *ConnectionManager) ConnFromName(name string) *Connection {
+	if conn, ok := cm.connections[name]; ok {
+		return conn
+	}
+	return nil
 }
 
 func (cm *ConnectionManager) AddConnection(conn *Connection) {
