@@ -49,7 +49,7 @@ func (conn *Connection) addBaseHandlers() {
 	conn.AddHandler("bootstrap", (*Connection).BootstrapHandler)
 	conn.AddHandler("send_ping", (*Connection).SendPing)
 	conn.AddHandler("001", (*Connection).ConnectedHandler)
-	conn.AddHandler("433", (*Connection).NickInUseHandler)
+	conn.AddHandler("433", (*Connection).InvalidNickHandler)
 	conn.AddHandler("PING", (*Connection).PingHandler)
 	conn.AddHandler("PONG", (*Connection).PongHandler)
 	conn.AddHandler("CTCP", (*Connection).CTCPHandler)
@@ -78,22 +78,21 @@ func (conn *Connection) BootstrapHandler(msg *Message) {
 		conn.Config.Host,
 		conn.Config.Ident,
 		conn.Config.Realname)
-	conn.Out <- fmt.Sprintf(
-		"NICK %s", conn.Config.Nicks[conn.nickIndex])
-	conn.currentNick = conn.Config.Nicks[conn.nickIndex]
+	conn.SetNick(conn.Config.Nicks[conn.nickIndex])
 	conn.ConnectWait <- true
 	close(conn.ConnectWait)
 }
 
-func (conn *Connection) NickInUseHandler(msg *Message) {
-	log.Info("[%s] Nick `%s` is in use. Next...", conn.Name, conn.currentNick)
-	conn.nickIndex++
-	if len(conn.Config.Nicks) >= conn.nickIndex+1 {
-		conn.Out <- fmt.Sprintf(
-			"NICK %s", conn.Config.Nicks[conn.nickIndex])
-		conn.currentNick = conn.Config.Nicks[conn.nickIndex]
-	} else {
-		log.Fatal("All nicks in use.")
+func (conn *Connection) InvalidNickHandler(msg *Message) {
+	if !conn.nickInitiallySet {
+		// TODO: add ERR message to log call
+		log.Info("[%s] Nick `%s` is invalid. Next...", conn.Name, conn.currentNick)
+		conn.nickIndex++
+		if len(conn.Config.Nicks) >= conn.nickIndex+1 {
+			conn.SetNick(conn.Config.Nicks[conn.nickIndex])
+		} else {
+			log.Fatal("All nicks in use.")
+		}
 	}
 }
 
@@ -112,6 +111,7 @@ func (conn *Connection) ConnectedHandler(msg *Message) {
 		conn.JoinChannel(channel)
 		log.Debug("[%s] Joined %s", conn.Name, channel)
 	}
+	conn.nickInitiallySet = true
 	conn.currentServer = msg.Prefix
 	go conn.watchdog()
 }

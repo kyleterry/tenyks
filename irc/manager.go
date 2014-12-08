@@ -13,6 +13,7 @@ const (
 	RtNewConn
 	RtDisconnect
 	RtReconnect
+	RtSetNick
 )
 
 type Request struct {
@@ -65,11 +66,15 @@ func (cm *ConnectionManager) Start(done chan bool) chan chan Request {
 						if conn != nil {
 							conn.JoinChannel(req.Payload.(string))
 						}
-					}
 					case RtPart:
 						conn := cm.ConnFromName(req.ConnName)
 						if conn != nil {
 							conn.PartChannel(req.Payload.(string))
+						}
+					case RtSetNick:
+						conn := cm.ConnFromName(req.ConnName)
+						if conn != nil {
+							conn.SetNick(req.Payload.(string))
 						}
 					}
 				case <-done:
