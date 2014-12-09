@@ -1,4 +1,5 @@
 # MockIRC
+[![GoDoc](https://godoc.org/github.com/kyleterry/tenyks/mockirc?status.svg)](https://godoc.org/github.com/kyleterry/tenyks/mockirc)
 
 This is a mock IRC server for testing go programs that interact with IRC. This
 is NOT a real IRC server... So don't attempt to use it as one.
