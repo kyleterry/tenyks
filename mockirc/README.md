@@ -4,6 +4,11 @@
 This is a mock IRC server for testing go programs that interact with IRC. This
 is NOT a real IRC server... So don't attempt to use it as one.
 
+MockIRC works by creating a listen socket and accepting real connections. You
+can specify what MockIRC should respond with when it sees a certain message.
+
+See below for usage and examples.
+
 ## Usage
 
 ```go
