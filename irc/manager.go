@@ -113,6 +113,8 @@ func (cm *ConnectionManager) Start(done chan bool) chan chan Request {
 		}
 	}()
 
+	cm.cmCom = c
+
 	return c
 }
 

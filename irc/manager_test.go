@@ -19,7 +19,6 @@ func TestCanStartCm(t *testing.T) {
 }
 
 func TestManagerCanRespond(t *testing.T) {
-	t.Skip("skipping for now")
 	done := make(chan bool)
 	cm := NewConnectionManager()
 	cmcom := cm.Start(done)
@@ -32,8 +31,8 @@ func TestManagerCanRespond(t *testing.T) {
 		Payload: NewConnection("mockirc", MakeConnConfig()),
 	}
 
-	rcom <- request
 	cmcom <- rcom
+	rcom <- request
 
 	select {
 	case request = <-rcom:
@@ -45,7 +44,6 @@ func TestManagerCanRespond(t *testing.T) {
 }
 
 func TestManagerCanConnectAndDisconnect(t *testing.T) {
-	t.Skip("skipping for now")
 	done := make(chan bool)
 	cm := NewConnectionManager()
 	cmcom := cm.Start(done)
