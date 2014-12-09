@@ -3,6 +3,7 @@ package irc
 import (
 	"testing"
 	"time"
+	"fmt"
 
 	"github.com/kyleterry/tenyks/mockirc"
 )
@@ -62,7 +63,10 @@ func TestManagerCanConnectAndDisconnect(t *testing.T) {
 	}
 	<-wait
 
-	conn := NewConnection("mockirc", MakeConnConfig())
+	config := MakeConnConfig()
+	conn := NewConnection("mockirc", config)
+
+	fmt.Println("Building request")
 
 	request = Request{
 		RequestType: RtNewConn,
@@ -70,18 +74,23 @@ func TestManagerCanConnectAndDisconnect(t *testing.T) {
 		Payload: conn,
 	}
 
-	rcom <- request
 	cmcom <- rcom
+	rcom <- request
 
+	fmt.Println("Sending request on rcom channel")
+
+	fmt.Println("Waiting for connect")
 	var i int
 	for i = 0; i <= 4; i++ {
 		<-time.After(time.Second * 1)
-		if !conn.connected && i == 4 {
+		if !conn.IsConnected() && i == 4 {
 			t.Error("The connection did not connect")
-		} else if conn.connected {
+			return
+		} else if conn.IsConnected() {
 			break
 		}
 	}
+	fmt.Println("connected!")
 
 	request = Request {
 		RequestType: RtDisconnect,
@@ -90,15 +99,23 @@ func TestManagerCanConnectAndDisconnect(t *testing.T) {
 	}
 
 	rcom = make(chan Request)
-	rcom <- request
 	cmcom <- rcom
+	rcom <- request
 
+	fmt.Println("Waiting for disconnect")
 	for i = 0; i <= 4; i++ {
 		<-time.After(time.Second * 1)
-		if conn.connected && i == 4 {
+		if conn.IsConnected() && i == 4 {
 			t.Error("The connection did not disconnect")
-		} else if !conn.connected {
+			return
+		} else if !conn.IsConnected() {
 			break
 		}
+	}
+	fmt.Println("disconnected!")
+
+	err = ircServer.Stop()
+	if err != nil {
+		t.Fatal("Error stopping mockirc server")
 	}
 }
