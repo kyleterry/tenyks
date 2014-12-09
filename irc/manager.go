@@ -14,12 +14,20 @@ const (
 	RtDisconnect
 	RtReconnect
 	RtSetNick
+	ReOK
+	ReErr
 )
 
 type Request struct {
 	RequestType int
 	Requirement int
 	ConnName string
+	Payload interface{}
+	Response Response
+}
+
+type Response struct {
+	ResponseType int
 	Payload interface{}
 }
 
@@ -32,6 +40,11 @@ func NewConnectionManager() *ConnectionManager {
 	return &ConnectionManager{
 		connections: make(map[string]*Connection),
 	}
+}
+
+func StartConnection(conn *Connection) {
+	wait := conn.Connect()
+	<-wait
 }
 
 func (cm *ConnectionManager) Start(done chan bool) chan chan Request {
@@ -51,6 +64,14 @@ func (cm *ConnectionManager) Start(done chan bool) chan chan Request {
 					case RtNewConn:
 						conn := req.Payload.(*Connection)
 						cm.connections[conn.Name] = conn
+						if req.Requirement == RqResponseRequired {
+							req.Response = Response{
+								ResponseType: ReOK,
+								Payload: "Connection was added and is boostrapping now",
+							}
+							com <- req
+							go StartConnection(conn)
+						}
 					case RtDisconnect:
 						conn := cm.ConnFromName(req.ConnName)
 						if conn != nil {
