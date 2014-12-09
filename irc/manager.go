@@ -70,6 +70,7 @@ func (cm *ConnectionManager) Start(done chan bool) chan chan Request {
 								Payload: "Connection was added and is boostrapping now",
 							}
 							com <- req
+							close(com)
 							go StartConnection(conn)
 						}
 					case RtDisconnect:
