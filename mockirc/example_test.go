@@ -2,7 +2,6 @@ package mockirc_test
 
 import (
 	"bufio"
-	"fmt"
 	"net"
 	"log"
 	"github.com/kyleterry/tenyks/mockirc"
