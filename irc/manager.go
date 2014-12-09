@@ -42,9 +42,12 @@ func NewConnectionManager() *ConnectionManager {
 	}
 }
 
-func StartConnection(conn *Connection) {
+func StartConnection(conn *Connection, done chan bool) {
 	wait := conn.Connect()
-	<-wait
+	select {
+	case <-wait:
+	case <-done:
+	}
 }
 
 func (cm *ConnectionManager) Start(done chan bool) chan chan Request {
@@ -71,7 +74,7 @@ func (cm *ConnectionManager) Start(done chan bool) chan chan Request {
 							}
 							com <- req
 							close(com)
-							go StartConnection(conn)
+							go StartConnection(conn, done)
 						}
 					case RtDisconnect:
 						conn := cm.ConnFromName(req.ConnName)
@@ -100,7 +103,9 @@ func (cm *ConnectionManager) Start(done chan bool) chan chan Request {
 						}
 					}
 				case <-done:
+					return
 				case <-time.After(time.Second * 2):
+					return
 				}
 			case <-done:
 				return

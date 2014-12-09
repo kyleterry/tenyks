@@ -3,6 +3,7 @@ package mockirc
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"strings"
@@ -96,7 +97,9 @@ func (irc *MockIRC) connectionWorker(conn net.Conn) {
 	defer conn.Close()
 	for {
 		msg, err := irc.io.ReadString('\n')
-		if err != nil {
+		if err != nil && err == io.EOF {
+			return
+		} else {
 			log.Println(err)
 		}
 		irc.handleMessage(msg)
