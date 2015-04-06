@@ -2,17 +2,15 @@ package mockirc_test
 
 import (
 	"bufio"
-	"fmt"
-	"net"
-	"log"
 	"github.com/kyleterry/tenyks/mockirc"
+	"log"
+	"net"
 )
 
 func ExampleIRCInteraction() {
 	var client net.Conn
 	var err error
 	var wait chan bool
-	var msg []byte
 
 	ircServer := mockirc.New("mockirc.tenyks.io", 6661) // servername and port
 	// When I recieve "PING mockirc.tenyks.io" on the server, respond back with PONG...
@@ -36,9 +34,9 @@ func ExampleIRCInteraction() {
 		log.Fatal(err)
 	}
 
-	msg, err = io.ReadString('\n')
+	msg_string, err := io.ReadString('\n')
 
-	if string(msg) != ":PONG mockirc.tenyks.io" {
+	if msg_string != ":PONG mockirc.tenyks.io" {
 		log.Fatal("Invalid response")
 	}
 }

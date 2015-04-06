@@ -3,6 +3,8 @@ package mockirc
 import (
 	"bufio"
 	"fmt"
+	"io"
+	"log"
 	"net"
 	"strings"
 	"time"
@@ -51,7 +53,7 @@ func (irc *MockIRC) Start() (chan bool, error) {
 				for {
 					conn, err := irc.Socket.Accept()
 					if err != nil {
-						fmt.Println(err)
+						log.Println(err)
 					}
 					a <- conn
 				}
@@ -95,8 +97,10 @@ func (irc *MockIRC) connectionWorker(conn net.Conn) {
 	defer conn.Close()
 	for {
 		msg, err := irc.io.ReadString('\n')
-		if err != nil {
-			fmt.Println(err)
+		if err != nil && err == io.EOF {
+			return
+		} else {
+			log.Println(err)
 		}
 		irc.handleMessage(msg)
 	}
@@ -111,19 +115,19 @@ func (irc *MockIRC) handleMessage(msg string) {
 		for _, response := range val.responses {
 			_, err = irc.io.WriteString(response + "\r\n")
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				return
 			}
 			err = irc.io.Flush()
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				return
 			}
 		}
 	} else {
-		fmt.Printf("Nothing to do for %s\n", msg)
+		log.Printf("Nothing to do for %s\n", msg)
 	}
-	fmt.Println(msg)
+	log.Println(msg)
 }
 
 // Send will write the string to the connection.
