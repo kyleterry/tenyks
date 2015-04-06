@@ -1,6 +1,7 @@
 {
     "debug": true,
     "redis": {
+        "host": "localhost",
         "port": 6379,
         "db": 0,
         "password": "",
@@ -24,7 +25,7 @@
             "ssl": false
         }
     ],
-    "Control" {
+    "Control": {
         "Enabled": true,
         "Bind": ":12666"
     },
