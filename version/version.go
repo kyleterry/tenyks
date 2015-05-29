@@ -5,7 +5,7 @@ import(
 )
 
 const (
-	TenyksVersion = "1.0"
+	TenyksVersion = "0.9"
 )
 
 var Info []string
