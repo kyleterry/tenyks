@@ -21,7 +21,7 @@ build-setup:
 
 build: vendor-get build-setup
 	@echo "$(OK_COLOR)===> Building$(NO_COLOR)"
-	$(GO) build -o ./bin/tenyks ./tenyks
+	$(GO) build -o ./bin/tenyks ./tenyks.go
 	$(GO) build -o ./bin/tenyksctl ./tenyksctl
 	@echo "$(OK_COLOR)===> Done building$(NO_COLOR)"
 
@@ -36,7 +36,7 @@ lint:
 
 run:
 	@echo "$(OK_COLOR)===> Running$(NO_COLOR)"
-	$(GO) run --race tenyks/tenyks.go
+	$(GO) run --race tenyks.go
 
 clean:
 	@echo "$(WARN_COLOR)===> Cleaning$(NO_COLOR)"
