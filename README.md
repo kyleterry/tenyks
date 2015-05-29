@@ -33,7 +33,7 @@ taking everything else down with it.
 
 Current supported Go version is 1.3
 
-Since Tenyks is pretty new, you will need to build the bot yourself. Step 1 is
+You can build the bot yourself. Step 1 is
 making sure you have a redis-server running. I won't go into detail there as I'm
 sure you can figure it out. Step 2 is making sure you have all the Go
 dependencies installed. For instance on Debian you would run `sudo apt-get
@@ -62,6 +62,12 @@ Why would you ever want to do that?
 cd /path/to/tenyks
 sudo make uninstall
 ```
+
+### Binary Release
+
+You can find binary builds on [bintray](https://dl.bintray.com/kyleterry/tenyks/).
+
+I cross compile for Linux {arm,386,amd64} and Darwin {386,amd64}.
 
 ### Configuration
 
