@@ -4,24 +4,11 @@
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
 
-$script = <<SCRIPT
-apt-get update -qq
-apt-get -q -y install ngircd redis-server wget golang git mercurial
-sed -i 's/127.0.0.1/0.0.0.0/g' /etc/redis/redis.conf
-service redis-server restart
-mkdir -p /tmp/tenyks
-cd /tmp/tenyks
-cp -r /vagrant/* /tmp/tenyks
-make
-make install
-make clean
-mkdir -p /etc/tenyks
-cp config.json.example /etc/tenyks/config.json
-SCRIPT
-
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box = "ubuntu/trusty64"
-  config.vm.network "private_network", ip: "192.168.33.66"
   config.vm.hostname = "tenyks"
-  config.vm.provision "shell", inline: $script
+  config.vm.provision "shell", path: './vagrant-bootstrap.sh', privileged: false
+  config.vm.network "forwarded_port", guest: 6667, host: 6667
+  config.vm.network "forwarded_port", guest: 6379, host: 6378
+  config.vm.synced_folder ".", "/home/vagrant/go/src/github.com/kyleterry/tenyks"
 end
