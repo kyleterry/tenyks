@@ -1,7 +1,9 @@
 * Look into https://github.com/tools/godep
+    * Better option would be to look at Go 1.5 vendoring
 * ZeroMQ
 * https://github.com/mitchellh/colorstring
 * Ping services on thier own pubsub channels (maybe)
-* Port some python-tenyks tasks to github issue tracker
+    * nah
 * Should services be able to talk to each other?
+    * Maybe? I'm not sure if this is beyond the scope of the project or not
 * Look at switching to Apache license
