@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 	"time"
-	"code.google.com/p/go-uuid/uuid"
+	"github.com/Xe/uuid"
 )
 
 type ServiceRegistry struct {

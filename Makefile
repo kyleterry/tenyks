@@ -57,5 +57,6 @@ vendor-get:
 	GOPATH=$(GOPATH) $(GO) get -d -u -v \
 	github.com/garyburd/redigo/redis \
 	github.com/op/go-logging \
-	code.google.com/p/gomock/gomock \
-	code.google.com/p/go-uuid/uuid
+	github.com/golang/mock/gomock \
+	github.com/Xe/uuid
+

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"code.google.com/p/go-uuid/uuid"
+	"github.com/Xe/uuid"
 	"github.com/kyleterry/tenyks/irc"
 )
 
