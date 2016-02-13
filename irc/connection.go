@@ -10,8 +10,8 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
-	"time"
 	"sync"
+	"time"
 
 	"github.com/kyleterry/tenyks/config"
 	"github.com/op/go-logging"
@@ -21,47 +21,47 @@ var log = logging.MustGetLogger("tenyks")
 
 type Connection struct {
 	// Name of the network (e.g. freenode, efnet, localhost)
-	Name            string
+	Name string
 	// Network configuration
-	Config          config.ConnectionConfig
+	Config config.ConnectionConfig
 	// Set to the current nick in use on the server
-	currentNick     string
+	currentNick string
 	// Set to the current server connected to in the network.
-	currentServer   string
+	currentServer string
 	// Current index in the array of nicks
-	nickIndex       int
+	nickIndex int
 	// Whether or not we are connected with SSL (TLS)
-	usingSSL        bool
+	usingSSL bool
 	// This is the socket used to communicate with IRC
-	socket          net.Conn
+	socket net.Conn
 	// Channel used to capture messages coming in from IRC
-	In              <-chan string
+	In <-chan string
 	// Channel used to send messages to IRC
-	Out             chan<- string
+	Out chan<- string
 	// bufio readerwriter instance
-	io              *bufio.ReadWriter
+	io *bufio.ReadWriter
 	// are we currently connected?
-	connected       bool
+	connected bool
 	// How many messages we have recieved. Reset when tenyks is restarted.
-	MessagesRecved  uint
+	MessagesRecved uint
 	// How mant messages we have sent. Reset when tenyks is restarted.
-	MessagesSent    uint
+	MessagesSent uint
 	// Created holds the datetime the connection was created.
-	Created         time.Time
+	Created time.Time
 	// Handler registry. These handle various commands from IRC.
-	Registry        *HandlerRegistry
+	Registry *HandlerRegistry
 	// Channel used to tell things to wait for the connection to succeed before spawning goroutines.
-	ConnectWait     chan bool
+	ConnectWait chan bool
 	// Last PONG recieved from the network.
-	LastPong        time.Time
+	LastPong time.Time
 	// Channel for the connection watchdog.
-	PongIn          chan bool
+	PongIn chan bool
 	// Number of retry attempts the connection made
-	retries         int
+	retries int
 	// Current channels tenyks is in. Jnerula hates state and I don't care.
-	Channels        *list.List
+	Channels *list.List
 	// Yes, I'm sharing memory. Sorry, mom.
-	channelMutex    *sync.Mutex
+	channelMutex *sync.Mutex
 }
 
 // NewConnection will create a new instance of an irc.Connection.
@@ -69,15 +69,15 @@ type Connection struct {
 func NewConnection(name string, conf config.ConnectionConfig) *Connection {
 	registry := NewHandlerRegistry()
 	conn := &Connection{
-		Name:            name,
-		Config:          conf,
-		usingSSL:        conf.Ssl,
-		Registry:        registry,
-		ConnectWait:     make(chan bool, 1),
-		PongIn:          make(chan bool, 1),
-		Created:         time.Now(),
-		Channels:        list.New(),
-		channelMutex:    &sync.Mutex{},
+		Name:         name,
+		Config:       conf,
+		usingSSL:     conf.Ssl,
+		Registry:     registry,
+		ConnectWait:  make(chan bool, 1),
+		PongIn:       make(chan bool, 1),
+		Created:      time.Now(),
+		Channels:     list.New(),
+		channelMutex: &sync.Mutex{},
 	}
 	conn.addBaseHandlers()
 	return conn
@@ -92,11 +92,11 @@ func (conn *Connection) Connect() chan bool {
 		conn.retries = 0
 		var (
 			socket net.Conn
-			err error
+			err    error
 		)
 		for {
 			if conn.retries > conn.Config.Retries {
-				log.Error("[%s] Max retries reached.",
+				log.Errorf("[%s] Max retries reached.",
 					conn.Name)
 				c <- false
 				return
@@ -108,7 +108,7 @@ func (conn *Connection) Connect() chan bool {
 			if conn.usingSSL {
 				socket, err = tls.Dial("tcp", server, nil)
 				if err != nil {
-					log.Error("[%s] Connection failed... Retrying.",
+					log.Errorf("[%s] Connection failed... Retrying.",
 						conn.Name)
 					conn.retries += 1
 					time.Sleep(time.Second * time.Duration(conn.retries))

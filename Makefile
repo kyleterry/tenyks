@@ -2,8 +2,6 @@
 
 GO ?= go
 BUILDDIR := $(CURDIR)/build
-GOPATH := $(BUILDDIR)
-export GOPATH
 PREFIX?=/usr/local
 INSTALL_BIN=$(PREFIX)/bin/
 NO_COLOR=\033[0m
@@ -13,13 +11,7 @@ WARN_COLOR=\033[33;01m
 
 default: build
 
-build-setup:
-	@echo "$(OK_COLOR)===> Linking relative packages to GOPATH$(NO_COLOR)"
-	@mkdir -p $(GOPATH)/src/github.com/kyleterry
-	@test -d "${GOPATH}/src/github.com/kyleterry/tenyks" || ln -s "$(CURDIR)" "$(GOPATH)/src/github.com/kyleterry/tenyks"
-
-
-build: vendor-get build-setup
+build: vendor-get
 	@echo "$(OK_COLOR)===> Building$(NO_COLOR)"
 	$(GO) build -o ./bin/tenyks ./tenyks.go
 	$(GO) build -o ./bin/tenyksctl ./tenyksctl
@@ -54,9 +46,5 @@ uninstall:
 
 vendor-get:
 	@echo "$(OK_COLOR)===> Fetching dependencies$(NO_COLOR)"
-	GOPATH=$(GOPATH) $(GO) get -d -u -v \
-	github.com/garyburd/redigo/redis \
-	github.com/op/go-logging \
-	github.com/golang/mock/gomock \
-	github.com/Xe/uuid
-
+	go get github.com/Masterminds/glide
+	glide install

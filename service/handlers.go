@@ -3,8 +3,8 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"time"
 	"strings"
+	"time"
 
 	"github.com/kyleterry/tenyks/irc"
 	"github.com/kyleterry/tenyks/version"
@@ -92,13 +92,13 @@ func (self *Connection) HelpIrcHandler(conn *irc.Connection, msg *irc.Message) {
 					return
 				}
 				serviceMsg := &Message{
-					Target: msg.Nick,
-					Nick: msg.Nick,
-					Direct: true,
+					Target:       msg.Nick,
+					Nick:         msg.Nick,
+					Direct:       true,
 					From_channel: false,
-					Command: "PRIVMSG",
-					Connection: conn.Name,
-					Payload: fmt.Sprintf("!help %s", service.UUID.String()),
+					Command:      "PRIVMSG",
+					Connection:   conn.Name,
+					Payload:      fmt.Sprintf("!help %s", service.UUID.String()),
 				}
 				jsonBytes, err := json.Marshal(serviceMsg)
 				if err != nil {
@@ -108,7 +108,7 @@ func (self *Connection) HelpIrcHandler(conn *irc.Connection, msg *irc.Message) {
 				self.Out <- string(jsonBytes[:])
 			} else {
 				conn.Out <- msg.GetDMString(
-					fmt.Sprintf("No such service `%s`", trail[1]))
+					fmt.Sprintf("No such service `%b`", trail[1]))
 			}
 		} else {
 			conn.Out <- msg.GetDMString(
@@ -180,7 +180,7 @@ func (self *Connection) ByeServiceHandler(msg *Message) {
 }
 
 const (
-	ServiceOnline = true
+	ServiceOnline  = true
 	ServiceOffline = false
 )
 

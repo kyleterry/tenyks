@@ -12,7 +12,7 @@ func ConnectionReactor(conn *Connection, reactorCtl <-chan bool) {
 			if conn.IsConnected() == false {
 				connected := <-conn.Connect()
 				if connected == false {
-					log.Error("[%s] Could not connect.", conn.Name)
+					log.Errorf("[%s] Could not connect.", conn.Name)
 					break
 				}
 				dispatch("bootstrap", conn, nil)
@@ -32,7 +32,7 @@ func ConnectionReactor(conn *Connection, reactorCtl <-chan bool) {
 			}
 		}
 	} else {
-		log.Error("[%s] Could not connect.", conn.Name)
+		log.Errorf("[%s] Could not connect.", conn.Name)
 	}
 }
 

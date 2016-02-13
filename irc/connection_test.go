@@ -1,10 +1,11 @@
 package irc
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 	"time"
-	"strings"
-	"fmt"
+
 	"github.com/kyleterry/tenyks/config"
 	"github.com/kyleterry/tenyks/mockirc"
 )
@@ -12,11 +13,11 @@ import (
 func TestNewConnectionNoDial(t *testing.T) {
 	conf := config.ConnectionConfig{
 		Name: "test",
-		Ssl: true,
+		Ssl:  true,
 	}
 	conn := NewConnection(conf.Name, conf)
 	if conn.Name != conf.Name {
-		t.Error("Expected %s, got %s", conn.Name, conf.Name)
+		t.Errorf("Expected %s, got %s", conn.Name, conf.Name)
 	}
 
 	if !conn.usingSSL {
@@ -42,16 +43,16 @@ func TestNewConnectionNoDial(t *testing.T) {
 
 func MakeConnConfig() config.ConnectionConfig {
 	return config.ConnectionConfig{
-		Name: "mockirc",
-		Host: "localhost",
-		Port: 26661,
+		Name:            "mockirc",
+		Host:            "localhost",
+		Port:            26661,
 		FloodProtection: true,
-		Retries: 5,
-		Nicks: []string{"tenyks", "tenyks-"},
-		Ident: "something",
-		Realname: "tenyks",
-		Admins: []string{"kyle"},
-		Channels: []string{"#tenyks", "#test"},
+		Retries:         5,
+		Nicks:           []string{"tenyks", "tenyks-"},
+		Ident:           "something",
+		Realname:        "tenyks",
+		Admins:          []string{"kyle"},
+		Channels:        []string{"#tenyks", "#test"},
 	}
 }
 
@@ -68,7 +69,7 @@ func TestCanConnectAndDisconnect(t *testing.T) {
 	conn := NewConnection("mockirc", MakeConnConfig())
 	wait = conn.Connect()
 	<-wait
-	
+
 	if conn.GetRetries() > 0 {
 		t.Error("Expected", 0, "got", conn.GetRetries())
 	}

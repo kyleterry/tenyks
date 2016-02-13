@@ -39,7 +39,7 @@ func NewConn(conf config.RedisConfig) *Connection {
 func (self *Connection) Bootstrap() {
 	// Hook up PrivmsgHandler to all connections
 	log.Debug("[service] Bootstrapping pubsub")
-	self.pubsub = redis.PubSubConn{self.r}
+	self.pubsub = redis.PubSubConn{Conn: self.r}
 	self.In = self.recv()
 	self.Out = self.send()
 }
@@ -109,7 +109,7 @@ func (self *Connection) getTenyksChannel() string {
 func (self *Connection) getIrcConnByName(name string) *irc.Connection {
 	conn, ok := self.engine.ircconns[name]
 	if !ok {
-		log.Error("[service] Connection `%s` doesn't exist", name)
+		log.Errorf("[service] Connection `%s` doesn't exist", name)
 	}
 	return conn
 }
