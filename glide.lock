@@ -1,0 +1,13 @@
+hash: 85d4ab4edbbcec5ebf5a0a81acc3167520dca9a8aa3a0ae35be9fc902ae25fc2
+updated: 2016-02-12T22:31:12.195275271-08:00
+imports:
+- name: github.com/garyburd/redigo
+  version: 836b6e58b3358112c8291565d01c35b8764070d7
+  subpackages:
+  - /internal
+  - redis
+- name: github.com/op/go-logging
+  version: f9dfb79d4f4eb950e6bb3ca5660e3c31cac8f02c
+- name: github.com/Xe/uuid
+  version: 62b230097e9c9534ca2074782b25d738c4b68964
+devImports: []

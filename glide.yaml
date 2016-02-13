@@ -1,0 +1,8 @@
+package: github.com/kyleterry/tenyks
+import:
+- package: github.com/Xe/uuid
+- package: github.com/garyburd/redigo
+  subpackages:
+  - /internal
+  - redis
+- package: github.com/op/go-logging
