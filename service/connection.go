@@ -109,7 +109,7 @@ func (self *Connection) getTenyksChannel() string {
 func (self *Connection) getIrcConnByName(name string) *irc.Connection {
 	conn, ok := self.engine.ircconns[name]
 	if !ok {
-		log.Errorf("[service] Connection `%s` doesn't exist", name)
+		log.Error("[service] Connection `%s` doesn't exist", name)
 	}
 	return conn
 }

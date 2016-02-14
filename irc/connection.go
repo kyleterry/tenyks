@@ -96,7 +96,7 @@ func (conn *Connection) Connect() chan bool {
 		)
 		for {
 			if conn.retries > conn.Config.Retries {
-				log.Errorf("[%s] Max retries reached.",
+				log.Error("[%s] Max retries reached.",
 					conn.Name)
 				c <- false
 				return
@@ -108,7 +108,7 @@ func (conn *Connection) Connect() chan bool {
 			if conn.usingSSL {
 				socket, err = tls.Dial("tcp", server, nil)
 				if err != nil {
-					log.Errorf("[%s] Connection failed... Retrying.",
+					log.Error("[%s] Connection failed... Retrying.",
 						conn.Name)
 					conn.retries += 1
 					time.Sleep(time.Second * time.Duration(conn.retries))
