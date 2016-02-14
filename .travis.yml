@@ -10,8 +10,7 @@ services:
   - redis-server
 
 install:
-  - go get github.com/Masterminds/glide
-  - glide install
+  - echo noop
 
 script: go test ./...
 
