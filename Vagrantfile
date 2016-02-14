@@ -10,5 +10,5 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision "shell", path: './vagrant-bootstrap.sh', privileged: false
   config.vm.network "forwarded_port", guest: 6667, host: 6667
   config.vm.network "forwarded_port", guest: 6379, host: 6378
-  config.vm.synced_folder ".", "/home/vagrant/go/src/github.com/kyleterry/tenyks"
+  config.vm.synced_folder '.', '/opt/gopath/src/github.com/kyleterry/tenyks'
 end
