@@ -15,7 +15,6 @@ build:
 	@echo "$(OK_COLOR)===> Building$(NO_COLOR)"
 	$(GO) build -o ./bin/tenyks ./tenyks.go
 	$(GO) build -o ./bin/tenyksctl ./tenyksctl
-	@echo "$(OK_COLOR)===> Done building$(NO_COLOR)"
 
 doc:
 	godoc -http=:6060 -index
