@@ -11,7 +11,7 @@ WARN_COLOR=\033[33;01m
 
 default: build
 
-build: vendor-get
+build:
 	@echo "$(OK_COLOR)===> Building$(NO_COLOR)"
 	$(GO) build -o ./bin/tenyks ./tenyks.go
 	$(GO) build -o ./bin/tenyksctl ./tenyksctl
@@ -43,8 +43,3 @@ install:
 uninstall:
 	@echo "$(WARN_COLOR)===> Uninstalling$(NO_COLOR)"
 	rm -rf $(INSTALL_BIN)tenyks
-
-vendor-get:
-	@echo "$(OK_COLOR)===> Fetching dependencies$(NO_COLOR)"
-	go get github.com/Masterminds/glide
-	glide install
