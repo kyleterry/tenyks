@@ -55,7 +55,7 @@ func (irc *MockIRC) Start() (chan bool, error) {
 					if err != nil {
 						log.Println(err)
 					}
-					if a != nil {
+					if conn != nil {
 						a <- conn
 					}
 				}
