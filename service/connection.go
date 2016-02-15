@@ -1,129 +1,115 @@
 package service
 
 import (
-	"fmt"
-
-	"github.com/garyburd/redigo/redis"
 	"github.com/kyleterry/tenyks/config"
 	"github.com/kyleterry/tenyks/irc"
 	"github.com/op/go-logging"
+	zmq "github.com/pebbe/zmq4"
 )
 
 var log = logging.MustGetLogger("tenyks")
 
+type pubsub struct {
+	ctx      *zmq.Context
+	sender   *zmq.Socket
+	receiver *zmq.Socket
+}
+
 type Connection struct {
-	r      redis.Conn
-	config *config.RedisConfig
-	In     <-chan []byte
+	config *config.ServiceConfig
+	In     <-chan string
 	Out    chan<- string
-	pubsub redis.PubSubConn
+	pubsub *pubsub
 	engine *ServiceEngine
 }
 
-func NewConn(conf config.RedisConfig) *Connection {
-	redisAddr := fmt.Sprintf(
-		"%s:%d",
-		conf.Host,
-		conf.Port)
-	r, err := redis.Dial("tcp", redisAddr)
-	if err != nil {
-		log.Fatal(err)
-	}
+func NewConn(conf config.ServiceConfig) (*Connection, error) {
 	conn := &Connection{
-		r:      r,
 		config: &conf,
+		pubsub: &pubsub{},
 	}
-	return conn
+	ctx, err := zmq.NewContext()
+	if err != nil {
+		return nil, err
+	}
+	sender, err := ctx.NewSocket(zmq.PUB)
+	if err != nil {
+		return nil, err
+	}
+	receiver, err := ctx.NewSocket(zmq.SUB)
+	if err != nil {
+		return nil, err
+	}
+	receiver.SetSubscribe("")
+
+	conn.pubsub.ctx = ctx
+	conn.pubsub.sender = sender
+	conn.pubsub.receiver = receiver
+	return conn, nil
 }
 
-func (self *Connection) Bootstrap() {
+func (c *Connection) Init() {
 	// Hook up PrivmsgHandler to all connections
 	log.Debug("[service] Bootstrapping pubsub")
-	self.pubsub = redis.PubSubConn{Conn: self.r}
-	self.In = self.recv()
-	self.Out = self.send()
+	c.pubsub.sender.Bind(c.config.SenderBind)
+	log.Debug("[service] sender is listening on %s", c.config.SenderBind)
+	c.pubsub.receiver.Bind(c.config.ReceiverBind)
+	log.Debug("[service] receiver is listening on %s", c.config.ReceiverBind)
+	c.In = c.recv()
+	c.Out = c.send()
 }
 
 // RegisterIRCHandlers will is what connections handler functions to IRC
 // connection instances.
-func (self *Connection) RegisterIrcHandlers(conn *irc.Connection) {
+func (c *Connection) RegisterIrcHandlers(conn *irc.Connection) {
 	log.Debug("[service] Registring IRC Handlers")
-	conn.AddHandler("PRIVMSG", self.PrivmsgIrcHandler)
-	conn.AddHandler("PRIVMSG", self.ListServicesIrcHandler)
-	conn.AddHandler("PRIVMSG", self.HelpIrcHandler)
-	conn.AddHandler("PRIVMSG", self.InfoIrcHandler)
+	conn.AddHandler("PRIVMSG", c.PrivmsgIrcHandler)
+	conn.AddHandler("PRIVMSG", c.ListServicesIrcHandler)
+	conn.AddHandler("PRIVMSG", c.HelpIrcHandler)
+	conn.AddHandler("PRIVMSG", c.InfoIrcHandler)
 }
 
-func (self *Connection) DialRedis() (redis.Conn, error) {
-	redisAddr := fmt.Sprintf(
-		"%s:%d",
-		self.config.Host,
-		self.config.Port)
-	r, err := redis.Dial("tcp", redisAddr)
-	if err != nil {
-		return nil, err
-	}
-	return r, nil
-}
-
-func (self *Connection) recv() <-chan []byte {
-	c := make(chan []byte, 1000)
-	log.Debug("[service] Spawning recv loop")
+func (c *Connection) recv() <-chan string {
+	ch := make(chan string, 1000)
+	log.Debug("[service] Starting recv loop")
 	go func() {
-		self.pubsub.Subscribe(self.getTenyksChannel())
 		for {
-			switch msg := self.pubsub.Receive().(type) {
-			case redis.Message:
-				c <- msg.Data
+			msgs, err := c.pubsub.receiver.RecvMessage(0)
+			log.Debug("[service] recv loop: received message")
+			if err != nil {
+				log.Debug("[service] recv loop: message error (%s)", err)
+				continue
+			}
+			for _, msg := range msgs {
+				ch <- msg
 			}
 		}
 	}()
-	return c
+	return ch
 }
 
-func (self *Connection) publish(channel, msg string) {
-	c, err := self.DialRedis()
-	if err != nil {
-		panic(err)
-	}
-	defer c.Close()
-	c.Do("PUBLISH", channel, msg)
+func (c *Connection) publish(msg string) {
+	c.pubsub.sender.SendMessage(msg)
 }
 
-func (self *Connection) getServiceChannel() string {
-	channel := "tenyks.service.broadcast"
-	if self.config.ServiceChannel != "" {
-		channel = self.config.ServiceChannel
-	}
-	return channel
-}
-
-func (self *Connection) getTenyksChannel() string {
-	channel := "tenyks.robot.broadcast"
-	if self.config.TenyksChannel != "" {
-		channel = self.config.TenyksChannel
-	}
-	return channel
-}
-
-func (self *Connection) getIrcConnByName(name string) *irc.Connection {
-	conn, ok := self.engine.ircconns[name]
+func (c *Connection) getIrcConnByName(name string) *irc.Connection {
+	conn, ok := c.engine.ircconns[name]
 	if !ok {
 		log.Error("[service] Connection `%s` doesn't exist", name)
 	}
 	return conn
 }
 
-func (self *Connection) send() chan<- string {
-	c := make(chan string, 1000)
+func (c *Connection) send() chan<- string {
+	ch := make(chan string, 1000)
 	log.Debug("[service] Spawning send loop")
 	go func() {
 		for {
 			select {
-			case msg := <-c:
-				self.publish(self.getServiceChannel(), msg)
+			case msg := <-ch:
+				c.publish(msg)
 			}
 		}
 	}()
-	return c
+	return ch
 }

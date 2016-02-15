@@ -44,8 +44,8 @@ func (self *ServiceID) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (self *Connection) ircify(msg []byte) {
-	message, err := NewMessageFromBytes(msg)
+func (self *Connection) ircify(msg string) {
+	message, err := NewMessageFromString(msg)
 	if err != nil {
 		log.Error("[service] Error parsing message: %s", err)
 		return // Just ignore the shit we don't care about
@@ -62,13 +62,13 @@ func (self *Connection) ircify(msg []byte) {
 	}
 }
 
-func (self *Connection) dispatch(msg []byte) {
+func (self *Connection) dispatch(msg string) {
 	self.ircify(msg)
 }
 
-func NewMessageFromBytes(msg []byte) (message *Message, err error) {
+func NewMessageFromString(msg string) (message *Message, err error) {
 	message = new(Message)
-	jsonerr := json.Unmarshal(msg, &message)
+	jsonerr := json.Unmarshal([]byte(msg), &message)
 	err = nil
 	if jsonerr != nil {
 		err = jsonerr

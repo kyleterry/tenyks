@@ -1,10 +1,10 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	stdlog "log"
 	"os"
-	"flag"
 
 	"github.com/kyleterry/tenyks/config"
 	"github.com/kyleterry/tenyks/control"
@@ -41,10 +41,10 @@ Usage: %s [-config <CONFIG PATH>] [OPTIONS]
 )
 
 var (
-	log = logging.MustGetLogger("tenyks")
-	configPath = flag.String("config", "", "Path to a configuration file")
+	log         = logging.MustGetLogger("tenyks")
+	configPath  = flag.String("config", "", "Path to a configuration file")
 	versionFlag = flag.Bool("version", false, "Get the current version")
-	helpFlag = flag.Bool("help", false, "Get some help")
+	helpFlag    = flag.Bool("help", false, "Get some help")
 )
 
 func init() {
@@ -93,7 +93,7 @@ func main() {
 	case "stdout":
 		flags := stdlog.LstdFlags
 		if conf.Debug {
-			flags = flags|stdlog.Lshortfile
+			flags = flags | stdlog.Lshortfile
 		}
 		logBackend := logging.NewLogBackend(os.Stdout, "", flags)
 		logBackend.Color = true
@@ -107,8 +107,8 @@ func main() {
 
 	// Starting Control Server
 	var (
-		err error
-		wait chan bool
+		err           error
+		wait          chan bool
 		controlServer *control.ControlServer
 	)
 	if conf.Control.Enabled {
@@ -128,7 +128,7 @@ func main() {
 	connections := make(irc.IRCConnections)
 	ircReactors := make([]<-chan bool, 0)
 
-	eng := service.NewServiceEngine(conf.Redis)
+	eng := service.NewServiceEngine(conf.Service)
 
 	// Create connection, spawn reactors and add to the map
 	for _, c := range conf.Connections {
@@ -148,7 +148,6 @@ func main() {
 		go eng.RegisterIrcHandlersFor(ircconn)
 	}
 	go eng.Start()
-
 
 	<-quit
 }

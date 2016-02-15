@@ -15,7 +15,7 @@ type ServiceEngine struct {
 	ircconns  irc.IRCConnections
 }
 
-func NewServiceEngine(conf config.RedisConfig) *ServiceEngine {
+func NewServiceEngine(conf config.ServiceConfig) *ServiceEngine {
 	eng := &ServiceEngine{}
 	eng.Reactor = NewPubSubReactor(conf)
 	eng.Reactor.engine = eng
@@ -100,20 +100,24 @@ type PubSubReactor struct {
 	engine *ServiceEngine
 }
 
-func NewPubSubReactor(conf config.RedisConfig) *PubSubReactor {
+func NewPubSubReactor(conf config.ServiceConfig) *PubSubReactor {
 	reactor := &PubSubReactor{}
-	reactor.conn = NewConn(conf)
-	reactor.conn.Bootstrap()
+	conn, err := NewConn(conf)
+	if err != nil {
+		panic(err)
+	}
+	reactor.conn = conn
+	reactor.conn.Init()
 	return reactor
 }
 
-func (self *PubSubReactor) Start() {
+func (p *PubSubReactor) Start() {
 	log.Debug("[service] Starting Pub/Sub reactor")
 	go func() {
 		for {
 			select {
-			case msg := <-self.conn.In:
-				go self.conn.dispatch(msg)
+			case msg := <-p.conn.In:
+				go p.conn.dispatch(msg)
 			}
 		}
 	}()

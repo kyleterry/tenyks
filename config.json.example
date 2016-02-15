@@ -1,12 +1,8 @@
 {
     "debug": true,
-    "redis": {
-        "host": "localhost",
-        "port": 6379,
-        "db": 0,
-        "password": "",
-        "tenyksChannel": "tenyks.robot.broadcast",
-        "serviceChannel": "tenyks.service.broadcast"
+    "service": {
+        "sender_bind": "*:61123",
+        "receiver_bind": "*:61124"
     },
     "connections": [
         {

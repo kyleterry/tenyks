@@ -7,16 +7,12 @@
 			"Rev": "62b230097e9c9534ca2074782b25d738c4b68964"
 		},
 		{
-			"ImportPath": "github.com/garyburd/redigo/internal",
-			"Rev": "6ece6e0a09f28cc399b21550cbf37ab39ba63cce"
-		},
-		{
-			"ImportPath": "github.com/garyburd/redigo/redis",
-			"Rev": "6ece6e0a09f28cc399b21550cbf37ab39ba63cce"
-		},
-		{
 			"ImportPath": "github.com/op/go-logging",
 			"Rev": "e8d5414f0947014548c2334044a0fac13187dfee"
+		},
+		{
+			"ImportPath": "github.com/pebbe/zmq4",
+			"Rev": "7d78d887c96e116d7e87225b81b11e25a752dd5c"
 		}
 	]
 }

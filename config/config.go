@@ -23,20 +23,17 @@ func (self *configPaths) AddPath(path string) {
 
 type Config struct {
 	Debug       bool
-	Redis       RedisConfig
+	Service     ServiceConfig
 	Connections []ConnectionConfig
 	Control     ControlConfig
 	LogLocation string
 	Version     string
 }
 
-type RedisConfig struct {
-	Host           string
-	Port           int
-	Db             int
-	Password       string
-	TenyksChannel  string
-	ServiceChannel string
+// TODO(kt) look into zmq channels later
+type ServiceConfig struct {
+	SenderBind   string
+	ReceiverBind string
 }
 
 type ConnectionConfig struct {
@@ -57,7 +54,7 @@ type ConnectionConfig struct {
 
 type ControlConfig struct {
 	Enabled bool
-	Bind string
+	Bind    string
 }
 
 // discoverConfig will check to see if a config has been passed to tenyks on
