@@ -1,6 +1,9 @@
 package service
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/kyleterry/tenyks/config"
 	"github.com/kyleterry/tenyks/irc"
 	"github.com/op/go-logging"
@@ -51,10 +54,22 @@ func NewConn(conf config.ServiceConfig) (*Connection, error) {
 func (c *Connection) Init() {
 	// Hook up PrivmsgHandler to all connections
 	log.Debug("[service] Bootstrapping pubsub")
-	c.pubsub.sender.Bind(c.config.SenderBind)
-	log.Debug("[service] sender is listening on %s", c.config.SenderBind)
-	c.pubsub.receiver.Bind(c.config.ReceiverBind)
-	log.Debug("[service] receiver is listening on %s", c.config.ReceiverBind)
+	var sbind string
+	if strings.Contains(c.config.SenderBind, "tcp://") {
+		sbind = c.config.SenderBind
+	} else {
+		sbind = fmt.Sprintf("tcp://%s", c.config.SenderBind)
+	}
+	c.pubsub.sender.Bind(sbind)
+	log.Debug("[service] sender is listening on %s", sbind)
+	var rbind string
+	if strings.Contains(c.config.ReceiverBind, "tcp://") {
+		rbind = c.config.SenderBind
+	} else {
+		rbind = fmt.Sprintf("tcp://%s", c.config.ReceiverBind)
+	}
+	c.pubsub.receiver.Bind(rbind)
+	log.Debug("[service] receiver is listening on %s", rbind)
 	c.In = c.recv()
 	c.Out = c.send()
 }
