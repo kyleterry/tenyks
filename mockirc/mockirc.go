@@ -47,7 +47,7 @@ func (irc *MockIRC) Start() (chan bool, error) {
 	go func() {
 		defer close(wait)
 
-		accept := func () <-chan net.Conn {
+		accept := func() <-chan net.Conn {
 			a := make(chan net.Conn)
 			go func() {
 				for {
@@ -55,7 +55,9 @@ func (irc *MockIRC) Start() (chan bool, error) {
 					if err != nil {
 						log.Println(err)
 					}
-					a <- conn
+					if a != nil {
+						a <- conn
+					}
 				}
 			}()
 			return a
@@ -89,7 +91,8 @@ func (irc *MockIRC) Stop() error {
 	return nil
 }
 
-//connectionWorker is a non-exported method that will handle incoming connections from Accept.
+// connectionWorker will handle incoming connections from Accept.
+// Runs in it's own goroutine.
 func (irc *MockIRC) connectionWorker(conn net.Conn) {
 	irc.io = bufio.NewReadWriter(
 		bufio.NewReader(conn),

@@ -12,7 +12,7 @@ services:
 install:
   - echo noop
 
-script: go test ./...
+script: make test
 
 notifications:
   irc:
