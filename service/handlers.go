@@ -12,21 +12,21 @@ import (
 
 type servicefn func(*Connection, *Message)
 
-func (self *ServiceEngine) AddHandler(name string, fn servicefn) {
+func (s *ServiceEngine) AddHandler(name string, fn servicefn) {
 	handler := irc.NewHandler(func(p ...interface{}) {
 		fn(p[0].(*Connection), p[1].(*Message))
 	})
-	self.CommandRg.AddHandler(name, handler)
+	s.CommandRg.AddHandler(name, handler)
 }
 
-func (self *ServiceEngine) addBaseHandlers() {
-	self.AddHandler("PRIVMSG", (*Connection).PrivmsgServiceHandler)
-	self.AddHandler("REGISTER", (*Connection).RegisterServiceHandler)
-	self.AddHandler("BYE", (*Connection).ByeServiceHandler)
-	self.AddHandler("PONG", (*Connection).PongServiceHandler)
+func (s *ServiceEngine) addBaseHandlers() {
+	s.AddHandler("PRIVMSG", (*Connection).PrivmsgServiceHandler)
+	s.AddHandler("REGISTER", (*Connection).RegisterServiceHandler)
+	s.AddHandler("BYE", (*Connection).ByeServiceHandler)
+	s.AddHandler("PONG", (*Connection).PongServiceHandler)
 }
 
-func (self *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message) {
+func (c *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message) {
 	serviceMsg := Message{}
 	if !irc.IsChannel(msg.Params[0]) {
 		serviceMsg.Target = msg.Nick
@@ -57,14 +57,14 @@ func (self *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message
 	if err != nil {
 		log.Fatal(err)
 	}
-	self.Out <- string(jsonBytes[:])
+	c.Out <- string(jsonBytes[:])
 }
 
-func (self *Connection) ListServicesIrcHandler(conn *irc.Connection, msg *irc.Message) {
+func (c *Connection) ListServicesIrcHandler(conn *irc.Connection, msg *irc.Message) {
 	if strings.Contains(msg.RawMsg, "!services") {
 		log.Debug("[service] List services triggered")
-		if len(self.engine.ServiceRg.services) > 0 {
-			for _, service := range self.engine.ServiceRg.services {
+		if len(c.engine.ServiceRg.services) > 0 {
+			for _, service := range c.engine.ServiceRg.services {
 				outMessage := fmt.Sprintf("%s", service)
 				conn.Out <- msg.GetDMString(outMessage)
 			}
@@ -74,7 +74,7 @@ func (self *Connection) ListServicesIrcHandler(conn *irc.Connection, msg *irc.Me
 	}
 }
 
-func (self *Connection) HelpIrcHandler(conn *irc.Connection, msg *irc.Message) {
+func (c *Connection) HelpIrcHandler(conn *irc.Connection, msg *irc.Message) {
 	var trail string
 	if irc.IsDirect(msg.Trail, conn.GetCurrentNick()) {
 		trail = irc.StripNickOnDirect(msg.Trail, conn.GetCurrentNick())
@@ -84,8 +84,8 @@ func (self *Connection) HelpIrcHandler(conn *irc.Connection, msg *irc.Message) {
 	if strings.HasPrefix(trail, "!help") {
 		trail_pieces := strings.Fields(trail)
 		if len(trail_pieces) > 1 {
-			if self.engine.ServiceRg.IsService(trail_pieces[1]) {
-				service := self.engine.ServiceRg.GetServiceByName(trail_pieces[1])
+			if c.engine.ServiceRg.IsService(trail_pieces[1]) {
+				service := c.engine.ServiceRg.GetServiceByName(trail_pieces[1])
 				if service == nil {
 					conn.Out <- msg.GetDMString(
 						fmt.Sprintf("No such service `%s`", trail_pieces[1]))
@@ -105,7 +105,7 @@ func (self *Connection) HelpIrcHandler(conn *irc.Connection, msg *irc.Message) {
 					log.Error("Cannot marshal help message")
 					return
 				}
-				self.Out <- string(jsonBytes[:])
+				c.Out <- string(jsonBytes[:])
 			} else {
 				conn.Out <- msg.GetDMString(
 					fmt.Sprintf("No such service `%b`", trail[1]))
@@ -121,7 +121,7 @@ func (self *Connection) HelpIrcHandler(conn *irc.Connection, msg *irc.Message) {
 	}
 }
 
-func (self *Connection) InfoIrcHandler(conn *irc.Connection, msg *irc.Message) {
+func (c *Connection) InfoIrcHandler(conn *irc.Connection, msg *irc.Message) {
 	var trail string
 	if irc.IsDirect(msg.Trail, conn.GetCurrentNick()) {
 		trail = irc.StripNickOnDirect(msg.Trail, conn.GetCurrentNick())
@@ -139,8 +139,8 @@ func (self *Connection) InfoIrcHandler(conn *irc.Connection, msg *irc.Message) {
 	}
 }
 
-func (self *Connection) PrivmsgServiceHandler(msg *Message) {
-	conn := self.getIrcConnByName(msg.Connection)
+func (c *Connection) PrivmsgServiceHandler(msg *Message) {
+	conn := c.getIrcConnByName(msg.Connection)
 	if conn != nil {
 		msgStr := fmt.Sprintf("%s %s :%s", msg.Command, msg.Target, msg.Payload)
 		conn.Out <- msgStr
@@ -150,7 +150,7 @@ func (self *Connection) PrivmsgServiceHandler(msg *Message) {
 	}
 }
 
-func (self *Connection) RegisterServiceHandler(msg *Message) {
+func (c *Connection) RegisterServiceHandler(msg *Message) {
 	meta := msg.Meta
 	if meta.SID == nil || meta.SID.UUID == nil {
 		log.Error("[service] ERROR: UUID required to register with Tenyks")
@@ -164,14 +164,14 @@ func (self *Connection) RegisterServiceHandler(msg *Message) {
 	srv.Online = true
 	srv.LastPing = time.Now()
 	srv.UUID = meta.SID.UUID
-	self.engine.ServiceRg.RegisterService(srv)
+	c.engine.ServiceRg.RegisterService(srv)
 }
 
-func (self *Connection) ByeServiceHandler(msg *Message) {
+func (c *Connection) ByeServiceHandler(msg *Message) {
 	meta := msg.Meta
 	if meta.SID != nil && meta.SID.UUID != nil {
 		log.Debug("[service] %s (%s) is hanging up", meta.SID.UUID.String(), meta.Name)
-		srv := self.engine.ServiceRg.GetServiceByUUID(meta.SID.UUID.String())
+		srv := c.engine.ServiceRg.GetServiceByUUID(meta.SID.UUID.String())
 		if srv != nil {
 			log.Debug("[service] Settings state to `offline` for `%s`", srv.Name)
 			srv.Online = false
@@ -184,7 +184,7 @@ const (
 	ServiceOffline = false
 )
 
-func (self *Connection) PingServices() {
+func (c *Connection) PingServices() {
 	log.Debug("[service] Starting pinger")
 	for {
 		<-time.After(time.Second * 120)
@@ -198,9 +198,9 @@ func (self *Connection) PingServices() {
 			log.Error("Cannot marshal PING message")
 			continue
 		}
-		self.Out <- string(jsonBytes[:])
+		c.Out <- string(jsonBytes[:])
 
-		services := self.engine.ServiceRg.services
+		services := c.engine.ServiceRg.services
 		for _, service := range services {
 			if service.Online {
 				service.LastPing = time.Now()
@@ -209,9 +209,9 @@ func (self *Connection) PingServices() {
 	}
 }
 
-func (self *Connection) PongServiceHandler(msg *Message) {
+func (c *Connection) PongServiceHandler(msg *Message) {
 	meta := msg.Meta
 	if meta.SID != nil && meta.SID.UUID != nil {
-		self.engine.UpdateService(meta.SID.UUID.String(), ServiceOnline)
+		c.engine.UpdateService(meta.SID.UUID.String(), ServiceOnline)
 	}
 }

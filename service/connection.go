@@ -5,6 +5,7 @@ import (
 	"github.com/kyleterry/tenyks/irc"
 	"github.com/op/go-logging"
 	zmq "github.com/pebbe/zmq4"
+	"strconv"
 )
 
 var log = logging.MustGetLogger("tenyks")
@@ -75,7 +76,6 @@ func (c *Connection) recv() <-chan string {
 	go func() {
 		for {
 			msgs, err := c.pubsub.receiver.RecvMessage(0)
-			log.Debug("[service] recv loop: received message")
 			if err != nil {
 				log.Debug("[service] recv loop: message error (%s)", err)
 				continue
@@ -89,7 +89,10 @@ func (c *Connection) recv() <-chan string {
 }
 
 func (c *Connection) publish(msg string) {
-	c.pubsub.sender.SendMessage(msg)
+	_, err := c.pubsub.sender.SendMessage(msg)
+	if err != nil {
+		log.Error(err.Error())
+	}
 }
 
 func (c *Connection) getIrcConnByName(name string) *irc.Connection {

@@ -22,39 +22,39 @@ func (self *configPaths) AddPath(path string) {
 }
 
 type Config struct {
-	Debug       bool
-	Service     ServiceConfig
-	Connections []ConnectionConfig
-	Control     ControlConfig
-	LogLocation string
+	Debug       bool               `json:"debug"`
+	Service     ServiceConfig      `json:"service"`
+	Connections []ConnectionConfig `json:"connections"`
+	Control     ControlConfig      `json:"control"`
+	LogLocation string             `json:"log_location"`
 	Version     string
 }
 
 // TODO(kt) look into zmq channels later
 type ServiceConfig struct {
-	SenderBind   string
-	ReceiverBind string
+	SenderBind   string `json:"sender_bind"`
+	ReceiverBind string `json:"receiver_bind"`
 }
 
 type ConnectionConfig struct {
-	Name            string
-	Host            string
-	Port            int
-	Retries         int
-	FloodProtection bool
-	Password        string
-	Nicks           []string
-	Ident           string
-	Realname        string
-	Commands        []string
-	Admins          []string
-	Channels        []string
-	Ssl             bool
+	Name            string   `json:"name"`
+	Host            string   `json:"host"`
+	Port            int      `json:"port"`
+	Retries         int      `json:"retries"`
+	FloodProtection bool     `json:"flood_protection"`
+	Password        string   `json:"password"`
+	Nicks           []string `json:"nicks"`
+	Ident           string   `json:"ident"`
+	Realname        string   `json:"real_name"`
+	Commands        []string `json:"commands"`
+	Admins          []string `json:"admins"`
+	Channels        []string `json:"channels"`
+	Ssl             bool     `json:"ssl"`
 }
 
 type ControlConfig struct {
-	Enabled bool
-	Bind    string
+	Enabled bool   `json:"enabled"`
+	Bind    string `json:"bind"`
 }
 
 // discoverConfig will check to see if a config has been passed to tenyks on
@@ -80,7 +80,7 @@ func NewConfigAutoDiscover(configPath *string) (conf *Config, err error) {
 	if filename == "" {
 		return nil, errors.New("No configuration file found.")
 	}
-	log.Debug("Loading configuration from %s", filename)
+	log.Info("Loading configuration from %s", filename)
 	input, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err

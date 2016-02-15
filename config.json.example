@@ -1,8 +1,8 @@
 {
     "debug": true,
     "service": {
-        "sender_bind": "*:61123",
-        "receiver_bind": "*:61124"
+        "sender_bind": "tcp://*:61123",
+        "receiver_bind": "tcp://*:61124"
     },
     "connections": [
         {
@@ -10,20 +10,20 @@
             "host": "localhost",
             "port": 6667,
             "retries": 5,
-            "floodProtection": true,
+            "flood_protection": true,
             "password": "",
             "nicks": ["tenyks"],
             "ident": "tenyks",
-            "realname": "Tenyks Botson",
+            "real_name": "Tenyks Botson",
             "commands": [],
             "admins": ["kyle"],
             "channels": ["#tenyks"],
             "ssl": false
         }
     ],
-    "Control": {
-        "Enabled": true,
-        "Bind": ":12666"
+    "control": {
+        "enabled": true,
+        "bind": ":12666"
     },
-    "logLocation": "stdout"
+    "log_location": "stdout"
 }
