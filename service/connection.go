@@ -5,7 +5,6 @@ import (
 	"github.com/kyleterry/tenyks/irc"
 	"github.com/op/go-logging"
 	zmq "github.com/pebbe/zmq4"
-	"strconv"
 )
 
 var log = logging.MustGetLogger("tenyks")
