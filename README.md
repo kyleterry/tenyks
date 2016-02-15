@@ -13,7 +13,7 @@
 Tenyks is a computer program designed to relay messages between connections to
 IRC networks and custom built services written in any number of languages.
 More detailed, Tenyks is a service oriented IRC bot rewritten in Go.
-Service/core communication is handled by Redis Pub/Sub via json payloads.
+Service/core communication is handled by ZeroMQ 4 PubSub via json payloads.
 
 The core acts like a relay between IRC channels and remote services. When a
 message comes in from IRC, that message is turned into a json data structure,
@@ -31,35 +31,27 @@ taking everything else down with it.
 
 ## Installation and whatnot
 
-Current supported Go version is 1.3
-
-You can build the bot yourself. Step 1 is
-making sure you have a redis-server running. I won't go into detail there as I'm
-sure you can figure it out. Step 2 is making sure you have all the Go
-dependencies installed. For instance on Debian you would run `sudo apt-get
-install golang`.
-
 ### Building
 
-You can build with the make, which calls [Go tool](http://golang.org/cmd/go/)
-things.
+Current supported Go version is 1.5. All packages are vendored with Godep and
+stored in the repository. I update these occasionally. Make sure you have a
+functioning Go 1.5 environment with `GO15VENDOREXPERIMENT=1`.
 
-```bash
-git clone https://github.com/kyleterry/tenyks
-cd tenyks
-make # tenyks will be in ./bin
-sudo make install
-```
-
-`tenyks` should now be in `/usr/local/bin/tenyks` (or whatever you chose for
-your PREFIX)
+1. Install ZeroMQ4 (reference your OSs package install documentation) and make
+   sure libzmq exists on the system.
+1. `go get github.com/kyleterry/tenyks`
+1. `cd ${GOPATH}/src/github.com/kyleterry/tenyks`
+1. `make` - this will run tests and build
+1. `sudo make install` - otherwise you can find it in `./bin/tenyks`
+1. `cp config.json.example config.json`
+1. Edit `config.json` to your liking.
 
 ### Uninstall
 
 Why would you ever want to do that?
 
 ```bash
-cd /path/to/tenyks
+cd ${GOPATH}/src/github.com/kyleterry/tenyks
 sudo make uninstall
 ```
 
@@ -92,8 +84,7 @@ paths should be searched, please feel free to add it and submit a pull request.
 
 If you want to play _right fucking now_, you can just use vagrant: `vagrant up`
 and then `vagrant ssh`. Tenyks should be built and available in your `$PATH`.
-There is also an IRC and Redis server running. You can connect to that IRC
-server on `192.168.33.66` with your IRC client.
+There is also an IRC server running you can connect to server on `192.168.33.66` with your IRC client.
 
 Just run `tenyks & && disown` from the vagrant box and start playing.
 
@@ -115,6 +106,10 @@ tenyks.
 the user.
 
 ## Services
+
+## Libraries
+* [tenyksservice](https://github.com/kyleterry/tenyks-service) (Python)
+* [quasar](https://github.com/kyleterry/quasar) (Go)
 
 ### To Services
 
@@ -288,19 +283,6 @@ me out by creating an issue on Github explaining how dumb I am. Or you can patch
 the dumbness, make a pull request and tell me what I did wrong and why you made
 the change you did. I'm open to criticism as long as it's done in a respectful
 and "I'm teaching you something new" kind of way.
-
-## The future
-
-I'm using Redis pub/sub right now. It's pretty coupled to that, but I plan to
-implement a more pluggable communication backend.
-
-I also plan on trying to implement pub/sub over web sockets that will allow
-for communication over TLS and have authentication baked in. One use-case is
-giving your friends authentication tokens they can use to authenticate their
-services with your IRC bot. If someone is trouble, you cut them off.
-
-I'm also planning a 2.0 branch which will use ZeroMQ instead of Redis. I like
-embedded stuff.
 
 ## Credit where credit is due
 
