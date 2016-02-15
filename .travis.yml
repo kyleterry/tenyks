@@ -12,10 +12,13 @@ services:
 install:
   - echo noop
 
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libzmq4-dev
+
 script: make test
 
 notifications:
   irc:
     channels:
       - "irc.freenode.org#tenyks"
-      - "irc.freenode.org#infoforcefeed"
