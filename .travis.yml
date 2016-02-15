@@ -2,6 +2,7 @@ language: go
 dist: trusty
 
 go:
+  - 1.5
   - tip
 
 env:
