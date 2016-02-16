@@ -60,15 +60,21 @@ func (c *Connection) Init() {
 	} else {
 		sbind = fmt.Sprintf("tcp://%s", c.config.SenderBind)
 	}
-	c.pubsub.sender.Bind(sbind)
+	err := c.pubsub.sender.Bind(sbind)
+	if err != nil {
+		log.Panic("cannot bind sender: %s", err)
+	}
 	log.Debug("[service] sender is listening on %s", sbind)
 	var rbind string
 	if strings.Contains(c.config.ReceiverBind, "tcp://") {
-		rbind = c.config.SenderBind
+		rbind = c.config.ReceiverBind
 	} else {
 		rbind = fmt.Sprintf("tcp://%s", c.config.ReceiverBind)
 	}
-	c.pubsub.receiver.Bind(rbind)
+	err = c.pubsub.receiver.Bind(rbind)
+	if err != nil {
+		log.Panic("cannot bind receiver: %s", err)
+	}
 	log.Debug("[service] receiver is listening on %s", rbind)
 	c.In = c.recv()
 	c.Out = c.send()

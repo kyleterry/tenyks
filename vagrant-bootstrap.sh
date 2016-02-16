@@ -4,7 +4,7 @@ SRCPATH="/opt/gopath"
 
 sudo apt-get update -qq
 sudo apt-get upgrade -y
-sudo apt-get -q -y install ngircd redis-server wget git mercurial build-essential curl git-core libpcre3-dev pkg-config zip
+sudo apt-get -q -y install ngircd libzmq3-dev wget git mercurial build-essential curl git-core libpcre3-dev pkg-config zip
 sudo sed -i 's/127.0.0.1/0.0.0.0/g' /etc/redis/redis.conf
 sudo service redis-server restart
 
@@ -35,7 +35,7 @@ go get github.com/githubnemo/CompileDaemon
 
 tee ~vagrant/tmux-launcher.sh <<HERE
 tmux -2 new-session -d -s tenyks
-tmux new-window -t tenyks -a -n build 'while true; do cd \${GOPATH}/src/github.com/kyleterry/tenyks; CompileDaemon -directory='.' -command='./tenyks'; sleep 2; done'
+tmux new-window -t tenyks -a -n build 'while true; do cd \${GOPATH}/src/github.com/kyleterry/tenyks; CompileDaemon -build='make clean all' -directory='.' -command='./tenyks'; sleep 2; done'
 tmux select-window -t tenyks:1
 HERE
 
