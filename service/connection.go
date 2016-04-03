@@ -80,8 +80,8 @@ func (c *Connection) Init() {
 	c.Out = c.send()
 }
 
-// RegisterIRCHandlers will is what connections handler functions to IRC
-// connection instances.
+// RegisterIrcHandlers connects a few callback handlers for PRIVMSG's that respond
+// to things like !services and !help
 func (c *Connection) RegisterIrcHandlers(conn *irc.Connection) {
 	log.Debug("[service] Registring IRC Handlers")
 	conn.AddHandler("PRIVMSG", c.PrivmsgIrcHandler)
