@@ -2,14 +2,11 @@ language: go
 dist: trusty
 
 go:
-  - 1.5
+  - 1.6
   - tip
 
 env:
   - GO15VENDOREXPERIMENT=1
-
-services:
-  - redis-server
 
 install:
   - echo noop
