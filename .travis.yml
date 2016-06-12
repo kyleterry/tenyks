@@ -21,3 +21,5 @@ notifications:
   irc:
     channels:
       - "irc.freenode.org#tenyks"
+    use_notice: true
+    skip_join: true
