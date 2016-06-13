@@ -61,7 +61,8 @@ type Connection struct {
 	// Current channels tenyks is in. Jnerula hates state and I don't care.
 	Channels *list.List
 	// Yes, I'm sharing memory. Sorry, mom.
-	channelMutex *sync.Mutex
+	channelMutex    *sync.Mutex
+	connectionMutex *sync.Mutex
 }
 
 // NewConnection will create a new instance of an irc.Connection.
@@ -69,15 +70,16 @@ type Connection struct {
 func NewConnection(name string, conf config.ConnectionConfig) *Connection {
 	registry := NewHandlerRegistry()
 	conn := &Connection{
-		Name:         name,
-		Config:       conf,
-		usingSSL:     conf.Ssl,
-		Registry:     registry,
-		ConnectWait:  make(chan bool, 1),
-		PongIn:       make(chan bool, 1),
-		Created:      time.Now(),
-		Channels:     list.New(),
-		channelMutex: &sync.Mutex{},
+		Name:            name,
+		Config:          conf,
+		usingSSL:        conf.Ssl,
+		Registry:        registry,
+		ConnectWait:     make(chan bool, 1),
+		PongIn:          make(chan bool, 1),
+		Created:         time.Now(),
+		Channels:        list.New(),
+		channelMutex:    &sync.Mutex{},
+		connectionMutex: &sync.Mutex{},
 	}
 	conn.addBaseHandlers()
 	return conn
@@ -163,7 +165,9 @@ func (conn *Connection) send() chan<- string {
 					log.Debug("[%s] Stopping send loop", conn.Name)
 					return
 				}
+				conn.connectionMutex.Lock()
 				conn.MessagesSent += 1
+				conn.connectionMutex.Unlock()
 				conn.write(line)
 				if conn.Config.FloodProtection {
 					duration, _ := time.ParseDuration("500ms")
@@ -256,11 +260,13 @@ func (conn *Connection) GetCurrentNick() string {
 
 func (conn *Connection) GetInfo() []string {
 	var info []string
+	conn.connectionMutex.Lock()
 	info = append(info,
 		fmt.Sprintf("This connection (%s) has been up since %s", conn.Name,
 			conn.Created),
 		fmt.Sprintf("It has recieved %d messages", conn.MessagesRecved),
 		fmt.Sprintf("It has sent %d messages", conn.MessagesSent))
+	conn.connectionMutex.Unlock()
 	return info
 }
 
