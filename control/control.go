@@ -2,11 +2,13 @@ package control
 
 import (
 	"errors"
+	"fmt"
+	"net"
+	"net/rpc"
+
 	"github.com/kyleterry/tenyks/config"
 	"github.com/kyleterry/tenyks/irc"
 	"github.com/op/go-logging"
-	"net"
-	"net/rpc"
 )
 
 var log = logging.MustGetLogger("tenyks")
@@ -27,7 +29,7 @@ type ConnectionArgs struct {
 }
 
 type ChannelArgs struct {
-	Name string
+	Name    string
 	Channel string
 }
 
@@ -109,8 +111,12 @@ func (serv *ControlServer) DisconnectConnection(args *ConnectionArgs, reply *int
 
 func (serv *ControlServer) JoinChannel(args *ChannelArgs, reply *string) error {
 	conn, ok := serv.ircconns[args.Name]
+	fmt.Printf("%#v\n", args)
+	fmt.Printf("%#v\n", serv.ircconns)
+	fmt.Printf("%#v\n", conn)
 	if !ok {
 		*reply = "No such connection"
+		return errors.New("no such connection")
 	}
 	conn.JoinChannel(args.Channel)
 	*reply = "OK"
@@ -121,6 +127,7 @@ func (serv *ControlServer) PartChannel(args *ChannelArgs, reply *string) error {
 	conn, ok := serv.ircconns[args.Name]
 	if !ok {
 		*reply = "No such connection"
+		return errors.New("no such connection")
 	}
 	conn.PartChannel(args.Channel)
 	*reply = "OK"

@@ -1,12 +1,12 @@
 package main
 
-import(
-	"net/rpc"
+import (
 	"flag"
 	"fmt"
 	"log"
+	"net/rpc"
 	"time"
-	
+
 	"github.com/kyleterry/tenyks/control"
 )
 
@@ -29,21 +29,21 @@ func main() {
 
 	client, err = rpc.Dial("tcp", fmt.Sprintf("%s:%d", *hostFlag, *portFlag))
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
-	args := &control.ChannelArgs{"vagrant", "#test"}
+	args := &control.ChannelArgs{"localhost", "#test"}
 
 	err = client.Call("ControlServer.JoinChannel", args, &reply)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	<-time.After(time.Second * 10)
 
 	err = client.Call("ControlServer.PartChannel", args, &reply)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	log.Println("Made RPC call")
