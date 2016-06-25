@@ -11,6 +11,8 @@ all: test build
 
 build: tenyks tenyksctl
 
+force-build: clean build
+
 tenyks:
 	$(GO) build -v
 
@@ -42,4 +44,4 @@ install:
 uninstall:
 	rm -rf $(INSTALL_BIN)tenyks
 
-.PHONY: all build doc fmt lint run test clean install uninstall
+.PHONY: all build force-build doc fmt lint run test clean install uninstall
