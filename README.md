@@ -55,6 +55,20 @@ cd ${GOPATH}/src/github.com/kyleterry/tenyks
 sudo make uninstall
 ```
 
+### Docker
+
+There is a Docker image on Docker hub called `kyleterry/tenyks`. No
+configuration is available in the image so you need to use it as a base image.
+You can pass your own configuration in like so:
+
+```docker
+FROM kyleterry/tenyks:latest
+COPY my-config.json /etc/tenyks/config.json
+```
+
+Then you can build your image: `docker build -t myuser/tenyks .` and run it
+with: `docker run -d -P --name tenyks myuser/tenyks`.
+
 ### Binary Release
 
 You can find binary builds on [bintray](https://dl.bintray.com/kyleterry/tenyks/).
