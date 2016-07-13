@@ -14,10 +14,9 @@ type MockIRC struct {
 	Port       int
 	ServerName string
 	Socket     net.Listener
-	ctl        chan bool
-	running    bool
 	events     map[string]*WhenEvent
 	io         *bufio.ReadWriter
+	stop       bool
 }
 
 // New will create a new instance of mockirc.
@@ -43,7 +42,6 @@ func (irc *MockIRC) Start() (chan bool, error) {
 		return nil, err
 	}
 	irc.Socket = sock
-	irc.ctl = make(chan bool, 1)
 	go func() {
 		defer close(wait)
 
@@ -53,7 +51,11 @@ func (irc *MockIRC) Start() (chan bool, error) {
 				for {
 					conn, err := irc.Socket.Accept()
 					if err != nil {
+						if irc.stop {
+							return
+						}
 						log.Println(err)
+						continue
 					}
 					if conn != nil {
 						a <- conn
@@ -66,23 +68,24 @@ func (irc *MockIRC) Start() (chan bool, error) {
 		wait <- true
 
 		for {
-			select {
-			case conn := <-accept:
-				go irc.connectionWorker(conn)
-			case <-irc.ctl:
-				irc.running = false
+			conn := <-accept
+			if irc.stop {
 				return
 			}
+			go irc.connectionWorker(conn)
 		}
 	}()
-	irc.running = true
 	return wait, nil
 }
 
 // Stop will send the shutdown message on the control channel and stop the server.
 // It could return an error.
 func (irc *MockIRC) Stop() error {
-	irc.ctl <- true
+	if irc.stop {
+		return nil
+	}
+
+	irc.stop = true
 	err := irc.Socket.Close()
 	if err != nil {
 		return err
@@ -100,10 +103,13 @@ func (irc *MockIRC) connectionWorker(conn net.Conn) {
 	defer conn.Close()
 	for {
 		msg, err := irc.io.ReadString('\n')
-		if err != nil && err == io.EOF {
+		if err != nil {
+			if !irc.stop {
+				if err == io.EOF {
+					log.Println(err)
+				}
+			}
 			return
-		} else {
-			log.Println(err)
 		}
 		irc.handleMessage(msg)
 	}
@@ -112,30 +118,34 @@ func (irc *MockIRC) connectionWorker(conn net.Conn) {
 // handleMessage will figure out how to handle messages coming in. It looks at the
 // events map to see if it matched anything to send a response.
 func (irc *MockIRC) handleMessage(msg string) {
-	msg = strings.TrimSuffix(msg, "\r\n")
-	var err error
-	if val, ok := irc.events[msg]; ok {
-		for _, response := range val.responses {
-			_, err = irc.io.WriteString(response + "\r\n")
-			if err != nil {
-				log.Println(err)
-				return
+	if !irc.stop {
+		msg = strings.TrimSuffix(msg, "\r\n")
+		var err error
+		if val, ok := irc.events[msg]; ok {
+			for _, response := range val.responses {
+				_, err = irc.io.WriteString(response + "\r\n")
+				if err != nil {
+					log.Println(err)
+					return
+				}
+				err = irc.io.Flush()
+				if err != nil {
+					log.Println(err)
+					return
+				}
 			}
-			err = irc.io.Flush()
-			if err != nil {
-				log.Println(err)
-				return
-			}
+		} else {
+			log.Printf("Nothing to do for %s\n", msg)
 		}
-	} else {
-		log.Printf("Nothing to do for %s\n", msg)
+		log.Println(msg)
 	}
-	log.Println(msg)
 }
 
 // Send will write the string to the connection.
 func (irc *MockIRC) Send(thing string) {
-	irc.io.WriteString(thing + "\r\n")
+	if !irc.stop {
+		irc.io.WriteString(thing + "\r\n")
+	}
 }
 
 type WhenEvent struct {
