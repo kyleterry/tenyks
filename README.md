@@ -33,9 +33,9 @@ taking everything else down with it.
 
 ### Building
 
-Current supported Go version is 1.5. All packages are vendored with Godep and
+Current supported Go version is 1.7. All packages are vendored with Godep and
 stored in the repository. I update these occasionally. Make sure you have a
-functioning Go 1.5 environment with `GO15VENDOREXPERIMENT=1`.
+functioning Go 1.7 environment.
 
 1. Install ZeroMQ4 (reference your OSs package install documentation) and make
    sure libzmq exists on the system.
