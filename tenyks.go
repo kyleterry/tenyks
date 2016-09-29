@@ -41,10 +41,12 @@ Usage: %s [-config <CONFIG PATH>] [OPTIONS]
 )
 
 var (
-	log         = logging.MustGetLogger("tenyks")
-	configPath  = flag.String("config", "", "Path to a configuration file")
-	versionFlag = flag.Bool("version", false, "Get the current version")
-	helpFlag    = flag.Bool("help", false, "Get some help")
+	log           = logging.MustGetLogger("tenyks")
+	configPath    = flag.String("config", "", "Path to a configuration file")
+	consulAddress = flag.String("consul-address", "127.0.0.1:8500", "Consul host address")
+	consulKey     = flag.String("config-consul-key", "", "Consul key to get config from")
+	versionFlag   = flag.Bool("version", false, "Get the current version")
+	helpFlag      = flag.Bool("help", false, "Get some help")
 )
 
 func init() {
@@ -53,6 +55,8 @@ func init() {
 }
 
 func main() {
+	var conf *config.Config
+	var err error
 
 	flag.Parse()
 
@@ -71,13 +75,20 @@ func main() {
 	fmt.Printf(banner + "\n")
 	fmt.Printf(" Version: %s\n\n", TenyksVersion)
 
-	config.ConfigSearch.AddPath(os.Getenv("HOME") + "/.config/tenyks/config.json")
-	config.ConfigSearch.AddPath("/etc/tenyks/config.json")
+	if *consulKey != "" {
+		conf, err = config.NewConfigFromConsulKey(*consulKey, *consulAddress)
+	} else {
+		config.ConfigSearch.AddPath(os.Getenv("HOME") + "/.config/tenyks/config.json")
+		config.ConfigSearch.AddPath("/etc/tenyks/config.json")
 
-	// Make configuration from json file
-	conf, conferr := config.NewConfigAutoDiscover(configPath)
-	if conferr != nil {
-		log.Fatal(conferr)
+		// Make configuration from json file
+		conf, err = config.NewConfigAutoDiscover(configPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	if err != nil {
+		panic(err)
 	}
 	conf.Version = TenyksVersion
 
@@ -107,7 +118,6 @@ func main() {
 
 	// Starting Control Server
 	var (
-		err           error
 		wait          chan bool
 		controlServer *control.ControlServer
 	)
