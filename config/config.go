@@ -3,9 +3,11 @@ package config
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 
+	consul "github.com/hashicorp/consul/api"
 	"github.com/op/go-logging"
 )
 
@@ -67,10 +69,34 @@ func discoverConfig() string {
 			return path
 		}
 	}
+
 	return ""
 }
 
-func NewConfigAutoDiscover(configPath *string) (conf *Config, err error) {
+func NewConfigFromConsulKey(key, address string) (*Config, error) {
+	consulConfig := consul.DefaultConfig()
+	consulConfig.Address = address
+	client, err := consul.NewClient(consulConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	kv := client.KV()
+
+	pair, _, err := kv.Get(key, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if pair == nil {
+		return nil, errors.New(fmt.Sprintf("No such consul key: %s", key))
+	}
+
+	log.Info("Loading configuration from consul: %s/%s", consulConfig.Address, key)
+	return NewConfig(pair.Value)
+}
+
+func NewConfigAutoDiscover(configPath *string) (*Config, error) {
 	var filename string
 	if *configPath == "" {
 		filename = discoverConfig()
@@ -85,15 +111,15 @@ func NewConfigAutoDiscover(configPath *string) (conf *Config, err error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return NewConfig(input)
 }
 
-func NewConfig(input []byte) (conf *Config, err error) {
-	conf = new(Config)
-	jsonerr := json.Unmarshal(input, &conf)
-	err = nil
-	if jsonerr != nil {
-		err = jsonerr
+func NewConfig(input []byte) (*Config, error) {
+	conf := new(Config)
+	if err := json.Unmarshal(input, &conf); err != nil {
+		return nil, err
 	}
-	return
+
+	return conf, nil
 }

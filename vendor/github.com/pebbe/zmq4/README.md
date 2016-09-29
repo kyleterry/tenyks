@@ -1,5 +1,7 @@
-
 A Go interface to [ZeroMQ](http://www.zeromq.org/) version 4.
+
+[![Go Report Card](https://goreportcard.com/badge/github.com/pebbe/zmq4)](https://goreportcard.com/report/github.com/pebbe/zmq4)
+[![GoDoc](https://godoc.org/github.com/pebbe/zmq4?status.svg)](https://godoc.org/github.com/pebbe/zmq4)
 
 This requires ZeroMQ version 4.0.1 or above. To use CURVE security,
 ZeroMQ must be installed with [libsodium](https://github.com/jedisct1/libsodium) enabled.
@@ -14,7 +16,9 @@ Keywords: zmq, zeromq, 0mq, networks, distributed computing, message passing, fa
 
 ### See also
 
- * [goczmq](https://github.com/zeromq/goczmq) - A Go interface to CZMQ
+ * [Mangos](https://github.com/go-mangos/mangos) — An implementation in pure Go of the SP ("Scalable Protocols") protocols
+ * [go-nanomsg](https://github.com/op/go-nanomsg) — Language bindings for nanomsg in Go
+ * [goczmq](https://github.com/zeromq/goczmq) — A Go interface to CZMQ
 
 ## Install
 
