@@ -1,6 +1,3 @@
-* Look into https://github.com/tools/godep
-    * Better option would be to look at Go 1.5 vendoring
-* ZeroMQ
 * https://github.com/mitchellh/colorstring
 * Ping services on thier own pubsub channels (maybe)
     * nah
