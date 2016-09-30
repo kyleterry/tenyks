@@ -1,4 +1,4 @@
-FROM golang:1.6
+FROM golang:1.7
 MAINTAINER Kyle Terry "kyle@kyleterry.com"
 COPY . /go/src/github.com/kyleterry/tenyks
 WORKDIR /go/src/github.com/kyleterry/tenyks

@@ -92,7 +92,7 @@ func NewConfigFromConsulKey(key, address string) (*Config, error) {
 		return nil, errors.New(fmt.Sprintf("No such consul key: %s", key))
 	}
 
-	log.Info("Loading configuration from consul: %s/%s", consulConfig.Address, key)
+	log.Infof("Loading configuration from consul: %s/%s", consulConfig.Address, key)
 	return NewConfig(pair.Value)
 }
 
@@ -106,7 +106,7 @@ func NewConfigAutoDiscover(configPath *string) (*Config, error) {
 	if filename == "" {
 		return nil, errors.New("No configuration file found.")
 	}
-	log.Info("Loading configuration from %s", filename)
+	log.Infof("Loading configuration from %s", filename)
 	input, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
