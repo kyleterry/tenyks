@@ -98,7 +98,7 @@ func (conn *Connection) Connect() chan bool {
 		)
 		for {
 			if conn.retries > conn.Config.Retries {
-				log.Error("[%s] Max retries reached.",
+				log.Errorf("[%s] Max retries reached.",
 					conn.Name)
 				c <- false
 				return
@@ -110,7 +110,7 @@ func (conn *Connection) Connect() chan bool {
 			if conn.usingSSL {
 				socket, err = tls.Dial("tcp", server, nil)
 				if err != nil {
-					log.Error("[%s] Connection failed... Retrying.",
+					log.Errorf("[%s] Connection failed... Retrying.",
 						conn.Name)
 					conn.retries += 1
 					time.Sleep(time.Second * time.Duration(conn.retries))
@@ -141,7 +141,7 @@ func (conn *Connection) Connect() chan bool {
 // important bootstrap attributes back to the defaults.
 func (conn *Connection) Disconnect() {
 	if conn.connected {
-		log.Debug("[%s] Disconnect called", conn.Name)
+		log.Debugf("[%s] Disconnect called", conn.Name)
 		close(conn.Out)
 		conn.connected = false
 		conn.socket.Close()
@@ -157,12 +157,12 @@ func (conn *Connection) send() chan<- string {
 	c := make(chan string, 1000)
 	// goroutine for sending data to the IRC server
 	go func() {
-		log.Debug("[%s] Starting send loop", conn.Name)
+		log.Debugf("[%s] Starting send loop", conn.Name)
 		for {
 			select {
 			case line, ok := <-c:
 				if !ok {
-					log.Debug("[%s] Stopping send loop", conn.Name)
+					log.Debugf("[%s] Stopping send loop", conn.Name)
 					return
 				}
 				conn.connectionMutex.Lock()
@@ -185,7 +185,7 @@ func (conn *Connection) send() chan<- string {
 func (conn *Connection) write(line string) error {
 	if len(line) > 510 {
 		// IRC RFC 2812 states the max length for messages is 512 INCLUDING cr-lf.
-		log.Warning("[%s] Message is too long. Truncating...", conn.Name)
+		log.Warningf("[%s] Message is too long. Truncating...", conn.Name)
 		line = line[:510] // Silently truncate to 510 chars as per IRC spec
 	}
 	_, wrerr := conn.io.WriteString(line + "\r\n")

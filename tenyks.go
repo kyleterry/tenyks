@@ -40,11 +40,13 @@ Usage: %s [-config <CONFIG PATH>] [OPTIONS]
 `
 )
 
+const DefaultConsulAddress = "127.0.0.1:8500"
+
 var (
 	log           = logging.MustGetLogger("tenyks")
 	configPath    = flag.String("config", "", "Path to a configuration file")
-	consulAddress = flag.String("consul-address", "127.0.0.1:8500", "Consul host address")
-	consulKey     = flag.String("config-consul-key", "", "Consul key to get config from")
+	consulAddress = flag.String("consul-address", os.Getenv("TENYKS_CONFIG_CONSUL_ADDRESS"), "Consul host address")
+	consulKey     = flag.String("config-consul-key", os.Getenv("TENYKS_CONFIG_CONSUL_KEY"), "Consul key to get config from")
 	versionFlag   = flag.Bool("version", false, "Get the current version")
 	helpFlag      = flag.Bool("help", false, "Get some help")
 )
@@ -68,6 +70,10 @@ func main() {
 	if *helpFlag {
 		fmt.Printf(Usage, os.Args[0])
 		os.Exit(0)
+	}
+
+	if *consulAddress == "" {
+		*consulAddress = DefaultConsulAddress
 	}
 
 	quit := make(chan bool, 1)
@@ -129,9 +135,9 @@ func main() {
 			log.Fatal(err)
 		}
 		<-wait
-		log.Info("Control server listening on %s", conf.Control.Bind)
+		log.Infof("Control server listening on %s", conf.Control.Bind)
 	} else {
-		log.Debug("Control Server is Off")
+		log.Debugf("Control Server is Off")
 	}
 
 	// Connections map
