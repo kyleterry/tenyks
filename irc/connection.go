@@ -211,6 +211,7 @@ func (conn *Connection) recv() <-chan string {
 		for {
 			rawLine, err := conn.io.ReadString('\n')
 			if err != nil {
+				log.Error(err)
 				conn.Disconnect()
 				close(c)
 				break
