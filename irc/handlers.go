@@ -72,6 +72,9 @@ func (conn *Connection) SendPing(msg *Message) {
 
 func (conn *Connection) BootstrapHandler(msg *Message) {
 	log.Infof("[%s] Bootstrapping connection", conn.Name)
+	if conn.Config.Password != "" {
+		conn.Out <- fmt.Sprintf("PASS %s", conn.Config.Password)
+	}
 	conn.Out <- fmt.Sprintf(
 		"USER %s %s %s :%s",
 		conn.Config.Nicks[0],
