@@ -6,11 +6,9 @@ import (
 
 	"github.com/kyleterry/tenyks/config"
 	"github.com/kyleterry/tenyks/irc"
-	"github.com/op/go-logging"
 	zmq "github.com/pebbe/zmq4"
+	"github.com/pkg/errors"
 )
-
-var log = logging.MustGetLogger("tenyks")
 
 type pubsub struct {
 	ctx      *zmq.Context
@@ -33,15 +31,15 @@ func NewConn(conf config.ServiceConfig) (*Connection, error) {
 	}
 	ctx, err := zmq.NewContext()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to create zeromq context")
 	}
 	sender, err := ctx.NewSocket(zmq.PUB)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to create zeromq pub socket")
 	}
 	receiver, err := ctx.NewSocket(zmq.SUB)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to create zeromq sub socket")
 	}
 	receiver.SetSubscribe("")
 
@@ -51,9 +49,8 @@ func NewConn(conf config.ServiceConfig) (*Connection, error) {
 	return conn, nil
 }
 
-func (c *Connection) Init() {
+func (c *Connection) Init() error {
 	// Hook up PrivmsgHandler to all connections
-	log.Debug("[service] Bootstrapping pubsub")
 	var sbind string
 	if strings.Contains(c.config.SenderBind, "tcp://") {
 		sbind = c.config.SenderBind
@@ -62,9 +59,9 @@ func (c *Connection) Init() {
 	}
 	err := c.pubsub.sender.Bind(sbind)
 	if err != nil {
-		log.Panic("cannot bind sender: %s", err)
+		return errors.Wrap(err, "cannot bind sender")
 	}
-	log.Debug("[service] sender is listening on %s", sbind)
+	Logger.Info("sender is now listening", "addr", sbind)
 	var rbind string
 	if strings.Contains(c.config.ReceiverBind, "tcp://") {
 		rbind = c.config.ReceiverBind
@@ -73,17 +70,19 @@ func (c *Connection) Init() {
 	}
 	err = c.pubsub.receiver.Bind(rbind)
 	if err != nil {
-		log.Panic("cannot bind receiver: %s", err)
+		return errors.Wrap(err, "cannot bind receiver")
 	}
-	log.Debug("[service] receiver is listening on %s", rbind)
+	Logger.Info("receiver is now listening", "addr", rbind)
 	c.In = c.recv()
 	c.Out = c.send()
+
+	return nil
 }
 
 // RegisterIrcHandlers connects a few callback handlers for PRIVMSG's that respond
 // to things like !services and !help
 func (c *Connection) RegisterIrcHandlers(conn *irc.Connection) {
-	log.Debug("[service] Registring IRC Handlers")
+	Logger.Debug("registring IRC Handlers")
 	conn.AddHandler("PRIVMSG", c.PrivmsgIrcHandler)
 	conn.AddHandler("PRIVMSG", c.ListServicesIrcHandler)
 	conn.AddHandler("PRIVMSG", c.HelpIrcHandler)
@@ -92,12 +91,12 @@ func (c *Connection) RegisterIrcHandlers(conn *irc.Connection) {
 
 func (c *Connection) recv() <-chan string {
 	ch := make(chan string, 1000)
-	log.Debug("[service] Starting recv loop")
+	Logger.Debug("starting recv loop")
 	go func() {
 		for {
 			msgs, err := c.pubsub.receiver.RecvMessage(0)
 			if err != nil {
-				log.Debug("[service] recv loop: message error (%s)", err)
+				Logger.Debug("received malformed message", "error", err, "msg", msgs)
 				continue
 			}
 			for _, msg := range msgs {
@@ -108,29 +107,33 @@ func (c *Connection) recv() <-chan string {
 	return ch
 }
 
-func (c *Connection) publish(msg string) {
+func (c *Connection) publish(msg string) error {
 	_, err := c.pubsub.sender.SendMessage(msg)
 	if err != nil {
-		log.Error(err.Error())
+		return errors.Wrap(err, "could not send message")
 	}
+
+	return nil
 }
 
 func (c *Connection) getIrcConnByName(name string) *irc.Connection {
-	conn, ok := c.engine.ircconns[name]
-	if !ok {
-		log.Error("[service] Connection `%s` doesn't exist", name)
+	if conn, ok := c.engine.ircconns[name]; ok {
+		return conn
 	}
-	return conn
+	return nil
 }
 
 func (c *Connection) send() chan<- string {
 	ch := make(chan string, 1000)
-	log.Debug("[service] Spawning send loop")
+	Logger.Debug("starting send loop")
 	go func() {
 		for {
 			select {
 			case msg := <-ch:
-				c.publish(msg)
+				err := c.publish(msg)
+				if err != nil {
+					Logger.Error("failed to send message", "error", err)
+				}
 			}
 		}
 	}()

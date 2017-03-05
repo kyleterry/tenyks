@@ -1,11 +1,11 @@
 package version
 
-import(
+import (
 	"fmt"
 )
 
 const (
-	TenyksVersion = "0.9"
+	TenyksVersion = "0.10.0"
 )
 
 var Info []string

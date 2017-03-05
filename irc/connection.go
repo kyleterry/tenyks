@@ -9,15 +9,37 @@ import (
 	"container/list"
 	"crypto/tls"
 	"fmt"
+	"math"
 	"net"
 	"sync"
 	"time"
 
 	"github.com/kyleterry/tenyks/config"
-	"github.com/op/go-logging"
 )
 
-var log = logging.MustGetLogger("tenyks")
+type backoff struct {
+	n uint64
+
+	factor float64
+	min    time.Duration
+	max    time.Duration
+}
+
+func (b *backoff) next() time.Duration {
+	d := float64(b.min) * math.Pow(b.factor, float64(b.n))
+
+	if d > float64(b.max) {
+		d = float64(b.max)
+	} else {
+		b.n++
+	}
+
+	return time.Duration(d)
+}
+
+func (b *backoff) Reset() {
+	b.n = 0
+}
 
 type Connection struct {
 	// Name of the network (e.g. freenode, efnet, localhost)
@@ -90,6 +112,11 @@ func NewConnection(name string, conf config.ConnectionConfig) *Connection {
 // It returns a bool channel that when closed or is passed true means success.
 func (conn *Connection) Connect() chan bool {
 	c := make(chan bool, 1)
+	b := backoff{
+		factor: 2,
+		min:    1 * time.Second,
+		max:    120 * time.Second,
+	}
 	go func() {
 		conn.retries = 0
 		var (
@@ -97,12 +124,6 @@ func (conn *Connection) Connect() chan bool {
 			err    error
 		)
 		for {
-			if conn.retries > conn.Config.Retries {
-				log.Errorf("[%s] Max retries reached.",
-					conn.Name)
-				c <- false
-				return
-			}
 			if conn.socket != nil {
 				break
 			}
@@ -110,10 +131,10 @@ func (conn *Connection) Connect() chan bool {
 			if conn.usingSSL {
 				socket, err = tls.Dial("tcp", server, nil)
 				if err != nil {
-					log.Errorf("[%s] Connection failed... Retrying.",
-						conn.Name)
+					dur := b.next()
+					Logger.Error("connection failed; retrying", "connection", conn.Name, "waiting", dur)
 					conn.retries += 1
-					time.Sleep(time.Second * time.Duration(conn.retries))
+					time.Sleep(dur)
 					continue
 				}
 			} else {
@@ -141,7 +162,7 @@ func (conn *Connection) Connect() chan bool {
 // important bootstrap attributes back to the defaults.
 func (conn *Connection) Disconnect() {
 	if conn.connected {
-		log.Debugf("[%s] Disconnect called", conn.Name)
+		Logger.Debug("disconnect called", "connection", conn.Name)
 		close(conn.Out)
 		conn.connected = false
 		conn.socket.Close()
@@ -157,14 +178,15 @@ func (conn *Connection) send() chan<- string {
 	c := make(chan string, 1000)
 	// goroutine for sending data to the IRC server
 	go func() {
-		log.Debugf("[%s] Starting send loop", conn.Name)
+		Logger.Debug("starting send loop", "connection", conn.Name)
 		for {
 			select {
 			case line, ok := <-c:
 				if !ok {
-					log.Debugf("[%s] Stopping send loop", conn.Name)
+					Logger.Debug("stopping send loop", "connection", conn.Name)
 					return
 				}
+				Logger.Debug("sending message", "connection", conn.Name, "msg", line)
 				conn.connectionMutex.Lock()
 				conn.MessagesSent += 1
 				conn.connectionMutex.Unlock()
@@ -185,7 +207,6 @@ func (conn *Connection) send() chan<- string {
 func (conn *Connection) write(line string) error {
 	if len(line) > 510 {
 		// IRC RFC 2812 states the max length for messages is 512 INCLUDING cr-lf.
-		log.Warningf("[%s] Message is too long. Truncating...", conn.Name)
 		line = line[:510] // Silently truncate to 510 chars as per IRC spec
 	}
 	_, wrerr := conn.io.WriteString(line + "\r\n")
@@ -211,11 +232,14 @@ func (conn *Connection) recv() <-chan string {
 		for {
 			rawLine, err := conn.io.ReadString('\n')
 			if err != nil {
-				log.Error(err)
+				Logger.Error("error reading data", "error", err)
 				conn.Disconnect()
 				close(c)
 				break
 			}
+
+			Logger.Debug("receiving message", "connection", conn.Name, "msg", rawLine[:len(rawLine)-1])
+
 			if rawLine != "" {
 				//TODO strip newlines
 				conn.MessagesRecved += 1
@@ -232,6 +256,13 @@ func (conn *Connection) recv() <-chan string {
 func (conn *Connection) watchdog() {
 	for {
 		<-time.After(time.Second * 60)
+		// TODO: This is a hack. It should be handed a channel that can be closed on disconnect
+		// so we can exit this goroutine.
+		if !conn.connected {
+			Logger.Debug("disconnected; stopping watchdog", "connection", conn.Name)
+			return
+		}
+
 		dispatch("send_ping", conn, nil)
 		select {
 		case <-conn.PongIn:

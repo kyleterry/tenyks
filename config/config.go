@@ -8,10 +8,7 @@ import (
 	"os"
 
 	consul "github.com/hashicorp/consul/api"
-	"github.com/op/go-logging"
 )
-
-var log = logging.MustGetLogger("tenyks")
 
 type configPaths struct {
 	paths []string
@@ -28,8 +25,12 @@ type Config struct {
 	Service     ServiceConfig      `json:"service"`
 	Connections []ConnectionConfig `json:"connections"`
 	Control     ControlConfig      `json:"control"`
-	LogLocation string             `json:"log_location"`
+	Logging     LogConfig          `json:"logging"`
 	Version     string
+}
+
+type LogConfig struct {
+	Debug bool `json:"debug"`
 }
 
 // TODO(kt) look into zmq channels later
@@ -92,21 +93,22 @@ func NewConfigFromConsulKey(key, address string) (*Config, error) {
 		return nil, errors.New(fmt.Sprintf("No such consul key: %s", key))
 	}
 
-	log.Infof("Loading configuration from consul: %s/%s", consulConfig.Address, key)
 	return NewConfig(pair.Value)
 }
 
 func NewConfigAutoDiscover(configPath *string) (*Config, error) {
 	var filename string
+
 	if *configPath == "" {
 		filename = discoverConfig()
 	} else {
 		filename = *configPath
 	}
+
 	if filename == "" {
 		return nil, errors.New("No configuration file found.")
 	}
-	log.Infof("Loading configuration from %s", filename)
+
 	input, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err

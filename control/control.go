@@ -8,10 +8,7 @@ import (
 
 	"github.com/kyleterry/tenyks/config"
 	"github.com/kyleterry/tenyks/irc"
-	"github.com/op/go-logging"
 )
-
-var log = logging.MustGetLogger("tenyks")
 
 type ControlServer struct {
 	socket   net.Listener
@@ -66,7 +63,7 @@ func (serv *ControlServer) Start() (chan bool, error) {
 				for {
 					conn, err := serv.socket.Accept()
 					if err != nil {
-						log.Error("Error while accepting connection")
+						Logger.Error("error while accepting connection", "error", err)
 					}
 					a <- ControlConnection{conn}
 				}

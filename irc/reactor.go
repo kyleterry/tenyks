@@ -3,16 +3,16 @@ package irc
 type IRCConnections map[string]*Connection
 
 func ConnectionReactor(conn *Connection, reactorCtl <-chan bool) {
-	log.Infof("[%s] Connecting...", conn.Name)
+	Logger.Info("connecting to network", "connection", conn.Name)
 	connected := <-conn.Connect()
-	log.Infof("[%s] Connected!", conn.Name)
+	Logger.Info("connected successfully", "connection", conn.Name)
 	dispatch("bootstrap", conn, nil)
 	if connected == true {
 		for {
 			if conn.IsConnected() == false {
 				connected := <-conn.Connect()
 				if connected == false {
-					log.Errorf("[%s] Could not connect.", conn.Name)
+					Logger.Error("failed to connect", "connection", conn.Name)
 					break
 				}
 				dispatch("bootstrap", conn, nil)
@@ -32,7 +32,7 @@ func ConnectionReactor(conn *Connection, reactorCtl <-chan bool) {
 			}
 		}
 	} else {
-		log.Errorf("[%s] Could not connect.", conn.Name)
+		Logger.Error("failed to connect", "connection", conn.Name)
 	}
 }
 
@@ -41,7 +41,7 @@ func dispatch(command string, conn *Connection, msg *Message) {
 	defer conn.Registry.RegistryMu.Unlock()
 	handlers, ok := conn.Registry.Handlers[command]
 	if ok {
-		log.Debugf("[%s] Dispatching handler `%s`", conn.Name, command)
+		Logger.Debug("dispatching handler", "connection", conn.Name, "command", command)
 		for i := handlers.Front(); i != nil; i = i.Next() {
 			handler := i.Value.(*Handler)
 			go handler.Fn(conn, msg)

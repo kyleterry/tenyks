@@ -55,14 +55,14 @@ func (c *Connection) PrivmsgIrcHandler(conn *irc.Connection, msg *irc.Message) {
 
 	jsonBytes, err := json.Marshal(serviceMsg)
 	if err != nil {
-		log.Fatal(err)
+		Logger.Error(err.Error())
 	}
 	c.Out <- string(jsonBytes[:])
 }
 
 func (c *Connection) ListServicesIrcHandler(conn *irc.Connection, msg *irc.Message) {
 	if strings.Contains(msg.RawMsg, "!services") {
-		log.Debug("[service] List services triggered")
+		Logger.Debug("list services command triggered", "command", "!services")
 		if len(c.engine.ServiceRg.services) > 0 {
 			for _, service := range c.engine.ServiceRg.services {
 				outMessage := fmt.Sprintf("%s", service)
@@ -82,6 +82,7 @@ func (c *Connection) HelpIrcHandler(conn *irc.Connection, msg *irc.Message) {
 		trail = msg.Trail
 	}
 	if strings.HasPrefix(trail, "!help") {
+		Logger.Debug("help command triggered", "command", "!help")
 		trail_pieces := strings.Fields(trail)
 		if len(trail_pieces) > 1 {
 			if c.engine.ServiceRg.IsService(trail_pieces[1]) {
@@ -102,7 +103,7 @@ func (c *Connection) HelpIrcHandler(conn *irc.Connection, msg *irc.Message) {
 				}
 				jsonBytes, err := json.Marshal(serviceMsg)
 				if err != nil {
-					log.Error("Cannot marshal help message")
+					Logger.Error("cannot marshal help message", "error", err)
 					return
 				}
 				c.Out <- string(jsonBytes[:])
@@ -145,18 +146,17 @@ func (c *Connection) PrivmsgServiceHandler(msg *Message) {
 		msgStr := fmt.Sprintf("%s %s :%s", msg.Command, msg.Target, msg.Payload)
 		conn.Out <- msgStr
 	} else {
-		log.Debug("[service] No such connection `%s`. Ignoring.",
-			msg.Connection)
+		Logger.Debug("no such connection", "connection", msg.Connection)
 	}
 }
 
 func (c *Connection) RegisterServiceHandler(msg *Message) {
 	meta := msg.Meta
 	if meta.SID == nil || meta.SID.UUID == nil {
-		log.Error("[service] ERROR: UUID required to register with Tenyks")
+		Logger.Crit("uuid required to register with tenyks")
 		return
 	}
-	log.Debug("[service] %s (%s) wants to register", meta.SID.UUID.String(), meta.Name)
+	Logger.Debug("service wants to register", "name", meta.Name, "id", meta.SID.UUID.String())
 	srv := &Service{}
 	srv.Name = meta.Name
 	srv.Version = meta.Version
@@ -170,10 +170,9 @@ func (c *Connection) RegisterServiceHandler(msg *Message) {
 func (c *Connection) ByeServiceHandler(msg *Message) {
 	meta := msg.Meta
 	if meta.SID != nil && meta.SID.UUID != nil {
-		log.Debug("[service] %s (%s) is hanging up", meta.SID.UUID.String(), meta.Name)
+		Logger.Debug("service wants to leave", "name", meta.Name, "id", meta.SID.UUID.String())
 		srv := c.engine.ServiceRg.GetServiceByUUID(meta.SID.UUID.String())
 		if srv != nil {
-			log.Debug("[service] Settings state to `offline` for `%s`", srv.Name)
 			srv.Online = false
 		}
 	}
@@ -185,17 +184,17 @@ const (
 )
 
 func (c *Connection) PingServices() {
-	log.Debug("[service] Starting pinger")
+	Logger.Debug("starting service pinger")
 	for {
 		<-time.After(time.Second * 120)
-		log.Debug("[service] PINGing services")
+		Logger.Debug("pinging services")
 		msg := &Message{
 			Command: "PING",
 			Payload: "!tenyks",
 		}
 		jsonBytes, err := json.Marshal(msg)
 		if err != nil {
-			log.Error("Cannot marshal PING message")
+			Logger.Error("cannot marshal ping message", "error", err)
 			continue
 		}
 		c.Out <- string(jsonBytes[:])

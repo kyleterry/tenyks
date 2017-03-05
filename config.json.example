@@ -1,29 +1,31 @@
 {
-    "debug": true,
-    "service": {
-        "sender_bind": "tcp://*:61123",
-        "receiver_bind": "tcp://*:61124"
-    },
-    "connections": [
-        {
-            "name": "localhost",
-            "host": "localhost",
-            "port": 6667,
-            "retries": 5,
-            "flood_protection": true,
-            "password": "",
-            "nicks": ["tenyks"],
-            "ident": "tenyks",
-            "real_name": "Tenyks Botson",
-            "commands": [],
-            "admins": ["kyle"],
-            "channels": ["#tenyks"],
-            "ssl": false
-        }
-    ],
-    "control": {
-        "enabled": true,
-        "bind": ":12666"
-    },
-    "log_location": "stdout"
+  "debug": true,
+  "service": {
+    "sender_bind": "tcp://*:61123",
+    "receiver_bind": "tcp://*:61124"
+  },
+  "control": {
+    "enabled": true,
+    "bind": ":12666"
+  },
+  "connections": [
+    {
+      "name": "localhost",
+      "host": "localhost",
+      "port": 6667,
+      "retries": 5,
+      "flood_protection": true,
+      "password": "",
+      "nicks": ["tenyks"],
+      "ident": "tenyks",
+      "real_name": "Tenyks Botson",
+      "commands": [],
+      "admins": ["kyle"],
+      "channels": ["#tenyks"],
+      "ssl": false
+    }
+  ],
+  "logging": {
+    "debug": true
+  }
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
 	"github.com/Xe/uuid"
 )
 
@@ -23,7 +24,7 @@ func (self *ServiceRegistry) RegisterService(srv *Service) {
 	self.regMu.Lock()
 	defer self.regMu.Unlock()
 	if _, ok := self.services[srv.UUID.String()]; ok {
-		log.Info("[service] Service `%s` already registered", srv.UUID.String())
+		Logger.Info("service already registered", "service-id", srv.UUID.String())
 		srv, _ = self.services[srv.UUID.String()]
 		srv.Online = ServiceOnline
 		return

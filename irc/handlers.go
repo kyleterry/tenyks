@@ -56,7 +56,7 @@ func (conn *Connection) addBaseHandlers() {
 }
 
 func (conn *Connection) PingHandler(msg *Message) {
-	log.Debugf("[%s] Responding to PING", conn.Name)
+	Logger.Debug("responding to ping", "connection", conn.Name)
 	conn.Out <- fmt.Sprintf("PONG %s", msg.Trail)
 }
 
@@ -66,12 +66,12 @@ func (conn *Connection) PongHandler(msg *Message) {
 }
 
 func (conn *Connection) SendPing(msg *Message) {
-	log.Debugf("[%s] Sending PING to server %s", conn.Name, conn.currentServer)
+	Logger.Debug("sending ping to server", "connection", conn.Name, "server", conn.currentServer)
 	conn.Out <- fmt.Sprintf("PING %s", conn.currentServer)
 }
 
 func (conn *Connection) BootstrapHandler(msg *Message) {
-	log.Infof("[%s] Bootstrapping connection", conn.Name)
+	Logger.Info("bootstrapping connection", "connection", conn.Name)
 	if conn.Config.Password != "" {
 		conn.Out <- fmt.Sprintf("PASS %s", conn.Config.Password)
 	}
@@ -89,19 +89,20 @@ func (conn *Connection) BootstrapHandler(msg *Message) {
 }
 
 func (conn *Connection) NickInUseHandler(msg *Message) {
-	log.Infof("[%s] Nick `%s` is in use. Next...", conn.Name, conn.currentNick)
+	Logger.Info("nick is in use", "connection", conn.Name, "nick", conn.currentNick)
 	conn.nickIndex++
 	if len(conn.Config.Nicks) >= conn.nickIndex+1 {
 		conn.Out <- fmt.Sprintf(
 			"NICK %s", conn.Config.Nicks[conn.nickIndex])
 		conn.currentNick = conn.Config.Nicks[conn.nickIndex]
 	} else {
-		log.Fatal("All nicks in use.")
+		Logger.Error("all nicks in use", "connection", conn.Name)
+		conn.Disconnect()
 	}
 }
 
 func (conn *Connection) ConnectedHandler(msg *Message) {
-	log.Infof("[%s] Sending user commands", conn.Name)
+	Logger.Info("sending user commands", "connection", conn.Name)
 	initCommandHandlers()
 	for _, commandHook := range conn.Config.Commands {
 		ircsafe, err := ConvertSlashCommand(commandHook)
@@ -110,10 +111,10 @@ func (conn *Connection) ConnectedHandler(msg *Message) {
 		}
 		conn.Out <- ircsafe
 	}
-	log.Infof("[%s] Joining Channels", conn.Name)
+	Logger.Info("joining channels", "connection", conn.Name)
 	for _, channel := range conn.Config.Channels {
 		conn.JoinChannel(channel)
-		log.Debugf("[%s] Joined %s", conn.Name, channel)
+		Logger.Debug("joined channel", "connection", conn.Name, "channel", channel)
 	}
 	conn.currentServer = msg.Prefix
 	go conn.watchdog()

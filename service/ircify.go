@@ -47,14 +47,14 @@ func (self *ServiceID) UnmarshalJSON(b []byte) error {
 func (self *Connection) ircify(msg string) {
 	message, err := NewMessageFromString(msg)
 	if err != nil {
-		log.Error("[service] Error parsing message: %s", err)
+		Logger.Error("error parsing message", "error", err)
 		return // Just ignore the shit we don't care about
 	}
 	self.engine.CommandRg.RegistryMu.Lock()
 	defer self.engine.CommandRg.RegistryMu.Unlock()
 	handlers, ok := self.engine.CommandRg.Handlers[message.Command]
 	if ok {
-		log.Debug("[service] Dispatching handler `%s`", message.Command)
+		Logger.Debug("dispatching handler", "command", message.Command)
 		for i := handlers.Front(); i != nil; i = i.Next() {
 			handler := i.Value.(*irc.Handler)
 			go handler.Fn(self, message)

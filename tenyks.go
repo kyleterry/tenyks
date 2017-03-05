@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	stdlog "log"
 	"os"
 
 	"github.com/kyleterry/tenyks/config"
@@ -11,7 +10,6 @@ import (
 	"github.com/kyleterry/tenyks/irc"
 	"github.com/kyleterry/tenyks/service"
 	. "github.com/kyleterry/tenyks/version"
-	"github.com/op/go-logging"
 )
 
 const (
@@ -43,7 +41,6 @@ Usage: %s [-config <CONFIG PATH>] [OPTIONS]
 const DefaultConsulAddress = "127.0.0.1:8500"
 
 var (
-	log           = logging.MustGetLogger("tenyks")
 	configPath    = flag.String("config", "", "Path to a configuration file")
 	consulAddress = flag.String("consul-address", os.Getenv("TENYKS_CONFIG_CONSUL_ADDRESS"), "Consul host address")
 	consulKey     = flag.String("config-consul-key", os.Getenv("TENYKS_CONFIG_CONSUL_KEY"), "Consul key to get config from")
@@ -89,9 +86,6 @@ func main() {
 
 		// Make configuration from json file
 		conf, err = config.NewConfigAutoDiscover(configPath)
-		if err != nil {
-			log.Fatal(err)
-		}
 	}
 	if err != nil {
 		panic(err)
@@ -99,28 +93,29 @@ func main() {
 	conf.Version = TenyksVersion
 
 	// Configure logging
-	switch conf.LogLocation {
-	case "syslog":
-		logBackend, logErr := logging.NewSyslogBackend("")
-		if logErr != nil {
-			log.Fatal(logErr)
-		}
-		logging.SetBackend(logBackend)
-	default:
-	case "stdout":
-		flags := stdlog.LstdFlags
-		if conf.Debug {
-			flags = flags | stdlog.Lshortfile
-		}
-		logBackend := logging.NewLogBackend(os.Stdout, "", flags)
-		logBackend.Color = true
-		logging.SetBackend(logBackend)
-	}
-	if conf.Debug {
-		logging.SetLevel(logging.DEBUG, "tenyks")
-	} else {
-		logging.SetLevel(logging.INFO, "tenyks")
-	}
+	// switch conf.LogLocation {
+	// case "syslog":
+	// 	logBackend, logErr := logging.NewSyslogBackend("")
+	// 	if logErr != nil {
+	// 		log.Fatal(logErr)
+	// 	}
+	// 	logging.SetBackend(logBackend)
+	// default:
+	// case "stdout":
+	// 	flags := stdlog.LstdFlags
+	// 	if conf.Debug {
+	// 		flags = flags | stdlog.Lshortfile
+	// 	}
+	// 	logBackend := logging.NewLogBackend(os.Stdout, "", flags)
+	// 	logBackend.Color = true
+	// 	logging.SetBackend(logBackend)
+	// }
+	// if conf.Debug {
+	// 	logging.SetLevel(logging.DEBUG, "tenyks")
+	// } else {
+	// 	logging.SetLevel(logging.INFO, "tenyks")
+	// }
+	setupLogger(conf.Logging)
 
 	// Starting Control Server
 	var (
@@ -128,23 +123,26 @@ func main() {
 		controlServer *control.ControlServer
 	)
 	if conf.Control.Enabled {
-		log.Debug("Control Server is On")
+		Logger.Debug("Control Server is On")
 		controlServer, err = control.NewControlServer(conf.Control)
 		wait, err = controlServer.Start()
 		if err != nil {
-			log.Fatal(err)
+			Logger.Error(err.Error())
 		}
 		<-wait
-		log.Infof("Control server listening on %s", conf.Control.Bind)
+		Logger.Info("Control server started", "addr", conf.Control.Bind)
 	} else {
-		log.Debugf("Control Server is Off")
+		Logger.Debug("Control Server is off")
 	}
 
 	// Connections map
 	connections := make(irc.IRCConnections)
 	ircReactors := make([]<-chan bool, 0)
 
-	eng := service.NewServiceEngine(conf.Service)
+	eng, err := service.NewServiceEngine(conf.Service)
+	if err != nil {
+		panic(err)
+	}
 
 	// Create connection, spawn reactors and add to the map
 	for _, c := range conf.Connections {

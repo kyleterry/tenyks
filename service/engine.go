@@ -6,6 +6,7 @@ import (
 
 	"github.com/kyleterry/tenyks/config"
 	"github.com/kyleterry/tenyks/irc"
+	"github.com/pkg/errors"
 )
 
 type ServiceEngine struct {
@@ -15,20 +16,26 @@ type ServiceEngine struct {
 	ircconns  irc.IRCConnections
 }
 
-func NewServiceEngine(conf config.ServiceConfig) *ServiceEngine {
+func NewServiceEngine(conf config.ServiceConfig) (*ServiceEngine, error) {
+	var err error
+
 	eng := &ServiceEngine{}
-	eng.Reactor = NewPubSubReactor(conf)
+	eng.Reactor, err = NewPubSubReactor(conf)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create pub/sub reactor")
+	}
 	eng.Reactor.engine = eng
 	eng.Reactor.conn.engine = eng
 	eng.ServiceRg = NewServiceRegistry()
 	eng.CommandRg = irc.NewHandlerRegistry()
-	return eng
+	return eng, nil
 }
 
 func (self *ServiceEngine) Start() {
-	log.Info("[service] Starting engine")
+	Logger.Info("starting engine")
 	self.addBaseHandlers()
 	self.Reactor.Start()
+	// TODO: these need to take error channels so we can handle things that go wrong
 	go self.NotifyServicesAboutStart()
 	go self.serviceWatchdog()
 	go self.Reactor.conn.PingServices()
@@ -49,15 +56,14 @@ func (self *ServiceEngine) RegisterIrcHandlersFor(conn *irc.Connection) {
 func (self *ServiceEngine) serviceWatchdog() {
 	for {
 		<-time.After(time.Second * 180)
-		log.Debug("[service] Checking service health")
 		services := self.ServiceRg.services
 		for name, service := range services {
 			if service.Online {
-				log.Debug("[service] Checking %s", name)
+				Logger.Debug("checking service health", "service", name)
 				pongDuration := time.Since(service.LastPong)
 				testDuration := time.Duration(time.Second * 400)
 				if int(pongDuration) > int(testDuration) {
-					log.Debug("[service] %s seems to have gone offline", name)
+					Logger.Debug("marking service offline", "service", name)
 					service.Online = ServiceOffline
 				}
 			}
@@ -73,8 +79,7 @@ func (self *ServiceEngine) UpdateService(uuid string, status bool) {
 		service := self.ServiceRg.services[uuid]
 		service.Online = status
 		if status {
-			log.Debug("[service] %s responded with PONG",
-				service.UUID.String())
+			Logger.Debug("service responded to PING", "service-id", service.UUID.String())
 			service.LastPong = time.Now()
 		}
 	}
@@ -83,14 +88,14 @@ func (self *ServiceEngine) UpdateService(uuid string, status bool) {
 // NotifyServicesAboutStart that the bot came online. This should prompt
 // services to send the REGISTER command.
 func (self *ServiceEngine) NotifyServicesAboutStart() {
-	log.Debug("[service] Notifying Services that Tenyks came online")
+	Logger.Debug("notifying services of startup")
 	msg := &Message{
 		Command: "HELLO",
 		Payload: "!tenyks",
 	}
 	jsonBytes, err := json.Marshal(msg)
 	if err != nil {
-		log.Fatal(err)
+		Logger.Error("failed to serialize msg", "error", err)
 	}
 	self.Reactor.conn.Out <- string(jsonBytes[:])
 }
@@ -100,19 +105,21 @@ type PubSubReactor struct {
 	engine *ServiceEngine
 }
 
-func NewPubSubReactor(conf config.ServiceConfig) *PubSubReactor {
+func NewPubSubReactor(conf config.ServiceConfig) (*PubSubReactor, error) {
 	reactor := &PubSubReactor{}
 	conn, err := NewConn(conf)
 	if err != nil {
-		panic(err)
+		return nil, errors.Wrap(err, "failed to create connection object")
 	}
 	reactor.conn = conn
-	reactor.conn.Init()
-	return reactor
+	if err := reactor.conn.Init(); err != nil {
+		return nil, errors.Wrap(err, "failed to initialize service connection")
+	}
+	return reactor, nil
 }
 
 func (p *PubSubReactor) Start() {
-	log.Debug("[service] Starting Pub/Sub reactor")
+	Logger.Debug("starting pub/sub reactor")
 	go func() {
 		for {
 			select {
