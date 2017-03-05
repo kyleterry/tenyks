@@ -65,10 +65,10 @@
 			"revisionTime": "2016-03-15T20:05:05Z"
 		},
 		{
-			"checksumSHA1": "Hk2bJWnLshavQJ/CWaynwY0mlVE=",
+			"checksumSHA1": "vLSKPu25kjU0iCCHrZRHrWwnTh0=",
 			"path": "github.com/pebbe/zmq4",
-			"revision": "eccbb48ddab7c3989994739b07868056997893da",
-			"revisionTime": "2016-08-17T14:25:57Z"
+			"revision": "86a301353efd154593d5c851a092dc21e907a601",
+			"revisionTime": "2016-11-07T14:27:27Z"
 		},
 		{
 			"checksumSHA1": "ynJSWoF6v+3zMnh9R0QmmG6iGV8=",
