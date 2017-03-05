@@ -13,7 +13,6 @@
       "name": "localhost",
       "host": "localhost",
       "port": 6667,
-      "retries": 5,
       "flood_protection": true,
       "password": "",
       "nicks": ["tenyks"],

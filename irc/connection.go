@@ -78,8 +78,6 @@ type Connection struct {
 	LastPong time.Time
 	// Channel for the connection watchdog.
 	PongIn chan bool
-	// Number of retry attempts the connection made
-	retries int
 	// Current channels tenyks is in. Jnerula hates state and I don't care.
 	Channels *list.List
 	// Yes, I'm sharing memory. Sorry, mom.
@@ -118,7 +116,6 @@ func (conn *Connection) Connect() chan bool {
 		max:    120 * time.Second,
 	}
 	go func() {
-		conn.retries = 0
 		var (
 			socket net.Conn
 			err    error
@@ -133,14 +130,12 @@ func (conn *Connection) Connect() chan bool {
 				if err != nil {
 					dur := b.next()
 					Logger.Error("connection failed; retrying", "connection", conn.Name, "waiting", dur)
-					conn.retries += 1
 					time.Sleep(dur)
 					continue
 				}
 			} else {
 				socket, err = net.Dial("tcp", server)
 				if err != nil {
-					conn.retries += 1
 					continue
 				}
 			}
@@ -278,10 +273,6 @@ func (conn *Connection) watchdog() {
 // It returns a bool
 func (conn *Connection) IsConnected() bool {
 	return conn.connected
-}
-
-func (conn *Connection) GetRetries() int {
-	return conn.retries
 }
 
 // GetCurrentNick will return the nick currently being used in the IRC connection

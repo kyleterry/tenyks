@@ -47,7 +47,6 @@ func MakeConnConfig() config.ConnectionConfig {
 		Host:            "localhost",
 		Port:            26661,
 		FloodProtection: true,
-		Retries:         5,
 		Nicks:           []string{"tenyks", "tenyks-"},
 		Ident:           "something",
 		Realname:        "tenyks",
@@ -69,10 +68,6 @@ func TestCanConnectAndDisconnect(t *testing.T) {
 	conn := NewConnection("mockirc", MakeConnConfig())
 	wait = conn.Connect()
 	<-wait
-
-	if conn.GetRetries() > 0 {
-		t.Error("Expected", 0, "got", conn.GetRetries())
-	}
 
 	if !conn.IsConnected() {
 		t.Error("Expected", true, "got", false)

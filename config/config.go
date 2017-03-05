@@ -43,7 +43,6 @@ type ConnectionConfig struct {
 	Name            string   `json:"name"`
 	Host            string   `json:"host"`
 	Port            int      `json:"port"`
-	Retries         int      `json:"retries"`
 	FloodProtection bool     `json:"flood_protection"`
 	Password        string   `json:"password"`
 	Nicks           []string `json:"nicks"`
