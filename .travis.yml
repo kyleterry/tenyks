@@ -2,11 +2,8 @@ language: go
 dist: trusty
 
 go:
-  - 1.6
+  - 1.8
   - tip
-
-env:
-  - GO15VENDOREXPERIMENT=1
 
 install:
   - echo noop
