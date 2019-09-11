@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Xe/uuid"
+	"github.com/google/uuid"
 )
 
 type ServiceRegistry struct {

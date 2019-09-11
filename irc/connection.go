@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"math"
 	"net"
+	"strings"
 	"sync"
 	"time"
 
@@ -181,6 +182,9 @@ func (conn *Connection) send() chan<- string {
 					Logger.Debug("stopping send loop", "connection", conn.Name)
 					return
 				}
+
+				line = strings.ReplaceAll(strings.ReplaceAll(line, "\r\n", "\n"), "\n", " ")
+
 				Logger.Debug("sending message", "connection", conn.Name, "msg", line)
 				conn.connectionMutex.Lock()
 				conn.MessagesSent += 1

@@ -2,12 +2,13 @@ package service
 
 import (
 	"encoding/json"
-	"errors"
 	"strings"
 
-	"github.com/Xe/uuid"
+	"github.com/google/uuid"
 	"github.com/kyleterry/tenyks/irc"
 )
+
+const maxMessages = 3
 
 type Message struct {
 	Target       string `json:"target"`
@@ -37,27 +38,38 @@ type Meta struct {
 
 func (self *ServiceID) UnmarshalJSON(b []byte) error {
 	s := strings.Trim(string(b), "\"")
-	self.UUID = uuid.Parse(s)
-	if self.UUID == nil {
-		return errors.New("Could not parse UUID")
+	id, err := uuid.Parse(s)
+	if err != nil {
+		return err
 	}
+
+	self.UUID = id
+
 	return nil
 }
 
 func (self *Connection) ircify(msg string) {
-	message, err := NewMessageFromString(msg)
-	if err != nil {
-		Logger.Error("error parsing message", "error", err)
-		return // Just ignore the shit we don't care about
+	lines := strings.Split(strings.ReplaceAll(msg, "\r\n", "\n"), "\n")
+
+	if len(lines) > maxMessages {
+		lines = lines[:maxMessages]
 	}
-	self.engine.CommandRg.RegistryMu.Lock()
-	defer self.engine.CommandRg.RegistryMu.Unlock()
-	handlers, ok := self.engine.CommandRg.Handlers[message.Command]
-	if ok {
-		Logger.Debug("dispatching handler", "command", message.Command)
-		for i := handlers.Front(); i != nil; i = i.Next() {
-			handler := i.Value.(*irc.Handler)
-			go handler.Fn(self, message)
+
+	for _, line := range lines {
+		message, err := NewMessageFromString(line)
+		if err != nil {
+			Logger.Error("error parsing message", "error", err)
+			return // Just ignore the shit we don't care about
+		}
+		self.engine.CommandRg.RegistryMu.Lock()
+		defer self.engine.CommandRg.RegistryMu.Unlock()
+		handlers, ok := self.engine.CommandRg.Handlers[message.Command]
+		if ok {
+			Logger.Debug("dispatching handler", "command", message.Command)
+			for i := handlers.Front(); i != nil; i = i.Next() {
+				handler := i.Value.(*irc.Handler)
+				go handler.Fn(self, message)
+			}
 		}
 	}
 }

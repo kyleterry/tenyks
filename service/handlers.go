@@ -152,7 +152,7 @@ func (c *Connection) PrivmsgServiceHandler(msg *Message) {
 
 func (c *Connection) RegisterServiceHandler(msg *Message) {
 	meta := msg.Meta
-	if meta.SID == nil || meta.SID.UUID == nil {
+	if meta.SID == nil || meta.SID.UUID.String() == "" {
 		Logger.Crit("uuid required to register with tenyks")
 		return
 	}
@@ -169,7 +169,7 @@ func (c *Connection) RegisterServiceHandler(msg *Message) {
 
 func (c *Connection) ByeServiceHandler(msg *Message) {
 	meta := msg.Meta
-	if meta.SID != nil && meta.SID.UUID != nil {
+	if meta.SID != nil && meta.SID.UUID.String() != "" {
 		Logger.Debug("service wants to leave", "name", meta.Name, "id", meta.SID.UUID.String())
 		srv := c.engine.ServiceRg.GetServiceByUUID(meta.SID.UUID.String())
 		if srv != nil {
@@ -210,7 +210,7 @@ func (c *Connection) PingServices() {
 
 func (c *Connection) PongServiceHandler(msg *Message) {
 	meta := msg.Meta
-	if meta.SID != nil && meta.SID.UUID != nil {
+	if meta.SID != nil && meta.SID.UUID.String() != "" {
 		c.engine.UpdateService(meta.SID.UUID.String(), ServiceOnline)
 	}
 }
