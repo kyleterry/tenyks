@@ -6,7 +6,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/kyleterry/tenyks/pkg/logger"
+	"github.com/kyleterry/tenyks/internal/logger"
 )
 
 func defaultLoginFunc(ctx context.Context, c *Connection) error {
@@ -70,8 +70,8 @@ func defaultJoinChannelStatusUpdater(ctx context.Context, c *Connection, command
 	case *JoinCommand:
 		msg := cmd.Message()
 
-		if msg.PrefixSection != nil {
-			if msg.PrefixSection.Nick == c.Status.CurrentNick {
+		if msg.Prefix != nil {
+			if msg.Prefix.Nick == c.Status.CurrentNick {
 				channelName := cmd.Message().Params[0]
 
 				c.WithWriteLock(ctx, func(conn *Connection) {

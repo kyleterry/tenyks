@@ -2,12 +2,10 @@ package irc
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestCommandEncoding(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		cmd      Command
 		expected string
 	}{
@@ -43,8 +41,11 @@ func TestCommandEncoding(t *testing.T) {
 
 	for _, c := range cases {
 		result, err := c.cmd.Encode()
-
-		require.NoError(t, err)
-		require.Equal(t, c.expected, result)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if result != c.expected {
+			t.Errorf("got %q, want %q", result, c.expected)
+		}
 	}
 }

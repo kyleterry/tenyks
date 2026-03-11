@@ -42,14 +42,19 @@ type MessageObject interface {
 // <SPACE>         ::= ' ' { ' ' }
 // <params>        ::= <SPACE> [ ':' <trailing> | <middle> <params> ]
 // <middle>        ::= <Any *non-empty* sequence of octets not including SPACE
-//                     or NUL or CR or LF, the first of which may not be ':'>
+//
+//	or NUL or CR or LF, the first of which may not be ':'>
+//
 // <trailing>      ::= <Any, possibly *empty*, sequence of octets not including
-//                     NUL or CR or LF>
+//
+//	NUL or CR or LF>
+//
 // <crlf>          ::= CR LF
 //
 // RFC2812: https://tools.ietf.org/html/rfc2812
 func ParseMessage(raw string) (*Message, error) {
 	raw = strings.TrimSuffix(raw, "\r\n")
+
 	msg := Message{
 		CreatedAt: time.Now(),
 		RawMsg:    raw,
@@ -59,12 +64,12 @@ func ParseMessage(raw string) (*Message, error) {
 	// has tags in it
 	if raw[0] == '@' {
 		if index := strings.Index(raw, " "); index != -1 {
-			if msg.TagsSection == nil {
-				msg.TagsSection = &TagsSection{}
+			if msg.Tags == nil {
+				msg.Tags = &TagsSection{}
 			}
 
 			rawTags := raw[1:index]
-			msg.TagsSection.RawTags = rawTags
+			msg.Tags.RawTags = rawTags
 			raw = raw[index+1:]
 
 			for _, tag := range strings.Split(rawTags, ";") {
@@ -92,7 +97,7 @@ func ParseMessage(raw string) (*Message, error) {
 
 				key = rawKey
 
-				msg.TagsSection.Tags = append(msg.TagsSection.Tags, &Tag{
+				msg.Tags.Tags = append(msg.Tags.Tags, &Tag{
 					Key:    key,
 					Value:  value,
 					Vendor: vendor,
@@ -107,15 +112,15 @@ func ParseMessage(raw string) (*Message, error) {
 	if raw[0] == ':' {
 		var rawPrefix string
 
-		if msg.PrefixSection == nil {
-			msg.PrefixSection = &PrefixSection{}
+		if msg.Prefix == nil {
+			msg.Prefix = &PrefixSection{}
 		}
 
 		// We have what looks to be a prefixed message from IRC, lets start trying to
 		// parse the prefix section
 		if index := strings.Index(raw, " "); index != -1 { // fetch up to " "
 			rawPrefix = raw[1:index]
-			msg.PrefixSection.RawPrefix = rawPrefix // could be server or user string
+			msg.Prefix.RawPrefix = rawPrefix // could be server or user string
 			raw = raw[index+1:]
 		} else {
 			// If we start with a : and there's no <space> anywhere, then we have an
@@ -129,9 +134,9 @@ func ParseMessage(raw string) (*Message, error) {
 		nickIndex := strings.Index(rawPrefix, "!")
 		userIndex := strings.Index(rawPrefix, "@")
 		if nickIndex != -1 && userIndex != -1 {
-			msg.PrefixSection.Nick = rawPrefix[:nickIndex]
-			msg.PrefixSection.Ident = rawPrefix[nickIndex+1 : userIndex]
-			msg.PrefixSection.Host = rawPrefix[userIndex+1:]
+			msg.Prefix.Nick = rawPrefix[:nickIndex]
+			msg.Prefix.Ident = rawPrefix[nickIndex+1 : userIndex]
+			msg.Prefix.Host = rawPrefix[userIndex+1:]
 		}
 	}
 
@@ -173,11 +178,11 @@ func ParseMessage(raw string) (*Message, error) {
 
 // Message is a type that holds all the parsed information from a message string
 type Message struct {
-	// TagsSection holds IRC V3 tags if there were any in the message
-	TagsSection *TagsSection
-	// PrefixSection holds the message prefix (from server only). Tenyks should never
+	// Tags holds IRC V3 tags if there were any in the message
+	Tags *TagsSection
+	// Prefix holds the message prefix (from server only). Tenyks should never
 	// send one of these to a server and it will be ignored by the MessageEncoder.
-	PrefixSection *PrefixSection
+	Prefix *PrefixSection
 	// Command is the IRC command (also includes reply codes and error codes)
 	Command string
 	// MessageType is the type of message received. This field can be inspected

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"path"
 	"strings"
-	"time"
 
-	"github.com/kyleterry/tenyks/pkg/message"
+	servicepb "github.com/kyleterry/tenyks/internal/service"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // MessageEncoder takes a Message object and returns a string value for that
@@ -58,32 +58,42 @@ func NewRawMessageDecoder() *RawMessageDecoder {
 
 type tenyksChatMessageEncoder struct{}
 
-func (tme *tenyksChatMessageEncoder) Encode(cmd *PrivmsgCommand) (message.Message, error) {
-	tmsg := &message.ChatMessage{
-		DestinationPath: "/",
-		OriginPath:      "/",
-		Content:         cmd.Message().Trail,
-		Timestamp:       time.Now(),
+func (tme *tenyksChatMessageEncoder) Encode(cmd *PrivmsgCommand) (*servicepb.Message, error) {
+	ircMsg := cmd.Message()
+
+	dest := ""
+	if len(ircMsg.Params) > 0 {
+		dest = ircMsg.Params[0]
 	}
 
-	return tmsg, nil
+	origin := ""
+	if ircMsg.Prefix != nil {
+		origin = ircMsg.Prefix.Nick
+	}
+
+	return &servicepb.Message{
+		Payload: &servicepb.Message_Chat{
+			Chat: &servicepb.Chat{
+				DestinationPath: dest,
+				OriginPath:      origin,
+				Direct:          cmd.IsDirect(),
+				Mention:         cmd.IsMention(),
+			},
+		},
+		Content:   ircMsg.Trail,
+		CreatedAt: timestamppb.Now(),
+	}, nil
 }
 
 type tenyksChatMessageDecoder struct{}
 
-func (tmd *tenyksChatMessageDecoder) Decode(msg message.Message) (*PrivmsgCommand, error) {
-	var cmd *PrivmsgCommand
-
-	switch msg.(type) {
-	case *message.ChatMessage:
-		theirs := msg.(*message.ChatMessage)
-
-		_, target := path.Split(theirs.DestinationPath)
-
-		cmd = NewPrivmsgCommand(target, theirs.Content)
-	default:
-		return nil, errors.New("unexpected message type")
+func (tmd *tenyksChatMessageDecoder) Decode(msg *servicepb.Message) (*PrivmsgCommand, error) {
+	chat := msg.GetChat()
+	if chat == nil {
+		return nil, errors.New("expected chat message payload")
 	}
 
-	return cmd, nil
+	_, target := path.Split(chat.DestinationPath)
+
+	return NewPrivmsgCommand(target, msg.Content), nil
 }

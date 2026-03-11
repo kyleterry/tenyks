@@ -4,14 +4,14 @@ import (
 	"context"
 	"flag"
 	"log"
-	"net/http"
-	"sync"
+	"net"
 
-	"github.com/kyleterry/tenyks/pkg/adapter"
-	"github.com/kyleterry/tenyks/pkg/adapter/irc"
-	"github.com/kyleterry/tenyks/pkg/config"
-	"github.com/kyleterry/tenyks/pkg/logger"
-	"github.com/kyleterry/tenyks/pkg/service"
+	"github.com/kyleterry/tenyks/internal/adapter"
+	"github.com/kyleterry/tenyks/internal/adapter/irc"
+	"github.com/kyleterry/tenyks/internal/config"
+	"github.com/kyleterry/tenyks/internal/logger"
+	"github.com/kyleterry/tenyks/internal/service"
+	"github.com/kyleterry/tenyks/internal/tlsconfig"
 )
 
 func main() {
@@ -19,7 +19,7 @@ func main() {
 
 	flag.Parse()
 
-	cfg, err := config.NewConfigFromFile(*configPath)
+	cfg, err := config.NewFromFile(*configPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -28,6 +28,7 @@ func main() {
 		Debug:         cfg.Logging.Debug,
 		ShowTimestamp: true,
 	}
+
 	standardLogger := logger.NewStandardLogger("tenyks", loggerConf)
 
 	adapterRegistry := adapter.NewRegistry()
@@ -40,7 +41,7 @@ func main() {
 
 		switch at {
 		case adapter.AdapterTypeIRC:
-			ircConfig := sc.Config.(config.IRCServerConfig)
+			ircConfig := sc.Config.(config.IRCServer)
 
 			c, err := irc.New(irc.Config{
 				Name:     ircConfig.Name,
@@ -54,7 +55,6 @@ func main() {
 				Commands: ircConfig.Commands,
 				Logger:   standardLogger,
 			})
-
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -63,18 +63,28 @@ func main() {
 				log.Fatal(err)
 			}
 
-			adapterRegistry.RegisterAdapter(conn)
+			adapterRegistry.RegisterAdapter(c)
 		}
 	}
 
-	ws := service.NewWebsocketServer(adapterRegistry)
-	ws.RegisterHandler()
+	bindAddr := ":50001"
+	if cfg.Service != nil && cfg.Service.BindAddr != "" {
+		bindAddr = cfg.Service.BindAddr
+	}
 
-	http.ListenAndServe("0.0.0.0:9999", ws)
+	l, err := net.Listen("tcp", bindAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	wg := sync.WaitGroup{}
+	certs, err := tlsconfig.Load(cfg.Service.TLS)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	wg.Add(1)
+	s := service.New(tlsconfig.NewServerConfig(certs))
 
-	wg.Wait()
+	if err := s.Serve(l); err != nil {
+		log.Fatal(err)
+	}
 }

@@ -2,8 +2,6 @@ package irc
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestParseIRCMessage(t *testing.T) {
@@ -86,13 +84,17 @@ func TestParseIRCMessage(t *testing.T) {
 			msg, err := ParseMessage(c.raw)
 
 			if !c.shouldParse {
-				require.Error(t, err)
-
+				if err == nil {
+					t.Fatal("expected error, got nil")
+				}
 				return
 			}
-			require.NoError(t, err)
-
-			require.Equal(t, c.expectedMessageType, msg.MessageType)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if msg.MessageType != c.expectedMessageType {
+				t.Errorf("got message type %v, want %v", msg.MessageType, c.expectedMessageType)
+			}
 		})
 	}
 }

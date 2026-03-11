@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package tenyks.service.v1;
+
+option go_package = "github.com/kyleterry/tenyks/internal/service";
+
+import "google/protobuf/timestamp.proto";
+
+service MessageService {
+  rpc StreamMessages(stream Message) returns (stream Message) {}
+  rpc SendMessage(Message) returns (Message) {}
+}
+
+message Chat {
+  string origin_path = 1;
+  string destination_path = 2;
+  bool direct = 3;
+  bool mention = 4;
+}
+
+message Control {
+  enum Type {
+    TYPE_UNSPECIFIED = 0;
+    TYPE_REGISTER = 1;
+    TYPE_QUIT = 2;
+    TYPE_PING = 3;
+    TYPE_PONG = 4;
+  }
+
+  string id = 1;
+  Type type = 2;
+}
+
+message Message {
+  oneof payload {
+    Chat chat = 1;
+    Control control = 2;
+  }
+
+  string content = 3;
+  google.protobuf.Timestamp created_at = 30;
+}

@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kyleterry/tenyks/pkg/adapter"
-	"github.com/kyleterry/tenyks/pkg/logger"
-	"github.com/kyleterry/tenyks/pkg/message"
+	"github.com/kyleterry/tenyks/internal/adapter"
+	"github.com/kyleterry/tenyks/internal/logger"
+	servicepb "github.com/kyleterry/tenyks/internal/service"
 )
 
 var (
@@ -81,7 +81,7 @@ type Connection struct {
 	io                  *bufio.ReadWriter
 	in                  chan MessageObject
 	out                 chan Command
-	chatMessageHandlers []message.HandlerFunc
+	chatMessageHandlers []adapter.HandlerFunc
 
 	sync.RWMutex
 }
@@ -94,7 +94,7 @@ func (c *Connection) GetType() adapter.AdapterType {
 	return adapter.AdapterTypeIRC
 }
 
-func (c *Connection) RegisterMessageHandler(h message.HandlerFunc) {
+func (c *Connection) RegisterMessageHandler(h adapter.HandlerFunc) {
 	c.chatMessageHandlers = append(c.chatMessageHandlers, h)
 }
 
@@ -189,7 +189,7 @@ func (c *Connection) EnqueueCommand(cmd Command) error {
 // SendAsync takes a generic tenyks message and decodes it into a PRIVCMD and
 // attempts to put it on the send queue. See EnqueueCommand for information on
 // potential contention.
-func (c *Connection) SendAsync(_ context.Context, msg message.Message) error {
+func (c *Connection) SendAsync(_ context.Context, msg *servicepb.Message) error {
 	decoder := tenyksChatMessageDecoder{}
 	cmd, err := decoder.Decode(msg)
 	if err != nil {

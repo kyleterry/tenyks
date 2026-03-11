@@ -3,7 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 )
 
 type Unmarshaler interface {
@@ -11,23 +11,23 @@ type Unmarshaler interface {
 }
 
 type Config struct {
-	Logging LoggingConfig  `json:"logging"`
-	Servers []ServerConfig `json:"servers"`
-	Service ServiceConfig  `json:"service"`
+	Logging *Logging  `json:"logging"`
+	Servers []*Server `json:"servers"`
+	Service *Service  `json:"service"`
 }
 
-type LoggingConfig struct {
+type Logging struct {
 	Debug    bool   `json:"debug"`
 	Location string `json:"location"`
 }
 
-type ServerConfig struct {
-	Kind   string      `json:"kind"`
-	Name   string      `json:"name"`
-	Config interface{} `json:"config"`
+type Server struct {
+	Kind   string `json:"kind"`
+	Name   string `json:"name"`
+	Config any    `json:"config"`
 }
 
-func (sc *ServerConfig) UnmarshalJSON(b []byte) error {
+func (sc *Server) UnmarshalJSON(b []byte) error {
 	var j map[string]*json.RawMessage
 	if err := json.Unmarshal(b, &j); err != nil {
 		return err
@@ -49,7 +49,7 @@ func (sc *ServerConfig) UnmarshalJSON(b []byte) error {
 
 	switch sc.Kind {
 	case "irc":
-		var irc IRCServerConfig
+		var irc IRCServer
 
 		if err := json.Unmarshal(*j["config"], &irc); err != nil {
 			return err
@@ -65,7 +65,7 @@ func (sc *ServerConfig) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-type IRCServerConfig struct {
+type IRCServer struct {
 	Name       string   `json:"-"`
 	ServerAddr string   `json:"server_addr"`
 	Password   string   `json:"password"`
@@ -78,12 +78,24 @@ type IRCServerConfig struct {
 	RootCAPath string   `json:"root_ca"`
 }
 
-type ServiceConfig struct {
-	BindAddr string
+// TLS holds the file paths to certificate PEM blocks used to configure mTLS.
+type TLS struct {
+	// CAFile is the path to the CA certificate file in PEM format. This CA must
+	// be the authority that signed the client certificates.
+	CAFile string `json:"ca_file"`
+	// CertFile is the path to the server certificate file in PEM format.
+	CertFile string `json:"cert_file"`
+	// PrivateKeyFile is the path to the server private key file in PEM format.
+	PrivateKeyFile string `json:"private_key_file"`
 }
 
-func NewConfigFromFile(path string) (*Config, error) {
-	b, err := ioutil.ReadFile(path)
+type Service struct {
+	BindAddr string
+	TLS      *TLS
+}
+
+func NewFromFile(path string) (*Config, error) {
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

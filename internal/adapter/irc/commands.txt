@@ -1,0 +1,42 @@
+ACCEPT
+ADMIN [<target>]
+AWAY [:<away message>]
+CDCC <sub-command> <arguments>
+CONNECT <server> [<port> [<remote server>]] 
+CTCP <target> <command> [:<text>]
+DCC <sub-command> <arguments>
+INFO [<target>]
+ISON <nickname1> [<nickname2>]
+JOIN <#channel> [key]
+KICK <#channel> <user> [:<reason>]
+KILL <nickname> :<reason>
+LINKS [[<remote server>] <server mask>]
+LIST [<channels> [<server>]]
+LUSERS [<target> [<mask>]]
+MODE <target> [<mode> [<mode params>]]
+MOTD [<target>]
+NICK <nickname>
+NOTICE <target> :<message>
+OPER <username> <password>
+PART <#channel>
+PING <server> [<server2>]
+PONG <server> [<server2>]
+PRIVMSG <target> :<message>
+QUIT [:<reason>]
+REHASH
+RESTART
+SERVER <server> <hopcount> :<info>
+SQUIT <server> [:<reason>]
+STATS [<query> [<target>]]
+TIME [<target>]
+TOPIC <#channel> [:<newtopic>]
+TRACE [<target>]
+TRACE [<target>]
+USER <username> <mode> <unused> :<realname>
+USERHOST <nickname1> [<nickname2>]
+USERIP <nickname>
+USERS [<target>]
+VERSION [<target>]
+WALLOPS :<message>
+WHOIS <nickname> [<server>]
+summon <user> [:<channel>]
