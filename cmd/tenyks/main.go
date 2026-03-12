@@ -82,9 +82,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	s := service.New(tlsconfig.NewServerConfig(certs))
+	svcServer, gs := service.New(tlsconfig.NewServerConfig(certs), adapterRegistry)
 
-	if err := s.Serve(l); err != nil {
+	// Register the service server as a handler on every adapter so that
+	// incoming IRC messages are broadcast to all connected service clients.
+	for _, a := range adapterRegistry.GetAdaptersFor(adapter.AdapterTypeIRC) {
+		a.RegisterMessageHandler(svcServer.Broadcast)
+	}
+
+	if err := gs.Serve(l); err != nil {
 		log.Fatal(err)
 	}
 }

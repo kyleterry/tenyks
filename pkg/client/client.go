@@ -4,21 +4,21 @@ import (
 	"context"
 	"crypto/tls"
 
-	servicepb "github.com/kyleterry/tenyks/internal/service"
+	servicepb "github.com/kyleterry/tenyks/internal/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
 
 const DefaultAddr = "localhost:50001"
 
-type Client struct {
+type grpcClient struct {
 	addr      string
 	tlsConfig *tls.Config
 	gclient   servicepb.MessageServiceClient
 	conn      *grpc.ClientConn
 }
 
-func (c *Client) Dial(ctx context.Context) error {
+func (c *grpcClient) dial(ctx context.Context) error {
 	conn, err := grpc.NewClient(c.addr,
 		grpc.WithTransportCredentials(credentials.NewTLS(c.tlsConfig)))
 	if err != nil {
@@ -31,20 +31,22 @@ func (c *Client) Dial(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) Close() error {
+func (c *grpcClient) stream(ctx context.Context) (servicepb.MessageService_StreamMessagesClient, error) {
+	return c.gclient.StreamMessages(ctx)
+}
+
+func (c *grpcClient) close() error {
 	if c.conn != nil {
 		return c.conn.Close()
 	}
-
 	return nil
 }
 
-func NewClient(addr string, tlsConfig *tls.Config) *Client {
+func newGRPCClient(addr string, tlsConfig *tls.Config) *grpcClient {
 	if addr == "" {
 		addr = DefaultAddr
 	}
-
-	return &Client{
+	return &grpcClient{
 		addr:      addr,
 		tlsConfig: tlsConfig,
 	}

@@ -23,6 +23,15 @@ var DefaultReplyFactory = map[ReplyType]func(*Message) Reply{
 	ReplyTypeErrNickInUse: func(msg *Message) Reply {
 		return &ErrNickInUseReply{m: msg}
 	},
+	ReplyTypeSASLLoggedIn: func(msg *Message) Reply {
+		return &SASLLoggedInReply{m: msg}
+	},
+	ReplyTypeSASLSuccess: func(msg *Message) Reply {
+		return &SASLSuccessReply{m: msg}
+	},
+	ReplyTypeSASLFail: func(msg *Message) Reply {
+		return &SASLFailReply{m: msg}
+	},
 }
 
 type WelcomeReply struct {
@@ -88,10 +97,20 @@ type ErrNickInUseReply struct {
 	m *Message
 }
 
-func (r ErrNickInUseReply) Message() *Message {
-	return r.m
-}
+func (r ErrNickInUseReply) Message() *Message { return r.m }
+func (r ErrNickInUseReply) Validate() error   { return nil }
 
-func (r ErrNickInUseReply) Validate() error {
-	return nil
-}
+type SASLLoggedInReply struct{ m *Message }
+
+func (r SASLLoggedInReply) Message() *Message { return r.m }
+func (r SASLLoggedInReply) Validate() error   { return nil }
+
+type SASLSuccessReply struct{ m *Message }
+
+func (r SASLSuccessReply) Message() *Message { return r.m }
+func (r SASLSuccessReply) Validate() error   { return nil }
+
+type SASLFailReply struct{ m *Message }
+
+func (r SASLFailReply) Message() *Message { return r.m }
+func (r SASLFailReply) Validate() error   { return nil }

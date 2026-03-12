@@ -21,6 +21,8 @@
             protobuf
             protoc-gen-go
             protoc-gen-go-grpc
+            gh
+            jq
           ];
         };
       });

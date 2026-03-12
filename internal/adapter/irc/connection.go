@@ -3,7 +3,10 @@ package irc
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
+	"errors"
 	"fmt"
+	"io"
 	"math"
 	"net"
 	"sync"
@@ -11,7 +14,7 @@ import (
 
 	"github.com/kyleterry/tenyks/internal/adapter"
 	"github.com/kyleterry/tenyks/internal/logger"
-	servicepb "github.com/kyleterry/tenyks/internal/service"
+	servicepb "github.com/kyleterry/tenyks/internal/pb"
 )
 
 var (
@@ -111,7 +114,7 @@ func (c *Connection) Dial(ctx context.Context) error {
 
 		dialer := net.Dialer{}
 
-		conn, err := dialer.DialContext(ctx, "tcp", c.server)
+		rawConn, err := dialer.DialContext(ctx, "tcp", c.server)
 		if err != nil {
 			dur := b.next()
 			c.log.Error("connection failed",
@@ -123,7 +126,22 @@ func (c *Connection) Dial(ctx context.Context) error {
 			continue
 		}
 
-		c.conn = conn
+		if c.useTLS {
+			host, _, _ := net.SplitHostPort(c.server)
+			tlsConn := tls.Client(rawConn, &tls.Config{ServerName: host})
+			if err := tlsConn.HandshakeContext(ctx); err != nil {
+				rawConn.Close()
+				dur := b.next()
+				c.log.Error("TLS handshake failed",
+					logger.Param{Key: "connection", Value: c.Name},
+					logger.Param{Key: "retry", Value: dur})
+				<-time.After(dur)
+				continue
+			}
+			c.conn = tlsConn
+		} else {
+			c.conn = rawConn
+		}
 
 		c.io = bufio.NewReadWriter(
 			bufio.NewReader(c.conn),
@@ -225,9 +243,13 @@ func (c *Connection) monitorErrs(ctx context.Context, in chan error, out chan er
 	for {
 		select {
 		case err = <-in:
-			c.log.Error("receive error", logger.Param{Key: "error", Value: err})
+			if !errors.Is(err, io.EOF) {
+				c.log.Error("receive error", logger.Param{Key: "error", Value: err})
+			}
 		case err = <-out:
-			c.log.Error("send error", logger.Param{Key: "error", Value: err})
+			if !errors.Is(err, io.EOF) {
+				c.log.Error("send error", logger.Param{Key: "error", Value: err})
+			}
 		case <-ctx.Done():
 			return
 		}
@@ -300,7 +322,7 @@ func (c *Connection) startReceiveLoop(ctx context.Context) (chan MessageObject, 
 				if err != nil {
 					errCh <- err
 
-					continue
+					return
 				}
 
 				mo, err := c.decodeAndMapMessage(line)
@@ -390,18 +412,20 @@ func New(conf Config) (*Connection, error) {
 		Name: conf.Name,
 		OnConnect: []OnConnectHook{
 			defaultLoginFunc,
-			defaultJoinFunc,
 		},
 		OnDisconnect: []OnDisconnectHook{
 			cleanupChannels,
 		},
 		OnCommand: []OnCommandHook{
+			defaultSASLCommandHandler,
 			defaultJoinChannelStatusUpdater,
 			defaultPrivmsgHandler,
+			defaultNoticeHandler,
 			defaultUnknownHandler,
 			defaultPingResponder,
 		},
 		OnReply: []OnReplyHook{
+			defaultSASLReplyHandler,
 			defaultConnectionStatusUpdater,
 			defaultChannelMemberUpdater,
 		},

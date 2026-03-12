@@ -6,7 +6,7 @@ import (
 	"path"
 	"strings"
 
-	servicepb "github.com/kyleterry/tenyks/internal/service"
+	servicepb "github.com/kyleterry/tenyks/internal/pb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -56,19 +56,31 @@ func NewRawMessageDecoder() *RawMessageDecoder {
 	return &RawMessageDecoder{}
 }
 
-type tenyksChatMessageEncoder struct{}
+type tenyksChatMessageEncoder struct {
+	serverName string
+}
 
 func (tme *tenyksChatMessageEncoder) Encode(cmd *PrivmsgCommand) (*servicepb.Message, error) {
 	ircMsg := cmd.Message()
 
 	dest := ""
 	if len(ircMsg.Params) > 0 {
-		dest = ircMsg.Params[0]
+		channel := ircMsg.Params[0]
+		if tme.serverName != "" {
+			dest = tme.serverName + "/" + channel
+		} else {
+			dest = channel
+		}
 	}
 
 	origin := ""
 	if ircMsg.Prefix != nil {
-		origin = ircMsg.Prefix.Nick
+		nick := ircMsg.Prefix.Nick
+		if tme.serverName != "" {
+			origin = tme.serverName + "/" + nick
+		} else {
+			origin = nick
+		}
 	}
 
 	return &servicepb.Message{

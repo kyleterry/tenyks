@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package tenyks.service.v1;
 
-option go_package = "github.com/kyleterry/tenyks/internal/service";
+option go_package = "github.com/kyleterry/tenyks/internal/pb";
 
 import "google/protobuf/timestamp.proto";
 

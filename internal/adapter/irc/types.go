@@ -14,19 +14,27 @@ const (
 	CommandTypePing
 	CommandTypePong
 	CommandTypeCTCP
+	CommandTypeCAP
+	CommandTypeAuthenticate
+	CommandTypeNotice
+	CommandTypeMode
 	CommandTypeUnknown
 )
 
 var CommandTypeMapping = map[string]CommandType{
-	"USER":    CommandTypeUser,
-	"NICK":    CommandTypeNick,
-	"JOIN":    CommandTypeJoin,
-	"PART":    CommandTypePart,
-	"PASS":    CommandTypePass,
-	"PRIVMSG": CommandTypePrivmsg,
-	"PING":    CommandTypePing,
-	"PONG":    CommandTypePong,
-	"CTCP":    CommandTypeCTCP,
+	"USER":         CommandTypeUser,
+	"NICK":         CommandTypeNick,
+	"JOIN":         CommandTypeJoin,
+	"PART":         CommandTypePart,
+	"PASS":         CommandTypePass,
+	"PRIVMSG":      CommandTypePrivmsg,
+	"PING":         CommandTypePing,
+	"PONG":         CommandTypePong,
+	"CTCP":         CommandTypeCTCP,
+	"CAP":          CommandTypeCAP,
+	"AUTHENTICATE": CommandTypeAuthenticate,
+	"NOTICE": CommandTypeNotice,
+	"MODE":   CommandTypeMode,
 }
 
 // ReplyType represents a reply to a command. These can be successful replies
@@ -46,6 +54,9 @@ const (
 	ReplyTypeErrNoSuchNick
 	ReplyTypeErrErroneusNickname
 	ReplyTypeErrNickInUse
+	ReplyTypeSASLLoggedIn
+	ReplyTypeSASLSuccess
+	ReplyTypeSASLFail
 )
 
 var ReplyTypeMapping = map[string]ReplyType{
@@ -61,4 +72,7 @@ var ReplyTypeMapping = map[string]ReplyType{
 	"401": ReplyTypeErrNoSuchNick,
 	"432": ReplyTypeErrErroneusNickname,
 	"433": ReplyTypeErrNickInUse,
+	"900": ReplyTypeSASLLoggedIn,
+	"903": ReplyTypeSASLSuccess,
+	"904": ReplyTypeSASLFail,
 }

@@ -39,6 +39,18 @@ var DefaultCommandFactory = map[CommandType]func(*Message) Command{
 	CommandTypePong: func(msg *Message) Command {
 		return &PongCommand{m: msg}
 	},
+	CommandTypeCAP: func(msg *Message) Command {
+		return &CAPCommand{m: msg}
+	},
+	CommandTypeAuthenticate: func(msg *Message) Command {
+		return &AuthenticateCommand{m: msg}
+	},
+	CommandTypeNotice: func(msg *Message) Command {
+		return &NoticeCommand{m: msg}
+	},
+	CommandTypeMode: func(msg *Message) Command {
+		return &ModeCommand{m: msg}
+	},
 }
 
 type PassCommand struct {
@@ -285,6 +297,95 @@ func NewPongCommand(server string) *PongCommand {
 			Trail:       server,
 		},
 	}
+}
+
+// ModeCommand represents a MODE message.
+type ModeCommand struct {
+	m *Message
+}
+
+func (m *ModeCommand) Encode() (string, error) { return NewRawMessageEncoder().Encode(m.m) }
+func (m *ModeCommand) Message() *Message       { return m.m }
+func (m *ModeCommand) Validate() error         { return nil }
+
+// NoticeCommand represents a NOTICE message. Per RFC 2812, bots must never
+// send automatic replies in response to a NOTICE.
+type NoticeCommand struct {
+	m *Message
+}
+
+func (n *NoticeCommand) Encode() (string, error) { return NewRawMessageEncoder().Encode(n.m) }
+func (n *NoticeCommand) Message() *Message       { return n.m }
+func (n *NoticeCommand) Validate() error         { return nil }
+
+// CAPCommand represents a CAP message (capability negotiation).
+type CAPCommand struct {
+	m *Message
+}
+
+func (c *CAPCommand) Encode() (string, error)  { return NewRawMessageEncoder().Encode(c.m) }
+func (c *CAPCommand) Message() *Message        { return c.m }
+func (c *CAPCommand) Validate() error          { return nil }
+
+// Subcommand returns the CAP subcommand (LS, REQ, ACK, NAK, END, etc.).
+func (c *CAPCommand) Subcommand() string {
+	if len(c.m.Params) >= 2 {
+		return strings.ToUpper(c.m.Params[1])
+	}
+	return ""
+}
+
+// Capabilities returns the capability string from the trailing parameter.
+func (c *CAPCommand) Capabilities() string { return c.m.Trail }
+
+func NewCAPLSCommand() *CAPCommand {
+	return &CAPCommand{m: &Message{
+		Command:     "CAP",
+		MessageType: MessageTypeCommand,
+		Params:      []string{"LS", "302"},
+	}}
+}
+
+func NewCAPReqCommand(cap string) *CAPCommand {
+	return &CAPCommand{m: &Message{
+		Command:     "CAP",
+		MessageType: MessageTypeCommand,
+		Params:      []string{"REQ"},
+		Trail:       cap,
+	}}
+}
+
+func NewCAPEndCommand() *CAPCommand {
+	return &CAPCommand{m: &Message{
+		Command:     "CAP",
+		MessageType: MessageTypeCommand,
+		Params:      []string{"END"},
+	}}
+}
+
+// AuthenticateCommand represents an AUTHENTICATE message used in SASL.
+type AuthenticateCommand struct {
+	m *Message
+}
+
+func (a *AuthenticateCommand) Encode() (string, error) { return NewRawMessageEncoder().Encode(a.m) }
+func (a *AuthenticateCommand) Message() *Message       { return a.m }
+func (a *AuthenticateCommand) Validate() error         { return nil }
+
+// Payload returns the AUTHENTICATE parameter (e.g. "PLAIN", "+", or base64 data).
+func (a *AuthenticateCommand) Payload() string {
+	if len(a.m.Params) > 0 {
+		return a.m.Params[0]
+	}
+	return a.m.Trail
+}
+
+func NewAuthenticateCommand(payload string) *AuthenticateCommand {
+	return &AuthenticateCommand{m: &Message{
+		Command:     "AUTHENTICATE",
+		MessageType: MessageTypeCommand,
+		Params:      []string{payload},
+	}}
 }
 
 type UnknownCommand struct {

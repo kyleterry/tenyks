@@ -3,7 +3,7 @@ package adapter
 import (
 	"context"
 
-	servicepb "github.com/kyleterry/tenyks/internal/service"
+	servicepb "github.com/kyleterry/tenyks/internal/pb"
 )
 
 // HandlerFunc is called when an adapter receives an inbound chat message.

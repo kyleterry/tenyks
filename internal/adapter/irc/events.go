@@ -2,6 +2,8 @@ package irc
 
 import (
 	"context"
+	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -10,23 +12,62 @@ import (
 )
 
 func defaultLoginFunc(ctx context.Context, c *Connection) error {
-	// TODO figure out how to create a blocking and async message sending API.
-	// blocking can beused for sending messages (like PASS) and checking if there
-	// is an error coming back from the server allowing us to respond to it immediately.
-
 	if c.password != "" {
-		passCmd := NewPassCommand(c.password)
-		c.out <- passCmd
+		// Start capability negotiation for SASL PLAIN. NICK and USER are sent
+		// alongside CAP LS so the server can process them while we negotiate;
+		// the server holds off on sending 001 until we send CAP END.
+		c.out <- NewCAPLSCommand()
 	}
 
-	// TODO support MODE bitmasks: https://tools.ietf.org/html/rfc2812#page-11
-	userCmd := NewUserCommand(c.user, 0, c.realName)
-	c.out <- userCmd
-
-	nickCmd := NewNickCommand(c.nicks[0])
-	c.out <- nickCmd
+	c.out <- NewNickCommand(c.nicks[0])
 	c.Status.CurrentNick = c.nicks[0]
 
+	// TODO support MODE bitmasks: https://tools.ietf.org/html/rfc2812#page-11
+	c.out <- NewUserCommand(c.user, 0, c.realName)
+
+	return nil
+}
+
+func defaultSASLCommandHandler(ctx context.Context, c *Connection, command Command) error {
+	switch cmd := command.(type) {
+	case *CAPCommand:
+		switch cmd.Subcommand() {
+		case "LS":
+			if strings.Contains(cmd.Capabilities(), "sasl") {
+				c.out <- NewCAPReqCommand("sasl")
+			} else {
+				c.log.Error("server does not support SASL", logger.Param{Key: "connection", Value: c.Name})
+				c.out <- NewCAPEndCommand()
+			}
+		case "ACK":
+			if strings.Contains(cmd.Capabilities(), "sasl") {
+				c.out <- NewAuthenticateCommand("PLAIN")
+			}
+		case "NAK":
+			c.log.Error("SASL capability rejected", logger.Param{Key: "connection", Value: c.Name})
+			c.out <- NewCAPEndCommand()
+		}
+	case *AuthenticateCommand:
+		if cmd.Payload() == "+" {
+			// Server is ready — send base64(\0nick\0password)
+			payload := base64.StdEncoding.EncodeToString(
+				[]byte("\x00" + c.nicks[0] + "\x00" + c.password),
+			)
+			c.out <- NewAuthenticateCommand(payload)
+		}
+	}
+	return nil
+}
+
+func defaultSASLReplyHandler(ctx context.Context, c *Connection, reply Reply) error {
+	switch reply.(type) {
+	case *SASLSuccessReply:
+		c.log.Debug("SASL authentication successful", logger.Param{Key: "connection", Value: c.Name})
+		c.out <- NewCAPEndCommand()
+	case *SASLFailReply:
+		c.log.Error("SASL authentication failed", logger.Param{Key: "connection", Value: c.Name})
+		c.out <- NewCAPEndCommand()
+	}
 	return nil
 }
 
@@ -49,6 +90,7 @@ func defaultConnectionStatusUpdater(ctx context.Context, c *Connection, reply Re
 		c.WithWriteLock(ctx, func(conn *Connection) {
 			conn.Status.Connected = true
 		})
+		return defaultJoinFunc(ctx, c)
 	}
 
 	return nil
@@ -72,7 +114,10 @@ func defaultJoinChannelStatusUpdater(ctx context.Context, c *Connection, command
 
 		if msg.Prefix != nil {
 			if msg.Prefix.Nick == c.Status.CurrentNick {
-				channelName := cmd.Message().Params[0]
+				channelName := msg.Trail
+				if len(msg.Params) > 0 {
+					channelName = msg.Params[0]
+				}
 
 				c.WithWriteLock(ctx, func(conn *Connection) {
 					if channel, ok := conn.channels[channelName]; ok {
@@ -124,7 +169,7 @@ func defaultChannelMemberUpdater(ctx context.Context, c *Connection, reply Reply
 }
 
 func defaultErrorHandlerFunc(ctx context.Context, c *Connection, err error) error {
-	if err == io.EOF {
+	if errors.Is(err, io.EOF) {
 		return c.Close(ctx)
 	}
 
@@ -150,6 +195,15 @@ func cleanupChannels(ctx context.Context, c *Connection) error {
 	return nil
 }
 
+func defaultNoticeHandler(ctx context.Context, c *Connection, command Command) error {
+	switch cmd := command.(type) {
+	case *NoticeCommand:
+		c.log.Debug(cmd.Message().RawMsg)
+	}
+
+	return nil
+}
+
 func defaultPrivmsgHandler(ctx context.Context, c *Connection, command Command) error {
 	switch cmd := command.(type) {
 	case *PrivmsgCommand:
@@ -157,7 +211,7 @@ func defaultPrivmsgHandler(ctx context.Context, c *Connection, command Command) 
 		mention := logger.Param{Key: "mentionMessage", Value: cmd.IsMention()}
 		c.log.Debug(cmd.Message().RawMsg, direct, mention)
 
-		e := &tenyksChatMessageEncoder{}
+		e := &tenyksChatMessageEncoder{serverName: c.Name}
 		msg, err := e.Encode(cmd)
 		if err != nil {
 			return err

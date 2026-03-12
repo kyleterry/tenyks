@@ -90,8 +90,8 @@ type TLS struct {
 }
 
 type Service struct {
-	BindAddr string
-	TLS      *TLS
+	BindAddr string `json:"bind_addr"`
+	TLS      *TLS   `json:"tls"`
 }
 
 func NewFromFile(path string) (*Config, error) {
