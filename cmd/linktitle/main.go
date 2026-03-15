@@ -101,9 +101,11 @@ func main() {
 	}
 
 	cfg := &client.Config{
-		Name:    "linktitle",
-		Version: "1.0",
-		Addr:    *addr,
+		Name:        "linktitle",
+		Version:     "1.0",
+		Description: "Fetches the page title for URLs posted in chat",
+		HelpText:    "post a URL and linktitle will reply with the page title",
+		Addr:        *addr,
 		TLS: client.TLSConfig{
 			CAFile:   *caFile,
 			CertFile: *certFile,
@@ -112,8 +114,6 @@ func main() {
 	}
 
 	svc := client.New(cfg)
-	svc.Description = "Fetches the page title for URLs posted in chat"
-	svc.HelpText = "post a URL and linktitle will reply with the page title"
 
 	svc.Handle(client.MsgHandler{
 		MatcherFunc: client.MatcherFunc(matchURL),

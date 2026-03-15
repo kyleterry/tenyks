@@ -101,9 +101,11 @@ func main() {
 	}
 
 	cfg := &client.Config{
-		Name:    "lolbow",
-		Version: "1.0",
-		Addr:    *addr,
+		Name:        "lolbow",
+		Version:     "1.0",
+		Description: "A celebration of what it means to truly laugh",
+		HelpText:    "say lol — enough unique lollers in a row triggers a LOLBOW",
+		Addr:        *addr,
 		TLS: client.TLSConfig{
 			CAFile:   *caFile,
 			CertFile: *certFile,
@@ -114,8 +116,6 @@ func main() {
 	lb := &lolbow{channels: make(map[string]*channelState)}
 
 	svc := client.New(cfg)
-	svc.Description = "A celebration of what it means to truly laugh"
-	svc.HelpText = "say lol — enough unique lollers in a row triggers a LOLBOW"
 
 	svc.Handle(client.MsgHandler{
 		MatcherFunc:  client.NewRegexMatcher(`(?i)^max chain$`),

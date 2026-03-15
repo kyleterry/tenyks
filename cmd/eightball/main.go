@@ -47,9 +47,11 @@ func main() {
 	}
 
 	cfg := &client.Config{
-		Name:    "eightball",
-		Version: "1.0",
-		Addr:    *addr,
+		Name:        "eightball",
+		Version:     "1.0",
+		Description: "Magic 8-ball: ask a yes/no question and receive wisdom",
+		HelpText:    "<nick>: 8ball - the 8-ball will reveal your fate",
+		Addr:        *addr,
 		TLS: client.TLSConfig{
 			CAFile:   *caFile,
 			CertFile: *certFile,
@@ -58,8 +60,6 @@ func main() {
 	}
 
 	svc := client.New(cfg)
-	svc.Description = "Magic 8-ball: ask a yes/no question and receive wisdom"
-	svc.HelpText = "<nick>: 8ball - the 8-ball will reveal your fate"
 
 	svc.Handle(client.MsgHandler{
 		MatcherFunc: match8ball,

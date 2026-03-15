@@ -22,6 +22,10 @@ type Config struct {
 	Name string
 	// Version is an optional version string.
 	Version string
+	// Description describes what this service does.
+	Description string
+	// HelpText is shown in response to help queries.
+	HelpText string
 	// Addr is the tenyks gRPC server address. Defaults to localhost:50001.
 	Addr string
 	// TLS holds the mTLS certificate paths.
@@ -37,11 +41,6 @@ type TLSConfig struct {
 
 // Service connects to tenyks and dispatches incoming messages to registered handlers.
 type Service struct {
-	// Description describes what this service does.
-	Description string
-	// HelpText is shown in response to help queries.
-	HelpText string
-
 	config         *Config
 	handlers       []MsgHandler
 	defaultHandler MsgHandler
