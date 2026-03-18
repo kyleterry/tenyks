@@ -3,13 +3,13 @@ package client
 import (
 	"context"
 	"io"
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
-	internalpb "github.com/kyleterry/tenyks/internal/pb"
 	"github.com/kyleterry/tenyks/internal/config"
+	internalpb "github.com/kyleterry/tenyks/internal/pb"
 	"github.com/kyleterry/tenyks/internal/tlsconfig"
 )
 
@@ -30,6 +30,8 @@ type Config struct {
 	Addr string
 	// TLS holds the mTLS certificate paths.
 	TLS TLSConfig
+	// Debug enables debug-level logging to stderr.
+	Debug bool
 }
 
 // TLSConfig holds file paths for mTLS certificates.
@@ -42,13 +44,21 @@ type TLSConfig struct {
 // Service connects to tenyks and dispatches incoming messages to registered handlers.
 type Service struct {
 	config         *Config
+	log            *slog.Logger
 	handlers       []MsgHandler
 	defaultHandler MsgHandler
 }
 
 // New creates a new Service with the given config.
 func New(cfg *Config) *Service {
-	s := &Service{config: cfg}
+	level := slog.LevelWarn
+	if cfg.Debug {
+		level = slog.LevelDebug
+	}
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level})).
+		With("service", cfg.Name)
+
+	s := &Service{config: cfg, log: logger}
 	s.DefaultHandle(NoopHandler)
 	return s
 }
@@ -89,7 +99,20 @@ func (s *Service) Run() error {
 		return err
 	}
 
-	log.Printf("[%s] connected to %s", s.config.Name, addr)
+	s.log.Info("connected", "addr", addr)
+
+	if err := stream.Send(&internalpb.Message{
+		Payload: &internalpb.Message_Control{
+			Control: &internalpb.Control{
+				Type:        internalpb.Control_TYPE_REGISTER,
+				Name:        s.config.Name,
+				Description: s.config.Description,
+				HelpText:    s.config.HelpText,
+			},
+		},
+	}); err != nil {
+		return err
+	}
 
 	recvErrs := make(chan error, 1)
 	go func() {
@@ -102,7 +125,9 @@ func (s *Service) Run() error {
 			if pbMsg.GetChat() == nil {
 				continue
 			}
-			s.dispatch(stream, messageFromPB(pbMsg))
+			msg := messageFromPB(pbMsg)
+			s.log.Debug("message received", "nick", msg.Nick, "target", msg.Target, "payload", msg.Payload)
+			s.dispatch(stream, msg)
 		}
 	}()
 
@@ -113,7 +138,7 @@ func (s *Service) Run() error {
 	case <-sigs:
 	case err := <-recvErrs:
 		if err != io.EOF {
-			log.Printf("[%s] stream error: %v", s.config.Name, err)
+			s.log.Error("stream error", "err", err)
 		}
 	}
 
@@ -131,6 +156,7 @@ func (s *Service) dispatch(stream pbStream, msg Message) {
 			continue
 		}
 		if h.MatcherFunc == nil {
+			s.log.Debug("dispatching message", "nick", msg.Nick, "target", msg.Target, "handler", "catch-all")
 			go h.MatchHandler.HandleMatch(nil, msg, com)
 			return
 		}
@@ -138,9 +164,11 @@ func (s *Service) dispatch(stream pbStream, msg Message) {
 		if res == nil {
 			continue
 		}
+		s.log.Debug("dispatching message", "nick", msg.Nick, "target", msg.Target, "handler", "matched")
 		go h.MatchHandler.HandleMatch(res, msg, com)
 		return
 	}
 
+	s.log.Debug("dispatching message", "nick", msg.Nick, "target", msg.Target, "handler", "default")
 	go s.defaultHandler.MatchHandler.HandleMatch(nil, msg, com)
 }

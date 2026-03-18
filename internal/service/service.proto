@@ -29,6 +29,9 @@ message Control {
 
   string id = 1;
   Type type = 2;
+  string name = 3;
+  string description = 4;
+  string help_text = 5;
 }
 
 message Message {

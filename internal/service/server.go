@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"sort"
+	"strings"
 	"sync"
 
 	"github.com/kyleterry/tenyks/internal/adapter"
@@ -14,11 +16,15 @@ import (
 	grpc "google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type streamEntry struct {
-	ch    chan *pb.Message
-	perms certutil.Permissions
+	ch          chan *pb.Message
+	perms       certutil.Permissions
+	name        string
+	description string
+	helpText    string
 }
 
 // Server is the gRPC MessageService implementation. It fans incoming IRC
@@ -33,24 +39,87 @@ type Server struct {
 }
 
 // Broadcast sends msg to every connected service client whose certificate
-// permissions allow the message's destination path.
+// permissions allow the message's destination path. If the message is a
+// mention that matches a built-in command, tenyks handles it directly and
+// does not forward to service clients.
 func (s *Server) Broadcast(msg *pb.Message) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	destPath := ""
-	if chat := msg.GetChat(); chat != nil {
-		destPath = chat.DestinationPath
+	chat := msg.GetChat()
+	if chat == nil {
+		return
+	}
+
+	if chat.Mention {
+		if _, after, ok := strings.Cut(msg.Content, ": "); ok {
+			cmd := strings.TrimSpace(after)
+			if s.handleBuiltinCmdLocked(cmd, chat) {
+				return
+			}
+		}
 	}
 
 	for _, entry := range s.streams {
-		if destPath != "" && !entry.perms.AllowsPath(destPath) {
+		if chat.DestinationPath != "" && !entry.perms.AllowsPath(chat.DestinationPath) {
 			continue
 		}
 		select {
 		case entry.ch <- msg:
 		default:
 			// drop rather than block if the client is slow
+		}
+	}
+}
+
+// handleBuiltinCmdLocked matches cmd against tenyks' built-in commands and
+// replies via the IRC adapters. Returns true if the command was handled.
+// Caller must hold s.mu.RLock().
+func (s *Server) handleBuiltinCmdLocked(cmd string, chat *pb.Chat) bool {
+	switch {
+	case cmd == "list-services":
+		var names []string
+		for _, entry := range s.streams {
+			if entry.name != "" {
+				names = append(names, entry.name)
+			}
+		}
+		sort.Strings(names)
+		s.replyTo(chat.DestinationPath, "["+strings.Join(names, ", ")+"]")
+		return true
+	default:
+		if svcName, ok := strings.CutPrefix(cmd, "help "); ok {
+			for _, entry := range s.streams {
+				if entry.name == svcName {
+					text := entry.description
+					if entry.helpText != "" {
+						text += " | " + entry.helpText
+					}
+					s.replyTo(chat.DestinationPath, text)
+					return true
+				}
+			}
+			s.replyTo(chat.DestinationPath, "unknown service: "+svcName)
+			return true
+		}
+	}
+	return false
+}
+
+// replyTo sends a chat message to destPath via all registered IRC adapters.
+func (s *Server) replyTo(destPath, text string) {
+	msg := &pb.Message{
+		Payload: &pb.Message_Chat{
+			Chat: &pb.Chat{
+				DestinationPath: destPath,
+			},
+		},
+		Content:   text,
+		CreatedAt: timestamppb.Now(),
+	}
+	for _, a := range s.adapters.GetAdaptersFor(adapter.AdapterTypeIRC) {
+		if err := a.SendAsync(context.Background(), msg); err != nil {
+			log.Printf("failed to send built-in reply to adapter %s: %v", a.GetName(), err)
 		}
 	}
 }
@@ -118,6 +187,18 @@ func (s *Server) StreamMessages(stream pb.MessageService_StreamMessagesServer) e
 				return nil
 			}
 			return err
+		}
+
+		if ctrl := msg.GetControl(); ctrl != nil {
+			if ctrl.Type == pb.Control_TYPE_REGISTER {
+				s.mu.Lock()
+				entry.name = ctrl.Name
+				entry.description = ctrl.Description
+				entry.helpText = ctrl.HelpText
+				s.mu.Unlock()
+				log.Printf("service registered: %s (%s)", ctrl.Name, id)
+			}
+			continue
 		}
 
 		for _, a := range s.adapters.GetAdaptersFor(adapter.AdapterTypeIRC) {

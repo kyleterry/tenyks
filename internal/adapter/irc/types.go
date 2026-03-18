@@ -33,8 +33,8 @@ var CommandTypeMapping = map[string]CommandType{
 	"CTCP":         CommandTypeCTCP,
 	"CAP":          CommandTypeCAP,
 	"AUTHENTICATE": CommandTypeAuthenticate,
-	"NOTICE": CommandTypeNotice,
-	"MODE":   CommandTypeMode,
+	"NOTICE":       CommandTypeNotice,
+	"MODE":         CommandTypeMode,
 }
 
 // ReplyType represents a reply to a command. These can be successful replies

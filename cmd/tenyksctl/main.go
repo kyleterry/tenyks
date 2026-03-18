@@ -92,7 +92,7 @@ Flags:`)
 
 	var perms certutil.Permissions
 	if *paths != "" {
-		for _, p := range strings.Split(*paths, ",") {
+		for p := range strings.SplitSeq(*paths, ",") {
 			p = strings.TrimSpace(p)
 			if p != "" {
 				perms.Paths = append(perms.Paths, p)

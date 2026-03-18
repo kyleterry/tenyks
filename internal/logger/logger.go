@@ -5,11 +5,12 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 )
 
 type Param struct {
 	Key   string
-	Value interface{}
+	Value any
 }
 
 func (p Param) String() string {
@@ -48,16 +49,16 @@ func (sl StandardLogger) Error(msg string, params ...Param) {
 }
 
 func (sl StandardLogger) logWithPrefix(prefix string, msg string, params []Param) {
-	var s string
+	var s strings.Builder
 
-	s += fmt.Sprintf("[%s] ", prefix)
-	s += fmt.Sprintf("%s ", msg)
+	s.WriteString(fmt.Sprintf("[%s] ", prefix))
+	s.WriteString(fmt.Sprintf("%s ", msg))
 
 	for _, param := range params {
-		s += fmt.Sprintf("%s ", param.String())
+		s.WriteString(fmt.Sprintf("%s ", param.String()))
 	}
 
-	sl.stdlog.Println(s)
+	sl.stdlog.Println(s.String())
 }
 
 func NewStandardLogger(pkg string, cfg StandardLoggerConfig) StandardLogger {

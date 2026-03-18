@@ -39,6 +39,7 @@ func main() {
 	caFile := flag.String("ca", "", "path to CA certificate file")
 	certFile := flag.String("cert", "", "path to client certificate file")
 	keyFile := flag.String("key", "", "path to client private key file")
+	debug := flag.Bool("debug", false, "enable debug logging")
 
 	flag.Parse()
 
@@ -57,6 +58,7 @@ func main() {
 			CertFile: *certFile,
 			KeyFile:  *keyFile,
 		},
+		Debug: *debug,
 	}
 
 	svc := client.New(cfg)

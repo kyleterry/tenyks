@@ -7,12 +7,13 @@
 package pb
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -149,6 +150,9 @@ type Control struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Type          Control_Type           `protobuf:"varint,2,opt,name=type,proto3,enum=tenyks.service.v1.Control_Type" json:"type,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	HelpText      string                 `protobuf:"bytes,5,opt,name=help_text,json=helpText,proto3" json:"help_text,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -195,6 +199,27 @@ func (x *Control) GetType() Control_Type {
 		return x.Type
 	}
 	return Control_TYPE_UNSPECIFIED
+}
+
+func (x *Control) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Control) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *Control) GetHelpText() string {
+	if x != nil {
+		return x.HelpText
+	}
+	return ""
 }
 
 type Message struct {
@@ -305,10 +330,13 @@ const file_service_proto_rawDesc = "" +
 	"originPath\x12)\n" +
 	"\x10destination_path\x18\x02 \x01(\tR\x0fdestinationPath\x12\x16\n" +
 	"\x06direct\x18\x03 \x01(\bR\x06direct\x12\x18\n" +
-	"\amention\x18\x04 \x01(\bR\amention\"\xac\x01\n" +
+	"\amention\x18\x04 \x01(\bR\amention\"\xff\x01\n" +
 	"\aControl\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x123\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x1f.tenyks.service.v1.Control.TypeR\x04type\"\\\n" +
+	"\x04type\x18\x02 \x01(\x0e2\x1f.tenyks.service.v1.Control.TypeR\x04type\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12 \n" +
+	"\vdescription\x18\x04 \x01(\tR\vdescription\x12\x1b\n" +
+	"\thelp_text\x18\x05 \x01(\tR\bhelpText\"\\\n" +
 	"\x04Type\x12\x14\n" +
 	"\x10TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rTYPE_REGISTER\x10\x01\x12\r\n" +

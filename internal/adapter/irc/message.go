@@ -72,7 +72,7 @@ func ParseMessage(raw string) (*Message, error) {
 			msg.Tags.RawTags = rawTags
 			raw = raw[index+1:]
 
-			for _, tag := range strings.Split(rawTags, ";") {
+			for tag := range strings.SplitSeq(rawTags, ";") {
 				var key, value, vendor string
 
 				parts := strings.Split(tag, "=")

@@ -323,9 +323,9 @@ type CAPCommand struct {
 	m *Message
 }
 
-func (c *CAPCommand) Encode() (string, error)  { return NewRawMessageEncoder().Encode(c.m) }
-func (c *CAPCommand) Message() *Message        { return c.m }
-func (c *CAPCommand) Validate() error          { return nil }
+func (c *CAPCommand) Encode() (string, error) { return NewRawMessageEncoder().Encode(c.m) }
+func (c *CAPCommand) Message() *Message       { return c.m }
+func (c *CAPCommand) Validate() error         { return nil }
 
 // Subcommand returns the CAP subcommand (LS, REQ, ACK, NAK, END, etc.).
 func (c *CAPCommand) Subcommand() string {
